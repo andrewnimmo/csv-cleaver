@@ -8,6 +8,7 @@
    The uberjar is what jpackage consumes as its --input; see
    .github/workflows/release.yml and package/build-mac.sh."
   (:require
+   [clojure.string :as str]
    [clojure.tools.build.api :as b]))
 
 (def lib 'dev.nimmo/csv-cleaver)
@@ -26,7 +27,7 @@
   (try
     (let [{:keys [exit out]} (b/process {:command-args ["git" "rev-parse" "--short" "HEAD"]
                                          :out :capture})]
-      (when (zero? exit) (clojure.string/trim out)))
+      (when (zero? exit) (str/trim out)))
     (catch Exception _ nil)))
 
 (defn- stamp-build!
