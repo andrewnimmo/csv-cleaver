@@ -78,6 +78,23 @@
       (is (some #(re-find #"app\.css$" %) sheets))
       (is (some? (slurp (first sheets)))))))
 
+(deftest ^:fx dragging-does-not-destroy-the-theme
+  (testing "the regression that made the whole window lose its colours: cljfx
+            replaces the style-class list when it changes, and JavaFX had put
+            \"root\" in that same list, so the first drag deleted it"
+    @(fx/on-fx-thread
+      (let [idle     (:scene (view/root state/initial))
+            dragging (:scene (view/root (assoc state/initial :drag-over? true)))
+            classes  (fn [component]
+                       (set (.getStyleClass (.getRoot ^javafx.scene.Scene
+                                             (fx/instance component)))))
+            c0       (fx/create-component idle)
+            c1       (fx/advance-component c0 dragging)
+            c2       (fx/advance-component c1 idle)]
+        (is (contains? (classes c0) "root") "before the drag")
+        (is (contains? (classes c1) "root") "during it")
+        (is (contains? (classes c2) "root") "and after it")))))
+
 (deftest ^:fx the-scene-accepts-the-stylesheets
   (let [scene (materialise {:fx/type     :scene
                             :stylesheets (branding/stylesheets)

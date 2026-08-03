@@ -172,6 +172,30 @@
       (is (not (contains? (actions d) ::state/reveal-requested))
           "nothing to reveal yet"))))
 
+(deftest the-scene-root-always-keeps-its-root-class
+  (testing "every AtlantaFX colour is defined on .root. This list is recomputed
+            when a drag starts, and cljfx replaces the whole style-class list
+            when it changes, so omitting \"root\" destroyed it the first time
+            anyone dragged a file in — after which nothing resolved, backgrounds
+            vanished and text fell back to black for the rest of the session."
+    (tu/with-temp-dir [dir]
+      (doseq [[label st] {"idle"     state/initial
+                          "dragging" (assoc state/initial :drag-over? true)
+                          "ready"    (ready-state dir)
+                          "dragging over an open file"
+                          (assoc (ready-state dir) :drag-over? true)}]
+        (testing label
+          (is (contains? (set (:style-class (view/content st))) "root")))))))
+
+(deftest headings-state-their-own-colour
+  (testing "a bold label that leaves the fill to be inherited comes out black,
+            which is invisible on a dark card"
+    (let [styled? (fn [d] (every? #(contains? (set (:style-class %)) "label")
+                                  (filter #(contains? (set (:style-class %)) "title")
+                                          (nodes d))))]
+      (is (styled? (view/content (assoc state/initial :dialog :about))))
+      (is (styled? (view/startup-error-window {:problems ["x"]}))))))
+
 (deftest a-file-can-be-dropped-anywhere-at-any-time
   (testing "the handlers are on the window, not on the empty-state target, so a
             second file does not have to go through the Browse dialog"

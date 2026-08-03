@@ -99,8 +99,12 @@
     -fx-spacing: 10px;
 }
 
+/* An explicit fill, like .section-label and .drop-zone .headline already have.
+   A bold label that leaves the fill to be inherited resolves to black, which is
+   invisible on a dark card. */
 .file-card .file-name {
     -fx-font-weight: bold;
+    -fx-text-fill: -color-fg-default;
 }
 
 .chip {
@@ -185,9 +189,11 @@
     -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.35), 24, 0, 0, 6);
 }
 
-.dialog-card .title {
+.dialog-card .title,
+.window-body > .title {
     -fx-font-size: 15px;
     -fx-font-weight: bold;
+    -fx-text-fill: -color-fg-default;
 }
 
 .file-list {

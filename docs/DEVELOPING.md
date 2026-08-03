@@ -239,5 +239,18 @@ unformatted `1203` reaches the screen where `1,203` was intended.
 that does not fire will throw at render time. Use the `compact` helper. Only the
 materialisation tests catch this.
 
+**`:style-class` replaces, it does not add.** Two ways this bites:
+
+*On the scene root.* JavaFX puts `root` in the root node's style-class list, and
+every AtlantaFX colour is defined on `.root`. cljfx calls `setAll` whenever the
+computed list changes, so a list that omits `root` destroys it — and with it
+every colour lookup in the window, permanently. `content` therefore lists `root`
+explicitly, and a test asserts it in every state.
+
+*On a control.* `:style-class ["chip"]` on a Label drops `label`, so the label
+loses the theme's default text fill and resolves to black — invisible in dark
+mode. Either keep the control's own class in the list (`["label" "chip"]`) or
+set `-fx-text-fill` in the rule. Both are used here; the bold headings do both.
+
 **JavaFX keeps the JVM alive.** Requiring `cljfx.api` starts the toolkit, and its
 thread is not a daemon. A script that loads it must call `System/exit`.

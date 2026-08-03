@@ -153,7 +153,7 @@
      [{:fx/type     :v-box
        :style-class ["file-card"]
        :children
-       [{:fx/type :label :style-class ["file-name"] :text (if file (.getName file) "")}
+       [{:fx/type :label :style-class ["label" "file-name"] :text (if file (.getName file) "")}
         {:fx/type :label :style-class ["hint"]
          :text    (if (pos? rows)
                     (i18n/trn ctx :scanning/counted rows (i18n/number ctx rows))
@@ -265,7 +265,7 @@
         [{:fx/type     :v-box
           :h-box/hgrow :always
           :children
-          [{:fx/type :label :style-class ["file-name"] :text (.getName file)}
+          [{:fx/type :label :style-class ["label" "file-name"] :text (.getName file)}
            {:fx/type      :label
             :style-class  ["hint"]
             :text-overrun :leading-ellipsis
@@ -585,7 +585,7 @@
         extra (- (count collisions) (count shown))
         total (count collisions)]
     (overlay
-     [{:fx/type :label :style-class ["title"] :wrap-text true
+     [{:fx/type :label :style-class ["label" "title"] :wrap-text true
        :text    (i18n/trn ctx :clash/title total (i18n/number ctx total))}
       {:fx/type :label :wrap-text true :text (i18n/tr ctx :clash/body)}
       {:fx/type :label :style-class ["file-list"] :max-width Double/MAX_VALUE
@@ -614,7 +614,7 @@
   (let [ctx       (state/ctx st)
         languages (i18n/languages)]
     (overlay
-     [{:fx/type :label :style-class ["title"]
+     [{:fx/type :label :style-class ["label" "title"]
        :text    (i18n/tr ctx :about/title (branding/app-name))}
       ;; A rebranded application keeps whatever tagline its owner set, in their
       ;; words. The default one is ours, so it is translated like the rest.
@@ -676,10 +676,10 @@
     :stylesheets (branding/stylesheets)
     :root
     {:fx/type     :v-box
-     :style-class ["window-body"]
+     :style-class ["root" "window-body"]
      :spacing     10
      :children
-     [{:fx/type :label :style-class ["title"]
+     [{:fx/type :label :style-class ["label" "title"]
        :text    "A translation could not be used"}
       {:fx/type :label :wrap-text true
        :text    (str "One or more of the translation files in your languages "
@@ -717,7 +717,7 @@
   [st]
   (let [ctx (state/ctx st)]
     (overlay
-     [{:fx/type :label :style-class ["title"] :text (i18n/tr ctx :help/title)}
+     [{:fx/type :label :style-class ["label" "title"] :text (i18n/tr ctx :help/title)}
       {:fx/type        :scroll-pane
        :fit-to-width   true
        :pref-height    360
@@ -795,8 +795,16 @@
    which previously forced the user through the Browse dialog instead. No new
    control was needed; a restriction was removed."
   [{:keys [dialog drag-over?] :as st}]
-  {:fx/type         :stack-pane
-   :style-class     (cond-> ["drag-target"] drag-over? (conj "active"))
+  {:fx/type :stack-pane
+   ;; "root" is listed explicitly and must stay listed. JavaFX adds it to
+   ;; whatever node becomes the scene root, and every AtlantaFX colour —
+   ;; -color-bg-default, -color-fg-default, the accents — is defined on .root.
+   ;; Because this vector is recomputed when a drag starts, cljfx replaces the
+   ;; whole style-class list, and leaving "root" out of it destroyed the class
+   ;; the first time anyone dragged a file onto the window: every lookup then
+   ;; failed, backgrounds disappeared and text fell back to black, for the rest
+   ;; of the session.
+   :style-class     (cond-> ["root" "drag-target"] drag-over? (conj "active"))
    :on-drag-over    {:event/type ::drag-over}
    :on-drag-exited  {:event/type ::state/drag-exited}
    :on-drag-dropped {:event/type ::drag-dropped}
