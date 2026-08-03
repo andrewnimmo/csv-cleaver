@@ -187,4 +187,10 @@
   :confirm/many-title "Créer {0} fichiers ?"
   :confirm/many-body "Autant de fichiers dans un même dossier peut le rendre lent ou inutilisable dans le gestionnaire de fichiers, et le découpage prendra longtemps. Si ce n'était pas votre intention, vérifiez le nombre de lignes par fichier."
   :action/create-anyway "Les créer quand même"
-  :done/where "Les fichiers se trouvent dans :"}}
+  :done/where "Les fichiers se trouvent dans :"
+
+  :file/one-column "Une seule colonne"
+  :file/not-a-table "Une seule colonne a été trouvée : ce n'est peut-être pas un tableau. Le fichier peut tout de même être découpé par lignes, et chaque morceau sera une copie littérale d'une partie du fichier."
+  :advanced/delimiter-chosen "Vous avez choisi {0}. La détection a trouvé {1}."
+  :advanced/encoding-chosen "Vous avez choisi {0}. La détection a trouvé {1}."
+  :done/nothing-written "Aucun fichier créé : rien dans ce fichier n'a été reconnu comme des données à découper."}}

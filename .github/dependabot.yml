@@ -1,0 +1,11 @@
+# Dependabot does not understand deps.edn, so it watches the one ecosystem it
+# can here: the GitHub Actions used by CI and by the release workflow. Clojure
+# dependencies are covered instead by `bb audit` (NVD) and `bb outdated` (antq),
+# both of which run in CI.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5

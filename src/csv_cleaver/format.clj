@@ -180,6 +180,9 @@
   (let [n (count files)]
     (cond
       (and cancelled? (zero? n)) (i18n/tr ctx :done/stopped-none)
+      ;; A run that wrote nothing is never a success. Reporting "0 files created
+      ;; in under a second" in green says the opposite of what happened.
+      (zero? n)                  (i18n/tr ctx :done/nothing-written)
       cancelled?                 (i18n/trn ctx :done/stopped-some n (i18n/number ctx n))
       :else                      (i18n/trn ctx :done/created n
                                            (i18n/number ctx n)

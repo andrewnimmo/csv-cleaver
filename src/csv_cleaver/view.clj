@@ -214,9 +214,16 @@
       ;; it is unusual is the opposite of what the encoding chip does, and it
       ;; leaves the commonest case as the one you cannot verify.
       {:fx/type chip :text (i18n/tr ctx (separated-key (:delimiter survey)))}
-      (if damage
-        {:fx/type chip :kind :warn :text (:headline damage)}
-        {:fx/type chip :kind :good :text (i18n/tr ctx :file/healthy)})])))
+      ;; Three outcomes, not two. A one-column file is structurally faultless —
+      ;; which is why a letter used to be reported as healthy. That was true and
+      ;; useless. Whether it looks like a table is a different question from
+      ;; whether it is damaged, and the green tick belongs only to a file that
+      ;; passes both.
+      (cond
+        damage                  {:fx/type chip :kind :warn :text (:headline damage)}
+        (not (:tabular? survey)) {:fx/type chip :text (i18n/tr ctx :file/one-column)}
+        :else                   {:fx/type chip :kind :good
+                                 :text (i18n/tr ctx :file/healthy)})])))
 
 (def preview-cell-width
   "Longest cell shown in the preview. The point is to show the shape of the
@@ -330,6 +337,9 @@
        (preview-rows st)
        (when damage
          {:fx/type :label :style-class ["hint"] :wrap-text true :text (:detail damage)})
+       (when-not (:tabular? survey)
+         {:fx/type :label :style-class ["hint"] :wrap-text true
+          :text    (i18n/tr ctx :file/not-a-table)})
        (when (state/header-uncertain? st) (header-question st))])}))
 
 ;; ── Options ─────────────────────────────────────────────────────────────────
@@ -510,10 +520,18 @@
                                                          (first state/selectable-delimiters))))
           :items            (mapv #(i18n/tr ctx (:label-key %)) state/selectable-delimiters)
           :on-value-changed {:event/type ::delimiter-picked :event/value-key :label}}
+         ;; Once the user has overridden it, nothing here was "detected
+         ;; automatically" and the advice about changing it is spent. Say what
+         ;; they chose and what detection had found, so the two are separable.
          {:fx/type :label :style-class ["hint"] :wrap-text true
-          :text    (str (i18n/tr ctx :advanced/delimiter-detected
-                                 (i18n/tr ctx (separator-name-key (:delimiter survey))))
-                        " " (i18n/tr ctx :advanced/delimiter-hint))}]}
+          :text
+          (let [chosen   (:delimiter-override st)
+                detected (:detected-delimiter survey)
+                name-of  #(i18n/tr ctx (separator-name-key %))]
+            (if chosen
+              (i18n/tr ctx :advanced/delimiter-chosen (name-of chosen) (name-of detected))
+              (str (i18n/tr ctx :advanced/delimiter-detected (name-of detected))
+                   " " (i18n/tr ctx :advanced/delimiter-hint))))}]}
 
        {:fx/type :v-box
         :spacing 4
@@ -525,8 +543,11 @@
           :on-value-changed {:event/type ::state/charset-override-changed
                              :event/value-key :choice}}
          {:fx/type :label :style-class ["hint"] :wrap-text true
-          :text    (i18n/tr ctx :advanced/encoding-hint
-                            (get-in survey [:encoding :label]))}]}])}))
+          :text    (let [detected (get-in survey [:encoding :label])]
+                     (if (and charset-override
+                              (not= charset-override state/detected-charset))
+                       (i18n/tr ctx :advanced/encoding-chosen charset-override detected)
+                       (i18n/tr ctx :advanced/encoding-hint detected)))}]}])}))
 
 ;; ── Ready ───────────────────────────────────────────────────────────────────
 
@@ -625,7 +646,10 @@
        :v-box/margin {:bottom 14}
        :children
        (compact
-        [(callout {:kind     (if (:cancelled? result) :warning :success)
+        [(callout {:kind     (cond
+                               (:cancelled? result)      :warning
+                               (empty? (:files result))  :danger
+                               :else                     :success)
                    :headline (fmt/completion-sentence ctx result)
                    :body     (str/join
                               " "

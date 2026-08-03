@@ -64,6 +64,47 @@ jobs:
         if: runner.os != 'Linux'
         run: clojure -M:test
 
+  security:
+    name: Vulnerabilities
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 25
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '25'
+
+      - name: Set up Clojure
+        uses: DeLaGuardo/setup-clojure@13.0
+        with:
+          cli: latest
+          bb: latest
+
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.m2/repository
+            ~/.gitlibs
+          key: ${{ runner.os }}-deps-${{ hashFiles('deps.edn') }}
+          restore-keys: ${{ runner.os }}-deps-
+
+      # Known vulnerabilities in anything that ships. The NVD API is rate
+      # limited without a key, so add NVD_API_KEY as a repository secret to
+      # make this reliable rather than intermittent.
+      - name: Known vulnerabilities
+        env:
+          NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
+        run: bb audit
+
+      # Being behind is not itself a vulnerability, but it is how you come to
+      # be running one. Reported, not enforced.
+      - name: Dependency drift
+        continue-on-error: true
+        run: bb outdated
+
   coverage:
     name: Coverage
     runs-on: ubuntu-latest

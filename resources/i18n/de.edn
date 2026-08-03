@@ -187,4 +187,10 @@
   :confirm/many-title "{0} Dateien erstellen?"
   :confirm/many-body "So viele Dateien in einem Ordner können ihn im Dateimanager langsam oder unbrauchbar machen, und die Aufteilung dauert lange. War das nicht gemeint, prüfen Sie die Zeilenzahl je Datei."
   :action/create-anyway "Trotzdem erstellen"
-  :done/where "Die Dateien liegen in:"}}
+  :done/where "Die Dateien liegen in:"
+
+  :file/one-column "Nur eine Spalte"
+  :file/not-a-table "Es wurde nur eine Spalte gefunden — dies ist womöglich gar keine Tabelle. Aufteilen nach Zeilen geht trotzdem, und jedes Stück ist eine wörtliche Kopie eines Teils der Datei."
+  :advanced/delimiter-chosen "Sie haben {0} gewählt. Erkannt wurde {1}."
+  :advanced/encoding-chosen "Sie haben {0} gewählt. Erkannt wurde {1}."
+  :done/nothing-written "Es wurde keine Datei erstellt, weil in dieser Datei nichts als aufzuteilende Daten erkannt wurde."}}

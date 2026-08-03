@@ -182,4 +182,10 @@
   :confirm/many-title "要创建 {0} 个文件吗？"
   :confirm/many-body "一个文件夹中有这么多文件，可能会使文件管理器变慢甚至无法使用，拆分也会耗时很久。如果这不是您的本意，请检查每个文件的行数。"
   :action/create-anyway "仍然创建"
-  :done/where "文件位于："}}
+  :done/where "文件位于："
+
+  :file/one-column "只有一列"
+  :file/not-a-table "只发现了一列，因此这可能并不是一个表格。仍然可以按行拆分，每一份都是文件某一部分的原样副本。"
+  :advanced/delimiter-chosen "您选择了 {0}。自动检测的结果是 {1}。"
+  :advanced/encoding-chosen "您选择了 {0}。自动检测的结果是 {1}。"
+  :done/nothing-written "未创建任何文件，因为在此文件中没有识别到可拆分的数据。"}}

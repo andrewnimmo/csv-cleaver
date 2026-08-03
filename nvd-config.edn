@@ -1,0 +1,6 @@
+;; nvd-clojure configuration. Run with: bb audit
+;;
+;; The NVD API is rate limited without a key; set NVD_API_KEY in the environment
+;; (and as a GitHub secret) to get a usable check in CI.
+{:delete-config? false
+ :nvd {:fail-build-on-cvss-score 7.0}}

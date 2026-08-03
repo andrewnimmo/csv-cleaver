@@ -91,7 +91,13 @@
         (fraction true?
                   (for [i (range columns)]
                     (let [shapes (map cell-shape (column i))]
-                      (and (apply = shapes)
+                      ;; (seq shapes) is not decoration. A column that exists in
+                      ;; row one and in no row below it — "Dear Sir," at the top
+                      ;; of a letter, and no comma after — leaves this empty, and
+                      ;; (apply = ()) throws. That crashed the scan on an
+                      ;; ordinary text file.
+                      (and (seq shapes)
+                           (apply = shapes)
                            (not= (first shapes) (cell-shape (nth first-row i)))))))))
 
      ;; A bare number as a column name is vanishingly rare, so one is close to
@@ -238,7 +244,8 @@
          ;; An explicit delimiter overrides detection. Everything downstream —
          ;; the record count, the field count, the damage tally — depends on it,
          ;; which is why changing it re-surveys rather than patching the result.
-         delimiter (or delimiter (csv/detect-delimiter head))
+         detected  (csv/detect-delimiter head)
+         delimiter (or delimiter detected)
          ;; Twenty rows is plenty of evidence and costs nothing: they are
          ;; already in the sample read to sniff the delimiter.
          preview   (mapv #(csv/parse-fields (:text %) delimiter)
@@ -265,6 +272,16 @@
       :bytes          (.length file)
       :encoding       detection
       :delimiter      delimiter
+      ;; Kept apart from the effective one, so the window can say "you chose
+      ;; semicolons; detection found commas" rather than claiming to have
+      ;; detected what the user typed in.
+      :detected-delimiter detected
+      ;; A file with one column is a valid CSV and structurally faultless, which
+      ;; is why it used to be reported as healthy. It is also what a letter or a
+      ;; log looks like to this application, and calling that healthy tells the
+      ;; user something true and useless. Whether it looks like a table at all is
+      ;; a separate question from whether it is damaged.
+      :tabular?       (> (long (or (:fields counted) 0)) 1)
       :records        (:records counted)
       :fields         (or (:fields counted) 0)
       ;; The first two rows as parsed. Shown on the file card so that the

@@ -57,6 +57,19 @@
    :jvm-opts    ["--enable-native-access=ALL-UNNAMED" "-Dfile.encoding=UTF-8"]
    :main-opts   ["-m" "shots"]}
 
+  ;; Known vulnerabilities in anything this ships. Checks the resolved
+  ;; dependency tree against the NIST National Vulnerability Database.
+  :audit
+  {:replace-deps {nvd-clojure/nvd-clojure {:mvn/version "5.3.0"}
+                  org.clojure/clojure     {:mvn/version "1.12.5"}}
+   :main-opts    ["-m" "nvd.task.check" "nvd-config.edn"]}
+
+  ;; Dependencies that have moved on. Being behind is not itself a
+  ;; vulnerability, but it is how you come to be running one.
+  :outdated
+  {:replace-deps {com.github.liquidz/antq {:mvn/version "2.11.1276"}}
+   :main-opts    ["-m" "antq.core"]}
+
   :lint
   {:replace-deps {clj-kondo/clj-kondo {:mvn/version "2026.07.24"}}
    :main-opts    ["-m" "clj-kondo.main" "--lint" "src" "test" "build.clj"]}

@@ -218,4 +218,10 @@
   :confirm/many-title "Create {0} files?"
   :confirm/many-body "That many files in one folder can make it slow or unusable in a file manager, and the split will take a long time. If that was not what you meant, check the number of rows in each file."
   :action/create-anyway "Create them anyway"
-  :done/where "The files are in:"}}
+  :done/where "The files are in:"
+
+  :file/one-column "One column only"
+  :file/not-a-table "Only one column was found, so this may not be a table at all. It can still be split by rows, and each piece will be a plain copy of part of the file."
+  :advanced/delimiter-chosen "You chose {0}. Detection found {1}."
+  :advanced/encoding-chosen "You chose {0}. Detection found {1}."
+  :done/nothing-written "No files were created, because nothing in this file was recognised as data to split."}}

@@ -187,4 +187,10 @@
   :confirm/many-title "¿Crear {0} archivos?"
   :confirm/many-body "Esa cantidad de archivos en una sola carpeta puede volverla lenta o inutilizable en el explorador de archivos, y la división tardará mucho. Si no era lo que querías, revisa el número de filas por archivo."
   :action/create-anyway "Crearlos de todos modos"
-  :done/where "Los archivos están en:"}}
+  :done/where "Los archivos están en:"
+
+  :file/one-column "Solo una columna"
+  :file/not-a-table "Solo se ha encontrado una columna, así que puede que esto no sea una tabla. Aun así se puede dividir por filas, y cada parte será una copia literal de un trozo del archivo."
+  :advanced/delimiter-chosen "Has elegido {0}. La detección encontró {1}."
+  :advanced/encoding-chosen "Has elegido {0}. La detección encontró {1}."
+  :done/nothing-written "No se ha creado ningún archivo, porque no se ha reconocido nada en este archivo como datos que dividir."}}

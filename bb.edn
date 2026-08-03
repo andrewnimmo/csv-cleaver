@@ -36,6 +36,14 @@
   {:doc  "Run clj-kondo over the source and tests."
    :task (clj "-M:lint")}
 
+  audit
+  {:doc  "Check dependencies against the NIST vulnerability database."
+   :task (clj "-M:audit")}
+
+  outdated
+  {:doc  "List dependencies that have newer versions."
+   :task (clj "-M:outdated")}
+
   format
   {:doc  "Reformat every source file with cljfmt."
    :task (clj "-M:format" "fix")}
@@ -49,8 +57,8 @@
    :task (clj "-M:shots")}
 
   check
-  {:doc     "Everything CI runs: format, lint, tests."
-   :depends [format:check lint test]}
+  {:doc     "Everything CI runs: format, lint, tests, vulnerabilities."
+   :depends [format:check lint test audit]}
 
   clean
   {:doc  "Remove build output."
