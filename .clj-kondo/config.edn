@@ -1,0 +1,21 @@
+{:linters
+ ;; with-temp-dir binds its symbol inside a vector, which clj-kondo cannot see
+ ;; without a hook. Excluding it is cheaper than writing one for a test helper.
+ {:unresolved-symbol      {:level   :error
+                           :exclude [(csv-cleaver.test-util/with-temp-dir)]}
+  :unused-namespace       {:level :warning}
+  :unused-referred-var    {:level :warning}
+  :unsorted-required-namespaces {:level :warning}
+  :missing-docstring      {:level :off}
+  :single-key-in          {:level :warning}
+  :redundant-do           {:level :warning}
+  :redundant-let          {:level :warning}
+  ;; Shadowing a core function with a local matters when the local is called;
+  ;; it does not when the local is plainly data. These few names are the natural
+  ;; words for what they hold, and renaming them to avoid a collision that
+  ;; cannot bite makes the code worse, not safer.
+  :shadowed-var           {:level   :warning
+                           :exclude [name key bytes chars read basis options]}
+  :used-underscored-binding {:level :warning}}
+
+ :output {:progress false}}

@@ -1,0 +1,16 @@
+# Later rules win, so the general case comes first and the exceptions follow.
+
+* text=auto
+
+*.png binary
+*.icns binary
+*.ico binary
+*.sh text eol=lf
+*.bat text eol=crlf
+
+# The sample CSV files are fixtures whose exact bytes are the point of them:
+# crlf.csv proves Windows line endings survive, utf8-bom.csv proves a byte-order
+# mark is preserved, windows-1252.csv proves a non-UTF-8 encoding is not
+# silently converted. Git must not normalise any of them, or the tests that
+# check byte-for-byte fidelity would be comparing against already-altered files.
+test/resources/samples/** -text -diff

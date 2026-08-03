@@ -1,0 +1,164 @@
+# CSV Cleaver — user guide
+
+CSV Cleaver takes one large CSV file and makes several smaller ones from it,
+so that Excel can open them.
+
+You do not need to know anything about CSV files to use it. The application
+works out what it can and asks you only about the things it genuinely cannot
+decide.
+
+---
+
+## Why files need splitting
+
+Excel can open a sheet of at most **1,048,576 rows**. Older versions stopped at
+65,536. A file with more rows than that will not open at all — not partly, not
+with a warning. Splitting it into pieces small enough to open is the usual way
+round the problem.
+
+---
+
+## Installing
+
+Download the installer for your computer from the
+[releases page](https://github.com/andrewnimmo/csv-cleaver/releases).
+
+The installers are not signed with a paid certificate, so your computer will
+warn you the first time. This is expected.
+
+**macOS.** Open the `.dmg` and drag the application to Applications. The first
+time you open it, macOS will say it cannot be opened. Right-click the
+application in Applications, choose **Open**, then confirm. You only do this
+once. Choose the Apple Silicon download for an M-series Mac, or the Intel one
+for anything older.
+
+**Windows.** Run the `.msi`. Windows shows "Windows protected your PC". Choose
+**More info**, then **Run anyway**.
+
+**Linux.** Either install the `.deb` with `sudo dpkg -i csv-cleaver_*.deb`, or
+make the AppImage executable with `chmod +x` and run it directly.
+
+Nothing else needs installing. Each download contains everything it needs.
+
+---
+
+## Splitting a file
+
+**1. Choose the file.** Drag it onto the window, or press *Browse*.
+
+The application then reads the file through once. For a very large file this
+takes a few seconds, and you will see it counting.
+
+**2. Look at what it found.** A row of small labels appears:
+
+| Label | Meaning |
+|---|---|
+| `1,204,338 data rows` | How many rows of actual data the file holds |
+| `218 MB` | How big it is |
+| `Text: UTF-8` | How the letters are stored. Almost never needs attention |
+| `Looks healthy` | Nothing unusual was found |
+| `12 rows look damaged` | Something unusual was found — see below |
+
+**3. Answer the question, if you are asked one.** Sometimes the application
+cannot tell whether the first row of your file contains column names or your
+first row of data. When that happens it shows you the row and asks. Look at
+what it shows you: if it reads like a list of labels — `id`, `name`, `city` —
+they are column names. If it looks like a real record — `1`, `Ann`, `Leeds` —
+it is data.
+
+Most of the time it works this out for itself and does not ask.
+
+**4. Choose how to split.** Either equal numbers of rows, or equal file sizes.
+
+If you choose rows, the shortcut buttons explain themselves:
+
+- **65,000** — safe for very old versions of Excel
+- **100,000** — a comfortable size to work with
+- **1,048,576** — the most Excel can open in one sheet
+
+**5. Read the sentence.** Under the box, in blue, the application tells you what
+will happen before it happens:
+
+> This makes 19 files — 18 with 65,000 rows and one with 34,338.
+
+If that is not what you wanted, change the number and the sentence changes with
+it. Nothing has been written yet.
+
+**6. Choose where they go.** By default the new files go beside the original.
+Underneath, you are shown what they will be called.
+
+**7. Press *Split file*.**
+
+---
+
+## Things it may tell you
+
+### "6 files would be replaced"
+
+The folder already contains files with the names this split would use. **Nothing
+has been written yet.** You have three choices:
+
+- **Use a new folder** — the safe one. The results go into a new folder and
+  nothing existing is touched.
+- **Replace them** — the old files are overwritten.
+- **Cancel** — nothing happens at all.
+
+### "12 rows look damaged"
+
+Some rows do not follow the usual rules — perhaps one has more columns than the
+others, or a stray quotation mark. This is common in files exported from older
+systems.
+
+**Nothing is repaired and nothing is thrown away.** Damaged rows are copied
+across exactly as they arrived. You lose nothing, and you can look at them
+yourself afterwards. The application tells you so you are not surprised.
+
+### The results open with strange characters
+
+If accented letters look like nonsense when you open a result — `RenÃ©` instead
+of `René` — the text encoding was guessed wrongly. Open **Advanced** and change
+**Text encoding**, then split again. This is rare.
+
+---
+
+## Stopping a split
+
+Press **Cancel**. The file currently being written is removed, and the files
+already finished are kept. The application tells you how many survived, so you
+are never left wondering whether a half-written file is lurking among them.
+
+---
+
+## Changing the language
+
+Press the **i** button in the top corner. The application starts in your
+computer's language if it is one of the six it speaks — English, Spanish,
+French, German, Chinese, Japanese — and English otherwise.
+
+The five non-English translations were produced by machine and have not yet been
+checked by a native speaker. The About box says so.
+
+---
+
+## Light and dark
+
+Also under the **i** button. By default the application follows whatever your
+computer is set to, and keeps following it if you change it while the
+application is open.
+
+---
+
+## Getting help inside the application
+
+The **?** button answers the questions people actually ask: what a header row
+is, why some rows are called damaged, what text encoding means, and what happens
+to files already in the folder.
+
+---
+
+## What the application will never do
+
+- Change your original file in any way.
+- Overwrite anything without asking you first.
+- Repair, reformat or silently alter a single row of your data.
+- Connect to the internet.

@@ -1,0 +1,20 @@
+CSV Cleaver
+Copyright 2026 Andrew Nimmo
+
+Licensed under the Apache License, Version 2.0 (the "License"); you may not use
+this file except in compliance with the License. You may obtain a copy of the
+License in the accompanying LICENSE file, or at:
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+--------------------------------------------------------------------------------
+
+The installers produced for macOS, Windows and Linux bundle a Java runtime
+assembled by jpackage. That runtime contains components of OpenJDK and OpenJFX,
+which are licensed under the GNU General Public License, version 2, with the
+Classpath Exception.
+
+The Classpath Exception permits this application to be distributed under its own
+terms while linking against those components. The components themselves remain
+under GPLv2 with Classpath Exception, and their licences and source availability
+are recorded in THIRD-PARTY.md, which is installed alongside the application.

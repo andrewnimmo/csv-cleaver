@@ -1,0 +1,160 @@
+;; French. Machine translation — not yet checked by a native speaker.
+;; See en.edn for what each key is used for.
+
+{:meta
+ {:locale    "fr"
+  :name      "Français"
+  :reviewed? false}
+
+ :strings
+ {:empty/headline        "Déposez un fichier CSV ici"
+  :empty/headline-active "Relâchez pour l'ouvrir"
+  :empty/subhead         "ou choisissez-en un sur votre ordinateur"
+  :empty/hint            "Les options apparaîtront une fois le fichier choisi."
+
+  :scanning/checking "Vérification du fichier…"
+  :scanning/counted  {:one   "Vérification du fichier — {0} ligne pour l'instant"
+                      :other "Vérification du fichier — {0} lignes pour l'instant"}
+
+  :file/data-rows            {:one "{0} ligne de données" :other "{0} lignes de données"}
+  :file/rows                 {:one "{0} ligne" :other "{0} lignes"}
+  :file/encoding             "Texte : {0}"
+  :file/encoding-western     "Texte : {0} (européen occidental)"
+  :file/separated-semicolons "Séparé par des points-virgules"
+  :file/separated-tabs       "Séparé par des tabulations"
+  :file/separated-pipes      "Séparé par des barres verticales"
+  :file/healthy              "Semble correct"
+
+  :options/split-into    "Découper en"
+  :options/by-rows       "Même nombre de lignes"
+  :options/by-size       "Même taille de fichier"
+  :options/rows-suffix   "lignes dans chaque fichier"
+  :options/size-suffix   "dans chaque fichier"
+  :options/has-header    "Mon fichier a une ligne d'en-tête"
+  :options/repeat-header "Répéter cet en-tête dans chaque fichier"
+
+  :output/save-to "Enregistrer les fichiers dans"
+  :output/named   "Nommés {0}, {1}, et ainsi de suite."
+
+  :advanced/label           "Avancé"
+  :advanced/summary         "— encodage du texte, noms de fichiers"
+  :advanced/pattern-label   "Modèle de nom de fichier"
+  :advanced/pattern-hint    "{name} est le nom du fichier d'origine, {index} est le numéro du fichier."
+  :advanced/encoding-label  "Encodage du texte"
+  :advanced/encoding-hint   "{0} détecté. Ne le changez que si les résultats s'ouvrent avec des accents incorrects."
+  :advanced/detected        "Détecté"
+  :advanced/excel-safe      "Garder chaque fichier sous la limite de lignes d'Excel"
+  :advanced/excel-safe-hint "N'a d'effet que lors d'un découpage par taille, où le nombre de lignes dépend de leur longueur."
+
+  :splitting/headline "Découpage de {0}"
+  :splitting/progress "Fichier {0} · {1} sur {2} lignes"
+  :splitting/eta      "environ {0} restant"
+
+  :done/details      "Afficher le détail"
+  :done/created      {:one   "{0} fichier créé en {1}"
+                      :other "{0} fichiers créés en {1}"}
+  :done/stopped-none "Arrêté. Aucun fichier n'a été créé."
+  :done/stopped-some {:one   "Arrêté. {0} fichier était terminé avant l'arrêt, et celui en cours d'écriture a été supprimé."
+                      :other "Arrêté. {0} fichiers étaient terminés avant l'arrêt, et celui en cours d'écriture a été supprimé."}
+  :done/log-line     "{0}  —  {1} lignes"
+
+  :action/browse         "Parcourir…"
+  :action/change         "Modifier…"
+  :action/split          "Découper le fichier"
+  :action/cancel         "Annuler"
+  :action/split-again    "Découper un autre fichier"
+  :action/replace        "Les remplacer"
+  :action/new-folder     "Utiliser un nouveau dossier"
+  :action/close          "Fermer"
+  :action/about          "À propos"
+  :action/help           "Aide"
+  :action/reveal-mac     "Afficher dans le Finder"
+  :action/reveal-windows "Afficher dans l'Explorateur"
+  :action/reveal-other   "Ouvrir le dossier"
+
+  :clash/title {:one "Un fichier serait remplacé" :other "{0} fichiers seraient remplacés"}
+  :clash/body  "Ce dossier contient déjà des fichiers portant les noms que ce découpage utiliserait. Rien n'a encore été écrit."
+  :clash/more  "et {0} de plus"
+
+  :options/common-sizes "Tailles courantes"
+  :preset/plain         "{0}"
+  :preset/excel-old     "{0} — ancienne limite d'Excel"
+  :preset/excel-max     "{0} — maximum d'Excel"
+
+  :plan/one-file        "Tout tient dans un seul fichier de {0} lignes, donc rien ne serait découpé."
+  :plan/even            "Cela crée {0} fichiers de {1} lignes chacun."
+  :plan/uneven          "Cela crée {0} fichiers — {1} avec {2} lignes et un avec {3}."
+  :plan/by-size         "Cela crée environ {0} fichiers, d'à peu près {1} lignes chacun."
+  :plan/many-files      "Cela créerait {0} fichiers dans un même dossier."
+  :plan/over-excel      "Excel ne peut pas ouvrir un fichier de plus de {0} lignes. Le découpage sera fait quand même, au cas où vous les ouvririez ailleurs."
+  :plan/capped-at-excel "Les fichiers s'arrêteront aussi à {0} lignes, pour qu'Excel puisse les ouvrir."
+
+  :problem/rows-needed   "Indiquez combien de lignes chaque fichier doit contenir."
+  :problem/size-needed   "Indiquez quelle taille chaque fichier doit avoir."
+  :problem/no-data       "Ce fichier ne contient aucune ligne de données à découper."
+  :problem/pattern-empty "Le modèle de nom ne peut pas être vide."
+  :problem/pattern-index "Le modèle doit contenir {index}, sinon tous les fichiers porteraient le même nom."
+  :problem/pattern-chars "Le modèle ne peut contenir aucun de ces caractères : / \\ : * ? \" < > |"
+  :problem/unreadable    "Ce fichier n'a pas pu être lu."
+  :problem/no-permission "Vous n'avez pas la permission d'écrire dans ce dossier. Essayez-en un autre."
+  :problem/disk-full     "Le disque est plein, les fichiers restants n'ont pas pu être écrits."
+  :problem/file-moved    "Ce fichier n'est plus là où il était. Il a peut-être été déplacé ou supprimé."
+  :problem/folder-create "Ce dossier n'a pas pu être créé :\n{0}"
+  :problem/generic       "Un problème est survenu et le découpage a été interrompu."
+
+  :damage/headline     {:one "{0} ligne semble endommagée" :other "{0} lignes semblent endommagées"}
+  :damage/ragged       {:one   "{0} ligne a un nombre de colonnes différent de la première ligne."
+                        :other "{0} lignes ont un nombre de colonnes différent de la première ligne."}
+  :damage/stray-quote  {:one   "{0} ligne contient un guillemet là où le format CSV ne l'autorise pas."
+                        :other "{0} lignes contiennent un guillemet là où le format CSV ne l'autorise pas."}
+  :damage/unterminated "Le fichier se termine au milieu d'une valeur entre guillemets."
+  :damage/reassurance  "Elles seront copiées exactement telles quelles, sur {0} lignes au total, donc rien n'est perdu."
+
+  :duration/under-second "moins d'une seconde"
+  :duration/seconds      "{0} secondes"
+  :duration/minutes      {:one "{0} minute" :other "{0} minutes"}
+  :duration/seconds-part {:one "{0} seconde" :other "{0} secondes"}
+  :size/bytes            "{0} octets"
+  :size/kb               "{0} Ko"
+  :size/mb               "{0} Mo"
+  :size/gb               "{0} Go"
+
+  :about/title        "À propos de {0}"
+  :about/version      "Version {0}"
+  :about/licence      "Distribué sous licence Apache 2.0."
+  :about/notices      "Inclut un environnement d'exécution Java sous GPL v2 avec exception Classpath. Voir THIRD-PARTY.md."
+  :about/language     "Langue"
+  :about/theme        "Apparence"
+  :about/theme-system "Suivre le système"
+  :about/theme-light  "Clair"
+  :about/theme-dark   "Sombre"
+  :about/unreviewed   "Cette traduction n'a pas encore été vérifiée par un locuteur natif."
+
+  :header/first-row       "Première ligne"
+  :header/question        "Cette ligne contient-elle les noms des colonnes, ou vos premières données ?"
+  :header/these-are-names "Ce sont des noms de colonnes"
+  :header/this-is-data    "Ce sont des données"
+
+  :help/title      "Aide"
+  :help/q-header   "Qu'est-ce qu'une ligne d'en-tête ?"
+  :help/a-header   "La première ligne de beaucoup de fichiers CSV nomme les colonnes — id, nom, ville — au lieu de contenir des données. Cocher la case indique à l'application de la traiter ainsi : elle n'est pas comptée comme une ligne et peut être répétée en haut de chaque fichier créé."
+  :help/q-quoted   "Une de mes cellules contient un saut de ligne. Est-ce un problème ?"
+  :help/a-quoted   "Non. Une valeur entre guillemets peut contenir des sauts de ligne, et cette application garde une telle ligne entière. Découper un fichier en comptant les lignes, comme le font beaucoup d'outils, couperait cette ligne en deux et endommagerait silencieusement les deux morceaux."
+  :help/q-damaged  "Pourquoi dit-il que certaines lignes semblent endommagées ?"
+  :help/a-damaged  "Parce qu'elles ne suivent pas les règles habituelles : une ligne avec plus de colonnes que la première, ou un guillemet isolé. Rien n'est réparé ni supprimé : les lignes endommagées sont copiées exactement telles qu'elles sont arrivées, vous ne perdez donc rien et pouvez les examiner vous-même."
+  :help/q-encoding "Qu'est-ce que l'encodage du texte ?"
+  :help/a-encoding "C'est la façon dont les lettres sont stockées sous forme de nombres dans le fichier. Il est déterminé pour vous et ne demande normalement aucune attention. Le seul signe d'un problème est l'apparition de caractères accentués illisibles à l'ouverture d'un résultat, et le réglage sous Avancé est là pour ce cas."
+  :help/q-excel    "Pourquoi parle-t-il de 1 048 576 lignes ?"
+  :help/a-excel    "C'est le nombre maximal de lignes qu'Excel peut ouvrir dans une feuille. Les anciennes versions s'arrêtaient à 65 536. Si un fichier dépasse la limite, Excel ne l'ouvrira pas du tout, ce qui est généralement la raison même du découpage."
+  :help/q-replace  "Qu'advient-il des fichiers déjà présents dans le dossier ?"
+  :help/a-replace  "Rien, sauf si vous le demandez. Avant toute écriture, le dossier est vérifié pour les fichiers dont ce découpage prendrait les noms. S'il y en a, la liste vous est présentée et la question vous est posée, et vous pouvez écrire ailleurs."
+
+  :problem/not-enough-space "Il n'y a pas assez de place sur le disque. Il en faut environ {0} et seuls {1} sont libres."
+  :plan/tight-space "Cela ne laisserait que très peu de place sur le disque — environ {0} ensuite."
+  :advanced/delimiter-label "Séparateur de colonnes"
+  :advanced/delimiter-hint "Détecté automatiquement. Ne le changez que si les colonnes sont mal découpées."
+  :delimiter/detected "Détecté"
+  :delimiter/comma "Virgule  ,"
+  :delimiter/semicolon "Point-virgule  ;"
+  :delimiter/tab "Tabulation"
+  :delimiter/pipe "Barre verticale  |"}}

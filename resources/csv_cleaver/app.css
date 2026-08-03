@@ -1,0 +1,211 @@
+/* CSS Cleaver's own styling, layered on top of an AtlantaFX theme.
+ *
+ * Every colour here is one of AtlantaFX's looked-up colours rather than a
+ * literal, which is what makes light and dark mode work without a second
+ * stylesheet and without this file knowing which theme is active. The old
+ * application hard-coded #f5f5f5 and #1a73e8 into forty inline style strings,
+ * so it had exactly one appearance and no way to gain another.
+ */
+
+.root {
+    -fx-font-size: 13px;
+}
+
+.window-body {
+    -fx-background-color: -color-bg-default;
+    -fx-padding: 18px 20px 6px 20px;
+    -fx-spacing: 4px;
+}
+
+.footer-bar {
+    -fx-background-color: -color-bg-subtle;
+    -fx-border-color: -color-border-muted transparent transparent transparent;
+    -fx-border-width: 1px 0 0 0;
+    -fx-padding: 12px 20px;
+    -fx-spacing: 8px;
+}
+
+.header-bar {
+    -fx-padding: 0 0 6px 0;
+    -fx-spacing: 2px;
+}
+
+.icon-button {
+    -fx-font-family: serif;
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-min-width: 26px;
+    -fx-min-height: 26px;
+    -fx-max-width: 26px;
+    -fx-max-height: 26px;
+    -fx-padding: 0;
+    -fx-background-radius: 13px;
+    -fx-border-radius: 13px;
+    -fx-border-color: -color-border-default;
+    -fx-border-width: 1px;
+    -fx-text-fill: -color-fg-muted;
+}
+
+.icon-button:hover {
+    -fx-background-color: -color-bg-subtle;
+    -fx-text-fill: -color-fg-default;
+}
+
+.section-label {
+    -fx-font-weight: bold;
+    -fx-text-fill: -color-fg-default;
+    -fx-padding: 14px 0 6px 0;
+}
+
+.hint {
+    -fx-font-size: 11.5px;
+    -fx-text-fill: -color-fg-muted;
+}
+
+.path-label {
+    -fx-text-fill: -color-fg-muted;
+}
+
+/* Empty state ------------------------------------------------------------- */
+
+.drop-zone {
+    -fx-border-color: -color-border-default;
+    -fx-border-width: 1.5px;
+    -fx-border-radius: 10px;
+    -fx-border-style: segments(6, 6) line-cap round;
+    -fx-background-radius: 10px;
+    -fx-padding: 34px 20px;
+    -fx-spacing: 6px;
+    -fx-alignment: center;
+}
+
+.drop-zone.active {
+    -fx-border-color: -color-accent-emphasis;
+    -fx-background-color: -color-accent-subtle;
+}
+
+.drop-zone .headline {
+    -fx-font-size: 15px;
+    -fx-text-fill: -color-fg-default;
+}
+
+/* File card --------------------------------------------------------------- */
+
+.file-card {
+    -fx-background-color: -color-bg-subtle;
+    -fx-background-radius: 8px;
+    -fx-padding: 12px 14px;
+    -fx-spacing: 10px;
+}
+
+.file-card .file-name {
+    -fx-font-weight: bold;
+}
+
+.chip {
+    -fx-border-color: -color-border-default;
+    -fx-border-radius: 6px;
+    -fx-background-radius: 6px;
+    -fx-padding: 2px 8px;
+    -fx-font-size: 11px;
+    -fx-text-fill: -color-fg-muted;
+}
+
+.chip.good {
+    -fx-background-color: -color-success-subtle;
+    -fx-border-color: -color-success-subtle;
+    -fx-text-fill: -color-success-fg;
+}
+
+.chip.warn {
+    -fx-background-color: -color-warning-subtle;
+    -fx-border-color: -color-warning-subtle;
+    -fx-text-fill: -color-warning-fg;
+}
+
+/* Callouts ---------------------------------------------------------------- */
+
+.callout {
+    -fx-background-radius: 8px;
+    -fx-padding: 11px 13px;
+    -fx-spacing: 8px;
+}
+
+.callout.accent {
+    -fx-background-color: -color-accent-subtle;
+}
+
+.callout.accent .label {
+    -fx-text-fill: -color-accent-fg;
+}
+
+.callout.success {
+    -fx-background-color: -color-success-subtle;
+}
+
+.callout.success .label {
+    -fx-text-fill: -color-success-fg;
+}
+
+.callout.warning {
+    -fx-background-color: -color-warning-subtle;
+}
+
+.callout.warning .label {
+    -fx-text-fill: -color-warning-fg;
+}
+
+.callout.danger {
+    -fx-background-color: -color-danger-subtle;
+}
+
+.callout.danger .label {
+    -fx-text-fill: -color-danger-fg;
+}
+
+.callout .headline {
+    -fx-font-weight: bold;
+}
+
+/* Overlay dialog ---------------------------------------------------------- */
+
+.overlay {
+    -fx-background-color: rgba(0, 0, 0, 0.42);
+}
+
+.dialog-card {
+    -fx-background-color: -color-bg-overlay;
+    -fx-background-radius: 12px;
+    -fx-border-color: -color-border-default;
+    -fx-border-radius: 12px;
+    -fx-padding: 20px;
+    -fx-spacing: 10px;
+    -fx-max-width: 440px;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.35), 24, 0, 0, 6);
+}
+
+.dialog-card .title {
+    -fx-font-size: 15px;
+    -fx-font-weight: bold;
+}
+
+.file-list {
+    -fx-font-family: monospace;
+    -fx-font-size: 11.5px;
+    -fx-background-color: -color-bg-inset;
+    -fx-background-radius: 6px;
+    -fx-padding: 8px 10px;
+    -fx-text-fill: -color-fg-muted;
+}
+
+/* Details --------------------------------------------------------------- */
+
+.details-log {
+    -fx-font-family: monospace;
+    -fx-font-size: 11.5px;
+}
+
+.disclosure {
+    -fx-text-fill: -color-fg-muted;
+    -fx-padding: 4px 0 0 0;
+}

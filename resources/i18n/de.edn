@@ -1,0 +1,160 @@
+;; German. Machine translation — not yet checked by a native speaker.
+;; See en.edn for what each key is used for.
+
+{:meta
+ {:locale    "de"
+  :name      "Deutsch"
+  :reviewed? false}
+
+ :strings
+ {:empty/headline        "CSV-Datei hierher ziehen"
+  :empty/headline-active "Loslassen zum Öffnen"
+  :empty/subhead         "oder eine vom Rechner auswählen"
+  :empty/hint            "Die Optionen erscheinen, sobald eine Datei gewählt ist."
+
+  :scanning/checking "Datei wird geprüft…"
+  :scanning/counted  {:one   "Datei wird geprüft — bisher {0} Zeile"
+                      :other "Datei wird geprüft — bisher {0} Zeilen"}
+
+  :file/data-rows            {:one "{0} Datenzeile" :other "{0} Datenzeilen"}
+  :file/rows                 {:one "{0} Zeile" :other "{0} Zeilen"}
+  :file/encoding             "Text: {0}"
+  :file/encoding-western     "Text: {0} (Westeuropäisch)"
+  :file/separated-semicolons "Durch Semikolon getrennt"
+  :file/separated-tabs       "Durch Tabulatoren getrennt"
+  :file/separated-pipes      "Durch senkrechte Striche getrennt"
+  :file/healthy              "Sieht in Ordnung aus"
+
+  :options/split-into    "Aufteilen nach"
+  :options/by-rows       "Gleiche Zeilenzahl"
+  :options/by-size       "Gleiche Dateigröße"
+  :options/rows-suffix   "Zeilen je Datei"
+  :options/size-suffix   "je Datei"
+  :options/has-header    "Meine Datei hat eine Kopfzeile"
+  :options/repeat-header "Diese Kopfzeile in jeder Datei wiederholen"
+
+  :output/save-to "Dateien speichern in"
+  :output/named   "Benannt {0}, {1} und so weiter."
+
+  :advanced/label           "Erweitert"
+  :advanced/summary         "— Textkodierung, Dateinamen"
+  :advanced/pattern-label   "Muster für Dateinamen"
+  :advanced/pattern-hint    "{name} ist der Name der Ursprungsdatei, {index} ist die Dateinummer."
+  :advanced/encoding-label  "Textkodierung"
+  :advanced/encoding-hint   "{0} erkannt. Nur ändern, wenn die Ergebnisse mit falschen Umlauten geöffnet werden."
+  :advanced/detected        "Erkannt"
+  :advanced/excel-safe      "Jede Datei innerhalb der Zeilengrenze von Excel halten"
+  :advanced/excel-safe-hint "Wirkt sich nur beim Aufteilen nach Größe aus, wo die Zeilenzahl von der Zeilenlänge abhängt."
+
+  :splitting/headline "{0} wird aufgeteilt"
+  :splitting/progress "Datei {0} · {1} von {2} Zeilen"
+  :splitting/eta      "noch etwa {0}"
+
+  :done/details      "Einzelheiten anzeigen"
+  :done/created      {:one   "{0} Datei erstellt in {1}"
+                      :other "{0} Dateien erstellt in {1}"}
+  :done/stopped-none "Angehalten. Es wurde keine Datei erstellt."
+  :done/stopped-some {:one   "Angehalten. {0} Datei war fertig, bevor Sie angehalten haben; die gerade geschriebene wurde entfernt."
+                      :other "Angehalten. {0} Dateien waren fertig, bevor Sie angehalten haben; die gerade geschriebene wurde entfernt."}
+  :done/log-line     "{0}  —  {1} Zeilen"
+
+  :action/browse         "Durchsuchen…"
+  :action/change         "Ändern…"
+  :action/split          "Datei aufteilen"
+  :action/cancel         "Abbrechen"
+  :action/split-again    "Weitere Datei aufteilen"
+  :action/replace        "Ersetzen"
+  :action/new-folder     "Neuen Ordner verwenden"
+  :action/close          "Schließen"
+  :action/about          "Über"
+  :action/help           "Hilfe"
+  :action/reveal-mac     "Im Finder anzeigen"
+  :action/reveal-windows "Im Explorer anzeigen"
+  :action/reveal-other   "Ordner öffnen"
+
+  :clash/title {:one "Eine Datei würde ersetzt" :other "{0} Dateien würden ersetzt"}
+  :clash/body  "In diesem Ordner liegen bereits Dateien mit den Namen, die diese Aufteilung verwenden würde. Es wurde noch nichts geschrieben."
+  :clash/more  "und {0} weitere"
+
+  :options/common-sizes "Übliche Größen"
+  :preset/plain         "{0}"
+  :preset/excel-old     "{0} — alte Excel-Grenze"
+  :preset/excel-max     "{0} — Excel-Maximum"
+
+  :plan/one-file        "Alles passt in eine Datei mit {0} Zeilen, es würde also nichts aufgeteilt."
+  :plan/even            "Das ergibt {0} Dateien mit je {1} Zeilen."
+  :plan/uneven          "Das ergibt {0} Dateien — {1} mit {2} Zeilen und eine mit {3}."
+  :plan/by-size         "Das ergibt etwa {0} Dateien mit jeweils rund {1} Zeilen."
+  :plan/many-files      "Das würde {0} Dateien in einem Ordner erzeugen."
+  :plan/over-excel      "Excel kann keine Datei mit mehr als {0} Zeilen öffnen. Die Aufteilung wird trotzdem vorgenommen, falls Sie sie anderswo öffnen."
+  :plan/capped-at-excel "Die Dateien enden zusätzlich bei {0} Zeilen, damit Excel sie öffnen kann."
+
+  :problem/rows-needed   "Geben Sie an, wie viele Zeilen jede Datei enthalten soll."
+  :problem/size-needed   "Geben Sie an, wie groß jede Datei sein soll."
+  :problem/no-data       "Diese Datei enthält keine Datenzeilen zum Aufteilen."
+  :problem/pattern-empty "Das Namensmuster darf nicht leer sein."
+  :problem/pattern-index "Das Muster braucht {index}, sonst hätten alle Dateien denselben Namen."
+  :problem/pattern-chars "Das Muster darf keines dieser Zeichen enthalten: / \\ : * ? \" < > |"
+  :problem/unreadable    "Diese Datei konnte nicht gelesen werden."
+  :problem/no-permission "Sie haben keine Berechtigung, in diesen Ordner zu schreiben. Versuchen Sie einen anderen."
+  :problem/disk-full     "Der Datenträger ist voll, die übrigen Dateien konnten nicht geschrieben werden."
+  :problem/file-moved    "Diese Datei ist nicht mehr dort. Sie wurde vielleicht verschoben oder gelöscht."
+  :problem/folder-create "Dieser Ordner konnte nicht erstellt werden:\n{0}"
+  :problem/generic       "Etwas ist schiefgegangen und die Aufteilung wurde angehalten."
+
+  :damage/headline     {:one "{0} Zeile wirkt beschädigt" :other "{0} Zeilen wirken beschädigt"}
+  :damage/ragged       {:one   "{0} Zeile hat eine andere Spaltenzahl als die erste Zeile."
+                        :other "{0} Zeilen haben eine andere Spaltenzahl als die erste Zeile."}
+  :damage/stray-quote  {:one   "{0} Zeile enthält ein Anführungszeichen, wo CSV keines erlaubt."
+                        :other "{0} Zeilen enthalten ein Anführungszeichen, wo CSV keines erlaubt."}
+  :damage/unterminated "Die Datei endet mitten in einem Wert in Anführungszeichen."
+  :damage/reassurance  "Sie werden genau so übernommen, wie sie sind, von insgesamt {0} Zeilen — es geht also nichts verloren."
+
+  :duration/under-second "weniger als eine Sekunde"
+  :duration/seconds      "{0} Sekunden"
+  :duration/minutes      {:one "{0} Minute" :other "{0} Minuten"}
+  :duration/seconds-part {:one "{0} Sekunde" :other "{0} Sekunden"}
+  :size/bytes            "{0} Bytes"
+  :size/kb               "{0} KB"
+  :size/mb               "{0} MB"
+  :size/gb               "{0} GB"
+
+  :about/title        "Über {0}"
+  :about/version      "Version {0}"
+  :about/licence      "Lizenziert unter der Apache-Lizenz 2.0."
+  :about/notices      "Enthält eine Java-Laufzeitumgebung unter GPL v2 mit Classpath-Ausnahme. Siehe THIRD-PARTY.md."
+  :about/language     "Sprache"
+  :about/theme        "Erscheinungsbild"
+  :about/theme-system "Dem System folgen"
+  :about/theme-light  "Hell"
+  :about/theme-dark   "Dunkel"
+  :about/unreviewed   "Diese Übersetzung wurde noch nicht von einem Muttersprachler geprüft."
+
+  :header/first-row       "Erste Zeile"
+  :header/question        "Enthält diese Zeile die Spaltennamen oder schon Ihre ersten Daten?"
+  :header/these-are-names "Das sind Spaltennamen"
+  :header/this-is-data    "Das sind Daten"
+
+  :help/title      "Hilfe"
+  :help/q-header   "Was ist eine Kopfzeile?"
+  :help/a-header   "Die erste Zeile vieler CSV-Dateien benennt die Spalten — id, Name, Ort — statt Daten zu enthalten. Das Häkchen sagt der Anwendung, sie so zu behandeln: sie zählt nicht als Zeile und kann oben in jeder erzeugten Datei wiederholt werden."
+  :help/q-quoted   "Eine meiner Zellen enthält einen Zeilenumbruch. Ist das ein Problem?"
+  :help/a-quoted   "Nein. Ein Wert in Anführungszeichen darf Zeilenumbrüche enthalten, und diese Anwendung hält eine solche Zeile zusammen. Eine Datei durch Zählen von Zeilen aufzuteilen, wie es viele Werkzeuge tun, würde diese Zeile zerschneiden und beide Hälften still beschädigen."
+  :help/q-damaged  "Warum heißt es, einige Zeilen wirkten beschädigt?"
+  :help/a-damaged  "Weil sie nicht den üblichen Regeln folgen: eine Zeile mit mehr Spalten als die erste oder ein einzelnes Anführungszeichen. Es wird nichts repariert und nichts verworfen: beschädigte Zeilen werden genau so übernommen, wie sie ankamen, Sie verlieren also nichts und können sie selbst ansehen."
+  :help/q-encoding "Was ist Textkodierung?"
+  :help/a-encoding "Sie bestimmt, wie Buchstaben als Zahlen in der Datei gespeichert werden. Das wird für Sie ermittelt und braucht normalerweise keine Aufmerksamkeit. Das einzige Anzeichen für einen Fehler sind unsinnige Umlaute beim Öffnen eines Ergebnisses; für diesen Fall gibt es die Einstellung unter Erweitert."
+  :help/q-excel    "Warum ist von 1.048.576 Zeilen die Rede?"
+  :help/a-excel    "So viele Zeilen kann Excel höchstens in einem Blatt öffnen. Ältere Versionen endeten bei 65.536. Überschreitet eine Datei die Grenze, öffnet Excel sie überhaupt nicht — meist genau der Grund, eine Datei aufzuteilen."
+  :help/q-replace  "Was geschieht mit Dateien, die schon im Ordner liegen?"
+  :help/a-replace  "Nichts, sofern Sie es nicht erlauben. Bevor etwas geschrieben wird, wird der Ordner auf Dateien geprüft, deren Namen diese Aufteilung verwenden würde. Gibt es welche, wird Ihnen die Liste gezeigt und die Frage gestellt, und Sie können woanders hin schreiben."
+
+  :problem/not-enough-space "Auf dem Datenträger ist nicht genug Platz. Benötigt werden etwa {0}, frei sind nur {1}."
+  :plan/tight-space "Danach bliebe sehr wenig Platz auf dem Datenträger — etwa {0}."
+  :advanced/delimiter-label "Spaltentrennzeichen"
+  :advanced/delimiter-hint "Wird automatisch erkannt. Nur ändern, wenn die Spalten falsch getrennt werden."
+  :delimiter/detected "Erkannt"
+  :delimiter/comma "Komma  ,"
+  :delimiter/semicolon "Semikolon  ;"
+  :delimiter/tab "Tabulator"
+  :delimiter/pipe "Senkrechter Strich  |"}}

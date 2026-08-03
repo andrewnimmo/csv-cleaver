@@ -1,0 +1,29 @@
+;; Branding.
+;;
+;; Everything here can be changed without opening a Clojure file. One rebuild
+;; and the new name, colour and icons appear in the window, the About box, the
+;; installer and the application menu.
+;;
+;;   bb brand --name "Acme Splitter" --accent "#c2410c"
+;;
+;; will edit this file for you, or you can simply edit it by hand.
+;;
+;; For finer control than an accent colour, put a resources/brand.css alongside
+;; this file: it is loaded after the application's own stylesheet, so any rule
+;; in it wins. The colour names to override are AtlantaFX's, such as
+;; -color-accent-emphasis and -color-accent-subtle.
+
+{:name      "CSV Cleaver"
+ :tagline   "Split large CSV files into pieces Excel can open"
+ :version   "2.0.0"
+ :bundle-id "dev.nimmo.csvcleaver"
+ :vendor    "Andrew Nimmo"
+ :copyright "Copyright 2026 Andrew Nimmo"
+ :homepage  "https://github.com/andrewnimmo/csv-cleaver"
+
+ ;; Leave as nil to use the theme's own accent colour.
+ :accent    nil
+
+ :icons     {:macos   "package/macos/icon.icns"
+             :windows "package/windows/icon.ico"
+             :linux   "package/linux/icon.png"}}

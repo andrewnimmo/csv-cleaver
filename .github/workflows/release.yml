@@ -1,0 +1,136 @@
+name: Release
+
+# Push a tag to cut a release:
+#     git tag v2.0.0 && git push origin v2.0.0
+#
+# jpackage builds only for the machine it runs on, so each installer comes from
+# its own runner. macOS needs two: Apple Silicon and Intel cannot be built from
+# one another.
+#
+# Nothing here is signed. The steps marked "signing" activate the moment the
+# corresponding secrets exist, so turning it on later means adding secrets
+# rather than editing this file.
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: ${{ matrix.label }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-latest
+            label: macOS (Apple Silicon)
+            script: ./package/build-mac.sh
+            artifacts: dist/*.dmg
+          - os: macos-13
+            label: macOS (Intel)
+            script: ./package/build-mac.sh
+            artifacts: dist/*.dmg
+          - os: windows-latest
+            label: Windows (x64)
+            script: package\build-windows.bat
+            artifacts: dist/*.msi
+          - os: ubuntu-latest
+            label: Linux (x64)
+            script: ./package/build-linux.sh
+            artifacts: |
+              dist/*.deb
+              dist/*.AppImage
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 25
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '25'
+
+      - name: Set up Clojure
+        uses: DeLaGuardo/setup-clojure@13.0
+        with:
+          cli: latest
+          bb: latest
+
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.m2/repository
+            ~/.gitlibs
+          key: ${{ runner.os }}-deps-${{ hashFiles('deps.edn') }}
+          restore-keys: ${{ runner.os }}-deps-
+
+      - name: Install AppImage tooling
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y fakeroot libfuse2
+
+      - name: Build installer
+        shell: bash
+        run: |
+          chmod +x package/*.sh || true
+          ${{ matrix.script }}
+
+      # Signing. Skipped silently until the secrets are added.
+      - name: Sign and notarize (macOS)
+        if: runner.os == 'macOS' && env.MACOS_CERTIFICATE != ''
+        env:
+          MACOS_CERTIFICATE: ${{ secrets.MACOS_CERTIFICATE }}
+        run: echo "Signing secrets present; add the notarytool step here."
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.os }}-installers
+          path: ${{ matrix.artifacts }}
+          if-no-files-found: error
+
+  release:
+    name: Publish release
+    needs: build
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Collect installers
+        uses: actions/download-artifact@v4
+        with:
+          path: installers
+          merge-multiple: true
+
+      - name: Publish
+        uses: softprops/action-gh-release@v2
+        with:
+          files: installers/**/*
+          generate_release_notes: true
+          body: |
+            ## Installing
+
+            These installers are **not code signed**, so each system will warn
+            about them the first time.
+
+            **macOS** — the first attempt will say the application cannot be
+            opened. Right-click it in Applications and choose Open, then confirm.
+            You only have to do this once. Download the Apple Silicon build for
+            an M-series Mac, the Intel build for anything older.
+
+            **Windows** — SmartScreen shows "Windows protected your PC". Choose
+            More info, then Run anyway.
+
+            **Linux** — install the `.deb` with
+            `sudo dpkg -i csv-cleaver_*.deb`, or make the AppImage executable
+            with `chmod +x` and run it directly.
+
+            Every installer contains its own Java runtime. Nothing else is needed.

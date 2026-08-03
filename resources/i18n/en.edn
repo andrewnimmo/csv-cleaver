@@ -1,0 +1,187 @@
+;; English — the reference translation.
+;;
+;; Every other file in this folder is a translation of this one. Keys whose
+;; value is a map have singular and plural forms; which one is used is decided
+;; per language in csv-cleaver.i18n/plural-category, so a translator never has
+;; to think about it. {0}, {1} … are filled in by the application, and must
+;; survive translation.
+;;
+;; Nothing here appears in any Clojure source file. Correcting a phrase means
+;; editing this file and rebuilding, nothing more.
+
+{:meta
+ {:locale    "en"
+  :name      "English"
+  :reviewed? true}
+
+ :strings
+ {;; Empty window
+  :empty/headline        "Drop a CSV file here"
+  :empty/headline-active "Let go to open it"
+  :empty/subhead         "or choose one from your computer"
+  :empty/hint            "Splitting options appear once you pick a file."
+
+  ;; Checking a chosen file
+  :scanning/checking "Checking the file…"
+  :scanning/counted  {:one   "Checking the file — {0} row so far"
+                      :other "Checking the file — {0} rows so far"}
+
+  ;; The file card
+  :file/data-rows            {:one "{0} data row" :other "{0} data rows"}
+  :file/rows                 {:one "{0} row" :other "{0} rows"}
+  :file/encoding             "Text: {0}"
+  :file/encoding-western     "Text: {0} (Western European)"
+  :file/separated-semicolons "Separated by semicolons"
+  :file/separated-tabs       "Separated by tabs"
+  :file/separated-pipes      "Separated by pipes"
+  :file/healthy              "Looks healthy"
+
+  ;; Options
+  :options/split-into    "Split into"
+  :options/by-rows       "Equal row counts"
+  :options/by-size       "Equal file sizes"
+  :options/rows-suffix   "rows in each file"
+  :options/size-suffix   "in each file"
+  :options/has-header    "My file has a header row"
+  :options/repeat-header "Repeat that header in every file"
+
+  ;; Where the results go
+  :output/save-to "Save files to"
+  :output/named   "Named {0}, {1}, and so on."
+
+  ;; Advanced
+  :advanced/label          "Advanced"
+  :advanced/summary        "— text encoding, file names"
+  :advanced/pattern-label  "File name pattern"
+  :advanced/pattern-hint   "{name} is the original file's name, {index} is the file number."
+  :advanced/encoding-label   "Text encoding"
+  :advanced/encoding-hint    "Detected {0}. Only change this if the results open with the wrong accented characters."
+  :advanced/detected         "Detected"
+  :advanced/excel-safe       "Keep every file within Excel's row limit"
+  :advanced/excel-safe-hint  "Only matters when splitting by size, where the number of rows in a file depends on how long the rows are."
+
+  ;; While splitting
+  :splitting/headline "Splitting {0}"
+  :splitting/progress "File {0} · {1} of {2} rows"
+  :splitting/eta      "about {0} left"
+
+  ;; Afterwards
+  :done/details      "Show details"
+  :done/created      {:one   "{0} file created in {1}"
+                      :other "{0} files created in {1}"}
+  :done/stopped-none "Stopped. No files were created."
+  :done/stopped-some {:one   "Stopped. {0} file was finished before you stopped it, and the one being written was removed."
+                      :other "Stopped. {0} files were finished before you stopped it, and the one being written was removed."}
+  :done/log-line     "{0}  —  {1} rows"
+
+  ;; Buttons
+  :action/browse         "Browse…"
+  :action/change         "Change…"
+  :action/split          "Split file"
+  :action/cancel         "Cancel"
+  :action/split-again    "Split another file"
+  :action/replace        "Replace them"
+  :action/new-folder     "Use a new folder"
+  :action/close          "Close"
+  :action/about          "About"
+  :action/reveal-mac     "Show in Finder"
+  :action/reveal-windows "Show in Explorer"
+  :action/reveal-other   "Open folder"
+
+  ;; Files that would be replaced
+  :clash/title {:one "One file would be replaced" :other "{0} files would be replaced"}
+  :clash/body  "That folder already holds files with the names this split would use. Nothing has been written yet."
+  :clash/more  "and {0} more"
+
+  ;; Row-count shortcuts
+  :options/common-sizes "Common sizes"
+  :preset/plain         "{0}"
+  :preset/excel-old     "{0} — old Excel limit"
+  :preset/excel-max     "{0} — Excel maximum"
+
+  ;; What the split would do
+  :plan/one-file        "Everything fits in one file of {0} rows, so nothing would be split."
+  :plan/even            "This makes {0} files of {1} rows each."
+  :plan/uneven          "This makes {0} files — {1} with {2} rows and one with {3}."
+  :plan/by-size         "This makes about {0} files, roughly {1} rows in each."
+  :plan/many-files      "That would create {0} files in one folder."
+  :plan/over-excel      "Excel cannot open a file with more than {0} rows. The split will still be made, in case you are opening these somewhere else."
+  :plan/capped-at-excel "Files will also stop at {0} rows, so that Excel can open them."
+
+  ;; Things that stop a split
+  :problem/rows-needed   "Enter how many rows each file should hold."
+  :problem/size-needed   "Enter how big each file should be."
+  :problem/no-data       "This file has no data rows to split."
+  :problem/pattern-empty "The file name pattern cannot be empty."
+  :problem/pattern-index "The pattern needs {index} in it, or every file would be given the same name."
+  :problem/pattern-chars "The pattern cannot contain any of these characters: / \\ : * ? \" < > |"
+  :problem/unreadable    "That file could not be read."
+  :problem/no-permission "You do not have permission to write to that folder. Try another one."
+  :problem/disk-full     "The disk is full, so the rest of the files could not be written."
+  :problem/file-moved    "That file is no longer where it was. It may have been moved or deleted."
+  :problem/folder-create "That folder could not be created:\n{0}"
+  :problem/generic       "Something went wrong and the split was stopped."
+
+  ;; What is wrong with the file
+  :damage/headline     {:one "{0} row looks damaged" :other "{0} rows look damaged"}
+  :damage/ragged       {:one   "{0} row has a different number of columns from the first row."
+                        :other "{0} rows have a different number of columns from the first row."}
+  :damage/stray-quote  {:one   "{0} row contains a quote mark where CSV does not allow one."
+                        :other "{0} rows contain a quote mark where CSV does not allow one."}
+  :damage/unterminated "The file ends in the middle of a quoted value."
+  :damage/reassurance  "They will be copied across exactly as they are, out of {0} rows in total, so nothing is lost."
+
+  ;; Time and size
+  :duration/under-second "under a second"
+  :duration/seconds      "{0} seconds"
+  :duration/minutes      {:one "{0} minute" :other "{0} minutes"}
+  :duration/seconds-part {:one "{0} second" :other "{0} seconds"}
+  :size/bytes            "{0} bytes"
+  :size/kb               "{0} KB"
+  :size/mb               "{0} MB"
+  :size/gb               "{0} GB"
+
+  ;; About
+  :about/title      "About {0}"
+  :about/version    "Version {0}"
+  :about/licence    "Licensed under the Apache License 2.0."
+  :about/notices    "Bundles a Java runtime under the GPL v2 with Classpath Exception. See THIRD-PARTY.md."
+  :about/language   "Language"
+  :about/theme      "Appearance"
+  :about/theme-system "Match the system"
+  :about/theme-light  "Light"
+  :about/theme-dark   "Dark"
+  :about/unreviewed "This translation has not yet been checked by a native speaker."
+
+  ;; Asked only when the detection cannot decide. Showing the row itself means
+  ;; the user need not know the word "header" to answer.
+  :header/first-row       "First row"
+  :header/question        "Is this row the column names, or your first row of data?"
+  :header/these-are-names "They are column names"
+  :header/this-is-data    "It is data"
+
+  ;; Help
+  :action/help     "Help"
+  :help/title      "Help"
+  :help/q-header   "What is a header row?"
+  :help/a-header   "The first line of many CSV files names the columns — id, name, city — rather than holding data. Ticking the box tells this application to treat it that way, so it is not counted as a row and can be repeated at the top of every file it makes."
+  :help/q-quoted   "One of my cells contains a line break. Is that a problem?"
+  :help/a-quoted   "No. A value wrapped in quotation marks may contain line breaks, and this application keeps such a row whole. Splitting a file by counting lines, as many tools do, would cut that row in half and quietly damage both pieces."
+  :help/q-damaged  "Why does it say some rows look damaged?"
+  :help/a-damaged  "Because they do not follow the usual rules — a row with more columns than the first one, or a stray quotation mark. Nothing is repaired or thrown away: damaged rows are copied across exactly as they arrived, so you lose nothing and can look at them yourself."
+  :help/q-encoding "What is text encoding?"
+  :help/a-encoding "It is how letters are stored as numbers in the file. This is worked out for you and normally needs no attention. The one sign that it went wrong is accented characters looking like nonsense when you open a result, and the setting under Advanced is there for that case."
+  :help/q-excel    "Why does it mention 1,048,576 rows?"
+  :help/a-excel    "That is the most rows Excel can open in one sheet. Older versions stopped at 65,536. If a file exceeds the limit Excel will not open it at all, which is usually the reason for splitting the file in the first place."
+  :help/q-replace  "What happens to files already in the folder?"
+  :help/a-replace  "Nothing, unless you say so. Before writing anything, the folder is checked for files this split would take the names of. If any exist you are shown the list and asked, and you can write somewhere else instead."
+
+  :problem/not-enough-space "There is not enough room on the disk. This needs about {0} and only {1} is free."
+  :plan/tight-space "This would leave very little room on the disk — about {0} afterwards."
+  :advanced/delimiter-label "Column separator"
+  :advanced/delimiter-hint "Detected automatically. Change this only if the columns come out wrong."
+  :delimiter/detected "Detected"
+  :delimiter/comma "Comma  ,"
+  :delimiter/semicolon "Semicolon  ;"
+  :delimiter/tab "Tab"
+  :delimiter/pipe "Vertical bar  |"}}

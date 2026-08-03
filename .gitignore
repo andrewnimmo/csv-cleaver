@@ -1,0 +1,21 @@
+# Build output
+/target/
+/dist/
+/.cpcache/
+
+# Tooling caches
+/.clj-kondo/.cache/
+/.lsp/
+/.calva/
+.nrepl-port
+
+# Editors
+/.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db

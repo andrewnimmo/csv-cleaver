@@ -1,0 +1,136 @@
+;; What each sample file in this folder should survey as.
+;;
+;; The files are deliberately small and readable — open any of them and you can
+;; see the exact problem it exists to represent. samples_test.clj checks every
+;; file against this manifest, and also checks that every file in the folder
+;; appears here, so a sample cannot be added and then quietly forgotten.
+;;
+;; :damage counts records, not occurrences: a row containing three stray quotes
+;; is one damaged row.
+;;
+;; :header-verdict is :header, :data or :unsure. The third is not a failure — it
+;; is the application declining to guess, at which point it shows the user the
+;; row and asks. See docs/SPECIFICATION.md, "Deciding whether row one is a
+;; header".
+
+{"clean-comma.csv"
+ {:note "The ordinary case: header, three data rows, commas."
+  :records 4 :fields 3 :delimiter \, :healthy? true
+  :header-verdict :header :header-likely? true
+  :encoding {:label "UTF-8" :basis :utf-8}}
+
+ "clean-semicolon.csv"
+ {:note "What Excel writes in much of Europe."
+  :records 3 :fields 3 :delimiter \; :healthy? true
+  :header-verdict :header :header-likely? true
+  :encoding {:label "UTF-8" :basis :utf-8}}
+
+ "clean-tab.csv"
+ {:note "Tab separated, still a CSV as far as anyone is concerned."
+  :records 3 :fields 3 :delimiter \tab :healthy? true
+  :header-verdict :header :header-likely? true
+  :encoding {:label "UTF-8" :basis :utf-8}}
+
+ "no-header.csv"
+ {:note "Data from the first line. A bare number in row one is near proof that
+         it is not a header, so this must be decided without asking."
+  :records 3 :fields 3 :delimiter \, :healthy? true
+  :header-verdict :data :header-likely? false
+  :encoding {:label "UTF-8" :basis :utf-8}}
+
+ "quoted-newlines.csv"
+ {:note "The file the old line-based splitter corrupted. Three data rows
+         spanning six physical lines; none may be torn in half."
+  :records 4 :fields 2 :delimiter \, :healthy? true
+  :header-verdict :header :header-likely? true
+  :encoding {:label "UTF-8" :basis :utf-8}}
+
+ "quoted-delimiters.csv"
+ {:note "Commas inside quoted values must not create extra columns."
+  :records 3 :fields 2 :delimiter \, :healthy? true
+  :header-verdict :header :header-likely? true
+  :encoding {:label "UTF-8" :basis :utf-8}}
+
+ "doubled-quotes.csv"
+ {:note "An escaped quotation mark is well formed, not damage."
+  :records 3 :fields 2 :delimiter \, :healthy? true
+  :header-verdict :header :header-likely? true
+  :encoding {:label "UTF-8" :basis :utf-8}}
+
+ "ragged.csv"
+ {:note "Two rows disagree with the first about how many columns exist."
+  :records 4 :fields 3 :delimiter \, :healthy? false
+  :header-verdict :header :header-likely? true
+  :damage {:ragged 2 :stray-quote 0 :unterminated-quote 0}
+  :encoding {:label "UTF-8" :basis :utf-8}}
+
+ "stray-quote.csv"
+ {:note "A quotation mark inside an unquoted value: malformed, but the text is
+         still passed through untouched."
+  :records 3 :fields 2 :delimiter \, :healthy? false
+  :header-verdict :header :header-likely? true
+  :damage {:ragged 0 :stray-quote 1 :unterminated-quote 0}
+  :encoding {:label "UTF-8" :basis :utf-8}}
+
+ "unterminated-quote.csv"
+ {:note "The file ends inside a quoted value — usually a truncated download."
+  :records 3 :fields 2 :delimiter \, :healthy? false
+  :header-verdict :header :header-likely? true
+  :damage {:ragged 0 :stray-quote 0 :unterminated-quote 1}
+  :encoding {:label "UTF-8" :basis :utf-8}}
+
+ "crlf.csv"
+ {:note "Windows line endings, which must survive into the output."
+  :records 3 :fields 2 :delimiter \, :healthy? true
+  :header-verdict :header :header-likely? true
+  :encoding {:label "UTF-8" :basis :utf-8}}
+
+ "no-final-newline.csv"
+ {:note "The last row has no terminator. It is still a row."
+  :records 3 :fields 2 :delimiter \, :healthy? true
+  :header-verdict :header :header-likely? true
+  :encoding {:label "UTF-8" :basis :utf-8}}
+
+ "utf8-bom.csv"
+ {:note "Byte-order mark plus accents. The mark must be skipped on read and
+         reproduced on every output file, or Excel mangles it."
+  :records 3 :fields 2 :delimiter \, :healthy? true
+  :header-verdict :header :header-likely? true
+  :encoding {:label "UTF-8" :basis :bom :bom-length 3}}
+
+ "windows-1252.csv"
+ {:note "Bytes that are not valid UTF-8 — what Excel writes on Windows."
+  :records 3 :fields 2 :delimiter \, :healthy? true
+  :header-verdict :header :header-likely? true
+  :encoding {:label "windows-1252" :basis :fallback}}
+
+ "empty.csv"
+ {:note "Zero bytes. Must not throw, and has nothing to split."
+  :records 0 :fields 0 :delimiter \, :healthy? true
+  :header-verdict :data :header-likely? false
+  :encoding {:label "UTF-8" :basis :utf-8}}
+
+ "header-only.csv"
+ {:note "One row and nothing beneath it, so there is no evidence either way —
+         the honest verdict is :unsure. Moot in practice: with no data rows the
+         split is refused before the question matters."
+  :records 1 :fields 3 :delimiter \, :healthy? true
+  :header-verdict :unsure :header-likely? false
+  :encoding {:label "UTF-8" :basis :utf-8}}
+
+ "single-column.csv"
+ {:note "One column of words: name over Ann, Bob, Cy. Every hint that compares
+         the row with the data below is blind here, so the verdict is :unsure
+         and the user is shown the row and asked. This is the case the old
+         single-signal heuristic got silently wrong."
+  :records 4 :fields 1 :delimiter \, :healthy? true
+  :header-verdict :unsure :header-likely? false
+  :encoding {:label "UTF-8" :basis :utf-8}}
+
+ "everything-wrong.csv"
+ {:note "Several problems at once: a short row, a long row, and a stray
+         quotation mark. All three must be counted separately."
+  :records 5 :fields 3 :delimiter \, :healthy? false
+  :header-verdict :header :header-likely? true
+  :damage {:ragged 2 :stray-quote 1 :unterminated-quote 0}
+  :encoding {:label "UTF-8" :basis :utf-8}}}

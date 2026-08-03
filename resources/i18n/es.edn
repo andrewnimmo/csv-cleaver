@@ -1,0 +1,160 @@
+;; Spanish. Machine translation — not yet checked by a native speaker.
+;; See en.edn for what each key is used for.
+
+{:meta
+ {:locale    "es"
+  :name      "Español"
+  :reviewed? false}
+
+ :strings
+ {:empty/headline        "Arrastra aquí un archivo CSV"
+  :empty/headline-active "Suéltalo para abrirlo"
+  :empty/subhead         "o elige uno de tu ordenador"
+  :empty/hint            "Las opciones aparecerán cuando elijas un archivo."
+
+  :scanning/checking "Comprobando el archivo…"
+  :scanning/counted  {:one   "Comprobando el archivo — {0} fila hasta ahora"
+                      :other "Comprobando el archivo — {0} filas hasta ahora"}
+
+  :file/data-rows            {:one "{0} fila de datos" :other "{0} filas de datos"}
+  :file/rows                 {:one "{0} fila" :other "{0} filas"}
+  :file/encoding             "Texto: {0}"
+  :file/encoding-western     "Texto: {0} (europeo occidental)"
+  :file/separated-semicolons "Separado por puntos y coma"
+  :file/separated-tabs       "Separado por tabuladores"
+  :file/separated-pipes      "Separado por barras verticales"
+  :file/healthy              "Parece correcto"
+
+  :options/split-into    "Dividir en"
+  :options/by-rows       "Mismo número de filas"
+  :options/by-size       "Mismo tamaño de archivo"
+  :options/rows-suffix   "filas en cada archivo"
+  :options/size-suffix   "en cada archivo"
+  :options/has-header    "Mi archivo tiene una fila de encabezado"
+  :options/repeat-header "Repetir ese encabezado en cada archivo"
+
+  :output/save-to "Guardar los archivos en"
+  :output/named   "Se llamarán {0}, {1}, y así sucesivamente."
+
+  :advanced/label           "Avanzado"
+  :advanced/summary         "— codificación de texto, nombres de archivo"
+  :advanced/pattern-label   "Patrón de nombre de archivo"
+  :advanced/pattern-hint    "{name} es el nombre del archivo original, {index} es el número de archivo."
+  :advanced/encoding-label  "Codificación de texto"
+  :advanced/encoding-hint   "Se ha detectado {0}. Cámbialo solo si los resultados se abren con los acentos equivocados."
+  :advanced/detected        "Detectado"
+  :advanced/excel-safe      "Mantener cada archivo dentro del límite de filas de Excel"
+  :advanced/excel-safe-hint "Solo importa al dividir por tamaño, donde el número de filas depende de lo largas que sean."
+
+  :splitting/headline "Dividiendo {0}"
+  :splitting/progress "Archivo {0} · {1} de {2} filas"
+  :splitting/eta      "quedan unos {0}"
+
+  :done/details      "Ver detalles"
+  :done/created      {:one   "{0} archivo creado en {1}"
+                      :other "{0} archivos creados en {1}"}
+  :done/stopped-none "Detenido. No se ha creado ningún archivo."
+  :done/stopped-some {:one   "Detenido. Se había terminado {0} archivo antes de detenerlo, y el que se estaba escribiendo se ha eliminado."
+                      :other "Detenido. Se habían terminado {0} archivos antes de detenerlo, y el que se estaba escribiendo se ha eliminado."}
+  :done/log-line     "{0}  —  {1} filas"
+
+  :action/browse         "Examinar…"
+  :action/change         "Cambiar…"
+  :action/split          "Dividir archivo"
+  :action/cancel         "Cancelar"
+  :action/split-again    "Dividir otro archivo"
+  :action/replace        "Reemplazarlos"
+  :action/new-folder     "Usar una carpeta nueva"
+  :action/close          "Cerrar"
+  :action/about          "Acerca de"
+  :action/help           "Ayuda"
+  :action/reveal-mac     "Mostrar en Finder"
+  :action/reveal-windows "Mostrar en el Explorador"
+  :action/reveal-other   "Abrir carpeta"
+
+  :clash/title {:one "Se reemplazaría un archivo" :other "Se reemplazarían {0} archivos"}
+  :clash/body  "Esa carpeta ya contiene archivos con los nombres que usaría esta división. Todavía no se ha escrito nada."
+  :clash/more  "y {0} más"
+
+  :options/common-sizes "Tamaños habituales"
+  :preset/plain         "{0}"
+  :preset/excel-old     "{0} — límite del Excel antiguo"
+  :preset/excel-max     "{0} — máximo de Excel"
+
+  :plan/one-file        "Todo cabe en un archivo de {0} filas, así que no se dividiría nada."
+  :plan/even            "Se crearán {0} archivos de {1} filas cada uno."
+  :plan/uneven          "Se crearán {0} archivos — {1} con {2} filas y uno con {3}."
+  :plan/by-size         "Se crearán unos {0} archivos, con aproximadamente {1} filas cada uno."
+  :plan/many-files      "Eso crearía {0} archivos en una sola carpeta."
+  :plan/over-excel      "Excel no puede abrir un archivo con más de {0} filas. La división se hará igualmente, por si los vas a abrir en otro programa."
+  :plan/capped-at-excel "Los archivos se detendrán también en {0} filas, para que Excel pueda abrirlos."
+
+  :problem/rows-needed   "Indica cuántas filas debe contener cada archivo."
+  :problem/size-needed   "Indica qué tamaño debe tener cada archivo."
+  :problem/no-data       "Este archivo no tiene filas de datos que dividir."
+  :problem/pattern-empty "El patrón de nombre no puede estar vacío."
+  :problem/pattern-index "El patrón necesita {index}, o todos los archivos tendrían el mismo nombre."
+  :problem/pattern-chars "El patrón no puede contener ninguno de estos caracteres: / \\ : * ? \" < > |"
+  :problem/unreadable    "No se ha podido leer ese archivo."
+  :problem/no-permission "No tienes permiso para escribir en esa carpeta. Prueba con otra."
+  :problem/disk-full     "El disco está lleno, así que no se han podido escribir los archivos restantes."
+  :problem/file-moved    "Ese archivo ya no está donde estaba. Puede que se haya movido o eliminado."
+  :problem/folder-create "No se ha podido crear esa carpeta:\n{0}"
+  :problem/generic       "Algo ha ido mal y la división se ha detenido."
+
+  :damage/headline     {:one "{0} fila parece dañada" :other "{0} filas parecen dañadas"}
+  :damage/ragged       {:one   "{0} fila tiene un número de columnas distinto al de la primera fila."
+                        :other "{0} filas tienen un número de columnas distinto al de la primera fila."}
+  :damage/stray-quote  {:one   "{0} fila contiene unas comillas donde el formato CSV no las permite."
+                        :other "{0} filas contienen unas comillas donde el formato CSV no las permite."}
+  :damage/unterminated "El archivo termina en mitad de un valor entrecomillado."
+  :damage/reassurance  "Se copiarán exactamente tal y como están, de un total de {0} filas, así que no se pierde nada."
+
+  :duration/under-second "menos de un segundo"
+  :duration/seconds      "{0} segundos"
+  :duration/minutes      {:one "{0} minuto" :other "{0} minutos"}
+  :duration/seconds-part {:one "{0} segundo" :other "{0} segundos"}
+  :size/bytes            "{0} bytes"
+  :size/kb               "{0} KB"
+  :size/mb               "{0} MB"
+  :size/gb               "{0} GB"
+
+  :about/title        "Acerca de {0}"
+  :about/version      "Versión {0}"
+  :about/licence      "Distribuido bajo la licencia Apache 2.0."
+  :about/notices      "Incluye un entorno de ejecución Java bajo la GPL v2 con excepción de ruta de clases. Consulta THIRD-PARTY.md."
+  :about/language     "Idioma"
+  :about/theme        "Apariencia"
+  :about/theme-system "Seguir al sistema"
+  :about/theme-light  "Claro"
+  :about/theme-dark   "Oscuro"
+  :about/unreviewed   "Esta traducción todavía no ha sido revisada por un hablante nativo."
+
+  :header/first-row       "Primera fila"
+  :header/question        "¿Esta fila son los nombres de las columnas o es tu primera fila de datos?"
+  :header/these-are-names "Son nombres de columnas"
+  :header/this-is-data    "Son datos"
+
+  :help/title      "Ayuda"
+  :help/q-header   "¿Qué es una fila de encabezado?"
+  :help/a-header   "La primera línea de muchos archivos CSV nombra las columnas — id, nombre, ciudad — en lugar de contener datos. Al marcar la casilla, la aplicación la trata así: no la cuenta como fila y puede repetirla al principio de cada archivo que cree."
+  :help/q-quoted   "Una de mis celdas contiene un salto de línea. ¿Es un problema?"
+  :help/a-quoted   "No. Un valor entre comillas puede contener saltos de línea, y esta aplicación mantiene esa fila entera. Dividir un archivo contando líneas, como hacen muchas herramientas, cortaría esa fila por la mitad y dañaría en silencio ambas partes."
+  :help/q-damaged  "¿Por qué dice que algunas filas parecen dañadas?"
+  :help/a-damaged  "Porque no siguen las reglas habituales: una fila con más columnas que la primera, o unas comillas sueltas. No se repara ni se descarta nada: las filas dañadas se copian exactamente como llegaron, así que no pierdes nada y puedes revisarlas tú mismo."
+  :help/q-encoding "¿Qué es la codificación de texto?"
+  :help/a-encoding "Es la forma en que las letras se guardan como números en el archivo. Se detecta automáticamente y normalmente no requiere atención. La única señal de que algo ha salido mal son los caracteres acentuados que se ven como galimatías al abrir un resultado, y para ese caso está la opción en Avanzado."
+  :help/q-excel    "¿Por qué menciona 1.048.576 filas?"
+  :help/a-excel    "Es el máximo de filas que Excel puede abrir en una hoja. Las versiones antiguas se detenían en 65.536. Si un archivo supera el límite, Excel no lo abrirá en absoluto, que suele ser el motivo por el que se divide un archivo."
+  :help/q-replace  "¿Qué pasa con los archivos que ya hay en la carpeta?"
+  :help/a-replace  "Nada, a menos que lo autorices. Antes de escribir nada se comprueba si la carpeta contiene archivos cuyos nombres usaría esta división. Si los hay, se te muestra la lista y se te pregunta, y puedes escribir en otro sitio."
+
+  :problem/not-enough-space "No hay suficiente espacio en el disco. Se necesitan unos {0} y solo hay {1} libres."
+  :plan/tight-space "Esto dejaría muy poco espacio en el disco: unos {0} después."
+  :advanced/delimiter-label "Separador de columnas"
+  :advanced/delimiter-hint "Se detecta automáticamente. Cámbialo solo si las columnas salen mal."
+  :delimiter/detected "Detectado"
+  :delimiter/comma "Coma  ,"
+  :delimiter/semicolon "Punto y coma  ;"
+  :delimiter/tab "Tabulador"
+  :delimiter/pipe "Barra vertical  |"}}

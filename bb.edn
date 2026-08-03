@@ -1,0 +1,98 @@
+;; Babashka task runner. Everything you routinely do to this project, in one
+;; short command each. Run `bb tasks` to list them.
+
+{:min-bb-version "1.3.0"
+
+ :tasks
+ {:requires ([babashka.fs :as fs]
+             [clojure.pprint :as pprint]
+             [clojure.string :as str])
+
+  :init
+  (do
+    (def app-version "2.0.0")
+    (defn clj [& args]
+      (let [{:keys [exit]} (shell {:continue true} (str/join " " (cons "clojure" args)))]
+        (when-not (zero? exit) (System/exit exit)))))
+
+  run
+  {:doc              "Run the application. Extra arguments pass through: bb run --locale ja"
+   :override-builtin true
+   :task             (apply clj "-M:run" *command-line-args*)}
+
+  test
+  {:doc  "Run the whole test suite."
+   :task (clj "-M:test")}
+
+  test:fast
+  {:doc  "Run everything except the tests that need a JavaFX toolkit."
+   :task (clj "-M:test" "--exclude" ":fx")}
+
+  coverage
+  {:doc  "Run the tests and write a coverage report to target/coverage."
+   :task (clj "-M:coverage")}
+
+  lint
+  {:doc  "Run clj-kondo over the source and tests."
+   :task (clj "-M:lint")}
+
+  format
+  {:doc  "Reformat every source file with cljfmt."
+   :task (clj "-M:format" "fix")}
+
+  format:check
+  {:doc  "Fail if anything is not formatted as cljfmt would write it."
+   :task (clj "-M:format" "check")}
+
+  shots
+  {:doc  "Render every screen to target/shots as PNG, in both themes."
+   :task (clj "-M:shots")}
+
+  check
+  {:doc     "Everything CI runs: format, lint, tests."
+   :depends [format:check lint test]}
+
+  clean
+  {:doc  "Remove build output."
+   :task (fs/delete-tree "target")}
+
+  uber
+  {:doc  "Build the standalone jar."
+   :task (clj "-T:build" "uber")}
+
+  package
+  {:doc  "Build a native installer for this machine's platform with jpackage."
+   :task (do (clj "-T:build" "uber")
+             (shell (str "./package/build-" (case (System/getProperty "os.name")
+                                              ("Mac OS X" "macOS") "mac.sh"
+                                              "linux.sh"))))}
+
+  brand
+  {:doc  "Change branding without editing code:
+          bb brand --name \"Acme Splitter\" --accent \"#c2410c\""
+   :task
+   (let [args    (apply hash-map *command-line-args*)
+         file    "resources/branding.edn"
+         current (read-string (slurp file))
+         ;; bb.edn is EDN, so a regex literal cannot appear here.
+         updated (reduce (fn [m [flag value]]
+                           (assoc m (keyword (str/replace flag (re-pattern "^--") "")) value))
+                         current
+                         args)]
+     (if (empty? args)
+       (do (println "Current branding:")
+           (doseq [[k v] (sort-by key current)] (println " " k v))
+           (println "\nUsage: bb brand --name \"Acme Splitter\" --accent \"#c2410c\""))
+       (do (spit file (with-out-str (pprint/pprint updated)))
+           (println "Updated" file)
+           (doseq [[k v] (sort-by key updated)] (println " " k v))
+           (println "\nRebuild to see the change: bb uber"))))}
+
+  languages
+  {:doc  "List the shipped languages and whether each has been reviewed."
+   :task (doseq [f (sort (fs/glob "resources/i18n" "*.edn"))]
+           (let [{:keys [meta]} (read-string (slurp (str f)))]
+             (println (format "%-6s %-12s %s"
+                              (:locale meta)
+                              (:name meta)
+                              (if (:reviewed? meta) "reviewed" "NOT REVIEWED")))))}}}
