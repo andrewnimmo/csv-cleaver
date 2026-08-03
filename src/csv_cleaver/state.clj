@@ -73,6 +73,7 @@
    :error           nil
    :dialog          nil
    :collisions      []
+   :replacing       []
    :drag-over?      false})
 
 ;; ── Derived values ──────────────────────────────────────────────────────────
@@ -333,9 +334,11 @@
 
 (defn split-request
   "The map the split effect needs, assembled from state."
-  [{:keys [survey out-dir mode has-header? include-header? template excel-safe?]
+  [{:keys [survey out-dir mode has-header? include-header? template excel-safe?
+           replacing]
     :as   state}]
-  {:excel-safe?     excel-safe?
+  {:excel-safe?      excel-safe?
+   :replace-existing replacing
    :survey          (assoc survey :encoding (effective-encoding state))
    :out-dir         out-dir
    :mode            mode
@@ -372,9 +375,13 @@
 (defmethod handle ::collision-resolved
   [state {:keys [choice ^File dir]}]
   (case choice
-    :cancel  (with-effects (assoc state :dialog nil :collisions []))
-    :replace (handle (assoc state :dialog nil :collisions []) {:event/type ::start-split})
-    :new-dir (-> (assoc state :dialog nil :collisions [] :out-dir dir)
+    :cancel  (with-effects (assoc state :dialog nil :collisions [] :replacing []))
+    ;; The files the user agreed to replace are carried into the split, because
+    ;; "Replace them" has to mean all of them — not merely the ones this run
+    ;; happens to write over.
+    :replace (handle (assoc state :dialog nil :replacing (:collisions state) :collisions [])
+                     {:event/type ::start-split})
+    :new-dir (-> (assoc state :dialog nil :collisions [] :replacing [] :out-dir dir)
                  (handle {:event/type ::start-split}))))
 
 (defmethod handle ::split-progress
@@ -386,7 +393,7 @@
   ;; Back to the options, not on to a screen of their own. The outcome appears
   ;; above the settings that produced it, so adjusting one and going again is a
   ;; single press rather than a journey back through the file chooser.
-  (with-effects (assoc state :phase :ready :result result)))
+  (with-effects (assoc state :phase :ready :result result :replacing [])))
 
 (defmethod handle ::split-failed
   [state {:keys [message]}]

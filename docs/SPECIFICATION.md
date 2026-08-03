@@ -108,6 +108,19 @@ leftovers from an earlier and larger split of the same file are found too.
 and offered three choices: cancel, replace them, or write to a new folder. The
 safe choice is the prominent one; replacement is styled as destructive.
 
+**R20a.** "Replace them" replaces all of them. Files that were listed but that
+this run does not itself write are removed, and the user is told how many. The
+alternative — writing three files and silently leaving five from an earlier,
+larger split — produces a folder whose contents are part new and part stale,
+with nothing to distinguish them.
+
+**R20b.** Leftovers are removed only after the split has succeeded. A failure or
+a cancellation never costs anyone their existing files.
+
+**R20c.** A split that would produce a single file is refused, with an
+explanation. Copying the input under a new name is not a split, and proceeding
+would also raise a name-clash dialog about files the run will never write.
+
 **R21.** Cancelling a split in progress removes the file being written and keeps
 those already finished, so what remains on disk is always a whole number of
 complete output files. The user is told how many survived.
@@ -271,7 +284,14 @@ files, of what size. A person who cannot judge 65,000 against 100,000 can judge
 19 files against 30.
 
 **R35.** Long work happens off the interface thread, reports progress, and can
-be cancelled.
+be cancelled. Progress counts files *finished*, so the file being written is
+reported as the one after them — a single-file run says "File 1", not "File 2".
+
+**R35a.** The first rows are shown with their columns aligned. Ragged spacing
+makes the reader count separators to work out which value sits under which
+heading. Over-long cells are shortened rather than pushing the rest off the
+side, and a row with fewer cells does not end in a separator pointing at
+nothing.
 
 **R36.** Failures are reported in the user's language and in terms of what to do
 next. The operating system's own wording is used only where the failure is not

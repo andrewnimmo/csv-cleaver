@@ -138,6 +138,14 @@
                  :required-bytes needed
                  :free-bytes     free}
 
+          ;; A "split" that would produce a single file is not a split. Copying
+          ;; the input under a new name is not what anyone asked for, and going
+          ;; ahead also drags the user through a name-clash dialog about files
+          ;; this run will never write. The plan is still described in full, so
+          ;; the window can say what would have happened.
+          (= 1 files)
+          (assoc :problem {:key :problem/nothing-to-split :args [rows]})
+
           ;; Refused, not warned about. Filling someone's disk is worse than
           ;; declining to split, and once it is full the failure spreads well
           ;; beyond this application.
@@ -194,7 +202,7 @@
    On cancellation the file being written is closed and removed, so what is left
    on disk is always a whole number of complete output files."
   [{:keys [survey out-dir mode value has-header? include-header? template
-           cancelled? on-progress]
+           cancelled? on-progress replace-existing]
     file-plan :plan
     :or   {template    naming/default-template
            cancelled?  (constantly false)
@@ -277,16 +285,35 @@
                                          (update :byte-count + record-bytes))))
                      (let [total (long (:total @state))]
                        (when (zero? (rem total progress-interval))
+                         ;; :files-done means files *finished*, everywhere. It
+                         ;; used to be the current file's number here and the
+                         ;; count of finished ones in open-next!, so the window
+                         ;; announced "File 2" while writing the first.
                          (on-progress {:rows-done    total
-                                       :files-done   (long (:index @state))
+                                       :files-done   (max 0 (dec (long (:index @state))))
                                        :current-name (when-let [f (:current @state)]
                                                        (.getName ^File f))})
                          (when (cancelled?) (reduced :cancelled)))))))
                nil))
             cancelled (= outcome :cancelled)
-            abandoned (if cancelled (abandon!) (do (close-current!) nil))]
+            abandoned (if cancelled (abandon!) (do (close-current!) nil))
+            ;; "Replace them" has to mean it. The user was shown a list and
+            ;; agreed to those files being replaced; leaving behind the ones
+            ;; this run happens not to write would strand output from an
+            ;; earlier, larger split in the folder, looking for all the world
+            ;; like part of the new results. Removed only after the split has
+            ;; succeeded, so a failure never costs anyone their old files.
+            removed   (when (and (seq replace-existing) (not cancelled))
+                        (let [kept (set (map (fn [^File f] (.getAbsolutePath f))
+                                             (:files @state)))]
+                          (vec (for [^File f replace-existing
+                                     :when (and (not (contains? kept (.getAbsolutePath f)))
+                                                (.exists f)
+                                                (.delete f))]
+                                 f))))]
         {:files      (:files @state)
          :written    (:written @state)
+         :removed    (vec removed)
          :rows       (long (:total @state 0))
          :elapsed-ms (quot (- (System/nanoTime) started) 1000000)
          :cancelled? cancelled

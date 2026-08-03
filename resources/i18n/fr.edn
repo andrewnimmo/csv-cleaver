@@ -171,4 +171,7 @@
   :delimiter/name-comma "virgules"
   :delimiter/name-semicolon "points-virgules"
   :delimiter/name-tab "tabulations"
-  :delimiter/name-pipe "barres verticales"}}
+  :delimiter/name-pipe "barres verticales"
+
+  :problem/nothing-to-split "Ce fichier tient déjà dans un seul fichier de {0} lignes, il n'y a donc rien à découper."
+  :done/removed-leftovers {:one "{0} fichier restant d'un découpage précédent a été supprimé." :other "{0} fichiers restants d'un découpage précédent ont été supprimés."}}}

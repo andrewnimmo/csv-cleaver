@@ -171,4 +171,7 @@
   :delimiter/name-comma "Kommas"
   :delimiter/name-semicolon "Semikolons"
   :delimiter/name-tab "Tabulatoren"
-  :delimiter/name-pipe "senkrechte Striche"}}
+  :delimiter/name-pipe "senkrechte Striche"
+
+  :problem/nothing-to-split "Diese Datei passt bereits in eine Datei mit {0} Zeilen, es gibt also nichts aufzuteilen."
+  :done/removed-leftovers {:one "{0} übrig gebliebene Datei aus einer früheren Aufteilung wurde entfernt." :other "{0} übrig gebliebene Dateien aus einer früheren Aufteilung wurden entfernt."}}}

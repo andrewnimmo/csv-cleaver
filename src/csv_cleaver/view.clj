@@ -199,6 +199,40 @@
         {:fx/type chip :kind :warn :text (:headline damage)}
         {:fx/type chip :kind :good :text (i18n/tr ctx :file/healthy)})])))
 
+(def preview-cell-width
+  "Longest cell shown in the preview. The point is to show the shape of the
+   file, not its contents, and one long note would otherwise push every other
+   column off the right-hand side."
+  16)
+
+(defn align-columns
+  "Pad the cells of each row so the columns line up under one another.
+
+   Ragged spacing makes the reader count separators to work out which value sits
+   under which heading, which defeats the purpose of showing the rows at all.
+   Whitespace inside a cell is collapsed, and over-long cells are shortened."
+  ([rows] (align-columns rows preview-cell-width))
+  ([rows limit]
+   (let [clip   (fn [cell]
+                  (let [s (str/trim (str/replace (str cell) #"\s+" " "))]
+                    (if (> (count s) limit) (str (subs s 0 (dec limit)) "…") s)))
+         rows   (mapv #(mapv clip %) rows)
+         widths (when (seq rows)
+                  (vec (for [i (range (apply max (map count rows)))]
+                         (apply max (map #(count (nth % i "")) rows)))))]
+     (mapv (fn [row]
+             ;; Trailing separators are stripped as well as trailing spaces: a
+             ;; row with fewer cells than its neighbours would otherwise end in
+             ;; a dangling "·" pointing at nothing.
+             (-> (str/join " · "
+                           (map-indexed (fn [i w]
+                                          (let [cell (nth row i "")]
+                                            (apply str cell
+                                                   (repeat (- w (count cell)) \space))))
+                                        widths))
+                 (str/replace #"[\s·]+$" "")))
+           rows))))
+
 (defn preview-rows
   "The first rows as they were parsed.
 
@@ -219,7 +253,7 @@
          :style-class  ["file-list"]
          :max-width    Double/MAX_VALUE
          :text-overrun :ellipsis
-         :text         (str/join "\n" (for [row rows] (str/join "   ·   " row)))}]})))
+         :text         (str/join "\n" (align-columns rows))}]})))
 
 (defn header-question
   "Shown only when the detection genuinely cannot tell whether the first row
@@ -546,14 +580,21 @@
    re-running meant re-choosing the same file. Keeping the options in place and
    putting the outcome above them removes a screen and the dead end together."
   [{:keys [result details-open?] :as st}]
-  (let [ctx (state/ctx st)]
+  (let [ctx     (state/ctx st)
+        removed (count (:removed result))]
     (when result
-      {:fx/type :v-box
-       :spacing 6
+      {:fx/type      :v-box
+       :spacing      6
+       ;; Matches the rhythm the section labels set. Without it the details
+       ;; panel sits almost flush against the file card below.
+       :v-box/margin {:bottom 14}
        :children
        (compact
         [(callout {:kind     (if (:cancelled? result) :warning :success)
-                   :headline (fmt/completion-sentence ctx result)})
+                   :headline (fmt/completion-sentence ctx result)
+                   :body     (when (pos? removed)
+                               (i18n/trn ctx :done/removed-leftovers removed
+                                         (i18n/number ctx removed)))})
          (disclosure {:open? details-open?
                       :text  (i18n/tr ctx :done/details)
                       :event {:event/type ::state/details-toggled}})

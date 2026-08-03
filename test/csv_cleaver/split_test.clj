@@ -325,6 +325,80 @@
         (testing "and the whole survey follows the override"
           (is (= 1 (:fields (scan/survey file {:delimiter \,})))))))))
 
+;; ── replacing, and what "replace" has to mean ───────────────────────────────
+
+(deftest replacing-removes-the-leftovers-it-promised-to-replace
+  (testing "the user is shown a list and agrees to those files being replaced.
+            Leaving behind the ones this run happens not to write strands output
+            from an earlier, larger split in the folder, looking for all the
+            world like part of the new results."
+    (tu/with-temp-dir [dir]
+      ;; An earlier, larger split left eight files behind.
+      (doseq [i (range 1 9)]
+        (tu/write-file dir (format "people_%04d.csv" i) "stale\n"))
+      (let [s     (survey-of dir "people.csv" "id\n1\n2\n3\n4\n")
+            old   (split/collisions {:survey s :out-dir dir})
+            _     (is (= 8 (count old)))
+            plan  (split/plan {:survey s :mode :rows :value 2 :has-header? true})
+            r     (split/execute! {:survey s :out-dir dir :mode :rows :value 2
+                                   :has-header? true :include-header? true
+                                   :plan plan :replace-existing old})]
+        (is (= 2 (count (:files r))) "this run writes two")
+        (is (= 6 (count (:removed r))) "and the six it did not write are gone")
+        (is (= ["people_0001.csv" "people_0002.csv"]
+               (tu/names (split/collisions {:survey s :out-dir dir})))
+            "so the folder holds this split's output and nothing else")))))
+
+(deftest a-failed-or-cancelled-split-never-removes-anything
+  (testing "leftovers are cleared only after success, so a failure costs nobody
+            their old files"
+    (tu/with-temp-dir [dir]
+      (doseq [i (range 1 5)]
+        (tu/write-file dir (format "people_%04d.csv" i) "stale\n"))
+      (let [rows (apply str "id\n" (for [i (range (* 3 split/progress-interval))]
+                                     (str i "\n")))
+            s    (survey-of dir "people.csv" rows)
+            old  (split/collisions {:survey s :out-dir dir})
+            r    (split/execute! {:survey s :out-dir dir :mode :rows :value 1000
+                                  :has-header? true :include-header? true
+                                  :plan (split/plan {:survey s :mode :rows :value 1000
+                                                     :has-header? true})
+                                  :replace-existing old
+                                  :cancelled? (constantly true)})]
+        (is (:cancelled? r))
+        (is (empty? (:removed r)))))))
+
+(deftest without-permission-to-replace-nothing-is-removed
+  (tu/with-temp-dir [dir]
+    (tu/write-file dir "people_0099.csv" "stale\n")
+    (let [s (survey-of dir "people.csv" "id\n1\n2\n")
+          r (split/execute! {:survey s :out-dir dir :mode :rows :value 1
+                             :has-header? true :include-header? true
+                             :plan (split/plan {:survey s :mode :rows :value 1
+                                                :has-header? true})})]
+      (is (empty? (:removed r)))
+      (is (.exists (io/file dir "people_0099.csv"))))))
+
+;; ── progress ────────────────────────────────────────────────────────────────
+
+(deftest progress-counts-files-finished-not-the-one-in-hand
+  (testing "it used to report the current file's number here and the count of
+            finished ones elsewhere, so the window announced \"File 2\" while it
+            was still writing the first — and \"File 2\" for a single-file run"
+    (tu/with-temp-dir [dir]
+      (let [rows (apply str "id\n" (for [i (range (* 2 split/progress-interval))]
+                                     (str i "\n")))
+            s    (survey-of dir "big.csv" rows)
+            seen (atom [])
+            _    (split/execute! {:survey s :out-dir dir :mode :rows
+                                  :value (* 10 split/progress-interval)
+                                  :has-header? true :include-header? true
+                                  :plan {:file-count 1}
+                                  :on-progress #(swap! seen conj %)})]
+        (is (seq @seen))
+        (is (every? #(zero? (:files-done %)) @seen)
+            "one file, so none is finished until the end")))))
+
 ;; ── collisions ──────────────────────────────────────────────────────────────
 
 (deftest reports-nothing-for-a-clear-folder

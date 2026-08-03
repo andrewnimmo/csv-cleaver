@@ -171,4 +171,7 @@
   :delimiter/name-comma "comas"
   :delimiter/name-semicolon "puntos y coma"
   :delimiter/name-tab "tabuladores"
-  :delimiter/name-pipe "barras verticales"}}
+  :delimiter/name-pipe "barras verticales"
+
+  :problem/nothing-to-split "Este archivo ya cabe en un solo archivo de {0} filas, así que no hay nada que dividir."
+  :done/removed-leftovers {:one "Se ha eliminado {0} archivo sobrante de una división anterior." :other "Se han eliminado {0} archivos sobrantes de una división anterior."}}}

@@ -198,4 +198,7 @@
   :delimiter/name-comma "commas"
   :delimiter/name-semicolon "semicolons"
   :delimiter/name-tab "tabs"
-  :delimiter/name-pipe "vertical bars"}}
+  :delimiter/name-pipe "vertical bars"
+
+  :problem/nothing-to-split "This file already fits in one file of {0} rows, so there is nothing to split."
+  :done/removed-leftovers {:one "{0} leftover file from an earlier split was removed." :other "{0} leftover files from an earlier split were removed."}}}

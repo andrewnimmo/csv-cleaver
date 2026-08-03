@@ -148,8 +148,23 @@
     (tu/with-temp-dir [dir]
       (let [d (view/content (ready-state dir))]
         (is (text-containing d #"First rows"))
-        (is (text-containing d #"id   ·   name"))
-        (is (text-containing d #"1   ·   Ann"))))))
+        (testing "with the columns lined up, so a value can be read against its
+                  heading without counting separators"
+          (is (text-containing d #"id · name"))
+          (is (text-containing d #"1  · Ann")))))))
+
+(deftest columns-are-padded-to-a-common-width
+  (is (= ["id · name" "1  · Ann"] (view/align-columns [["id" "name"] ["1" "Ann"]])))
+  (testing "a ragged row does not throw, and the missing cells are blank"
+    (is (= ["a · b" "1"] (view/align-columns [["a" "b"] ["1"]]))))
+  (testing "whitespace inside a cell is collapsed, so a stray newline cannot
+            wreck the alignment of everything below it"
+    (is (= ["a b · c"] (view/align-columns [["a\n  b" "c"]]))))
+  (testing "an over-long cell is shortened rather than pushing the rest off the
+            side — the preview shows the shape, not the contents"
+    (let [[row] (view/align-columns [["0123456789012345678901234567890" "x"]] 10)]
+      (is (= "012345678… · x" row))))
+  (is (= [] (view/align-columns []))))
 
 (deftest the-outcome-appears-above-the-options-not-instead-of-them
   (testing "the finished screen used to be a dead end: the only way on was to
@@ -374,12 +389,15 @@
       (is (text-containing d #"65,000 — old Excel limit"))
       (is (text-containing d #"1,048,576 — Excel maximum")))))
 
-(deftest splitting-by-size-warns-when-it-caps-the-rows
-  (testing "the conundrum the size mode creates: the user never chose a row
-            count, so nothing would otherwise stop a file exceeding Excel"
+(deftest a-split-that-would-produce-one-file-is-refused
+  (testing "copying the input under a new name is not what anyone asked for,
+            and going ahead also drags the user through a name-clash dialog
+            about files the run will never write"
     (tu/with-temp-dir [dir]
       (let [d (view/content (assoc (ready-state dir) :mode :bytes :size-text "500 MB"))]
-        (is (text-containing d #"1,048,576 rows"))))))
+        (is (text-containing d #"already fits in one file"))
+        (is (true? (:disable (first (filter #(= "Split file" (:text %)) (nodes d)))))
+            "and Split is not offered")))))
 
 ;; ── Finished ────────────────────────────────────────────────────────────────
 

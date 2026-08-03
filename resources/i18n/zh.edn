@@ -167,4 +167,7 @@
   :delimiter/name-comma "逗号"
   :delimiter/name-semicolon "分号"
   :delimiter/name-tab "制表符"
-  :delimiter/name-pipe "竖线"}}
+  :delimiter/name-pipe "竖线"
+
+  :problem/nothing-to-split "该文件已经可以放入一个 {0} 行的文件中，因此无需拆分。"
+  :done/removed-leftovers "已删除上次拆分遗留的 {0} 个文件。"}}

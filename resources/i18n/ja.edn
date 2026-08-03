@@ -167,4 +167,7 @@
   :delimiter/name-comma "カンマ"
   :delimiter/name-semicolon "セミコロン"
   :delimiter/name-tab "タブ"
-  :delimiter/name-pipe "縦棒"}}
+  :delimiter/name-pipe "縦棒"
+
+  :problem/nothing-to-split "このファイルは {0} 行の 1 ファイルに収まるため、分割の必要はありません。"
+  :done/removed-leftovers "以前の分割で残っていた {0} 個のファイルを削除しました。"}}
