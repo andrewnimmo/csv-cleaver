@@ -388,10 +388,30 @@
    :template        template
    :plan            (current-plan state)})
 
+(defn alarming-file-count?
+  "Whether this split would produce so many files that it deserves asking about
+   rather than merely colouring some text orange."
+  [state]
+  (>= (long (:file-count (current-plan state) 0)) split/alarming-file-count))
+
+(defmethod handle ::count-confirmed
+  [state _]
+  (handle (assoc state :dialog nil :count-confirmed? true)
+          {:event/type ::split-requested}))
+
 (defmethod handle ::split-requested
   [state _]
-  (if-not (ready? state)
+  (cond
+    (not (ready? state))
     (with-effects state)
+
+    ;; Tens of thousands of files is far more often a mistyped row count than an
+    ;; intention, and the consequences land on the file system rather than on
+    ;; this application. Asked outright, once, rather than left to a colour.
+    (and (alarming-file-count? state) (not (:count-confirmed? state)))
+    (with-effects (assoc state :dialog :confirm-count))
+
+    :else
     ;; Nothing is written until the folder has been checked. This is the
     ;; guarantee that the application cannot destroy a file without being told
     ;; it may.

@@ -105,10 +105,10 @@
   :preset/excel-max     "{0} — Excel maximum"
 
   ;; What the split would do
-  :plan/one-file        "Everything fits in one file of {0} rows, so nothing would be split."
-  :plan/even            "This makes {0} files of {1} rows each."
-  :plan/uneven          "This makes {0} files — {1} with {2} rows and one with {3}."
-  :plan/by-size         "This makes about {0} files, roughly {1} rows in each."
+  :plan/one-file {:one "Everything fits in one file of {0} row, so nothing would be split." :other "Everything fits in one file of {0} rows, so nothing would be split."}
+  :plan/even {:one "This makes {0} files of {1} row each." :other "This makes {0} files of {1} rows each."}
+  :plan/uneven {:one "This makes {0} files — {1} with {2} row and one with {3}." :other "This makes {0} files — {1} with {2} rows and one with {3}."}
+  :plan/by-size {:one "This makes about {0} files, roughly {1} row in each." :other "This makes about {0} files, roughly {1} rows in each."}
   :plan/many-files      "That would create {0} files in one folder."
   :plan/over-excel      "Excel cannot open a file with more than {0} rows. The split will still be made, in case you are opening these somewhere else."
   :plan/capped-at-excel "Files will also stop at {0} rows, so that Excel can open them."
@@ -213,4 +213,9 @@
   :clash/replace-note "Replacing writes over the files listed. Any others with matching names go to the Trash, so they can be got back."
   :clash/replace-note-no-trash "Replacing writes over the files listed. Any others with matching names are left alone, because this system has no Trash to move them to."
   :output/new-folder "This folder does not exist yet and will be created."
-  :output/existing-csv {:one "Careful: this folder already contains {0} CSV file." :other "Careful: this folder already contains {0} CSV files."}}}
+  :output/existing-csv {:one "Careful: this folder already contains {0} CSV file." :other "Careful: this folder already contains {0} CSV files."}
+
+  :confirm/many-title "Create {0} files?"
+  :confirm/many-body "That many files in one folder can make it slow or unusable in a file manager, and the split will take a long time. If that was not what you meant, check the number of rows in each file."
+  :action/create-anyway "Create them anyway"
+  :done/where "The files are in:"}}

@@ -298,6 +298,24 @@ cannot verify, and is inconsistent with how the encoding is reported.
 is already open. There is no separate drop target to hit and no need to go
 through the file dialog to change files.
 
+**R33e.** A number large enough to matter is asked about, not coloured. Above
+10,000 output files the application stops and asks outright, because a colour
+change reads as decoration — particularly on first use, with nothing to compare
+it against — and because that many files in one folder is far more often a
+mistyped row count than an intention, with consequences that land on the file
+system rather than on this application.
+
+**R33f.** Counted phrases agree with their number. "19 files of 1 rows each" is
+what carelessness looks like, and one row per file is precisely what a mistyped
+figure produces.
+
+**R33g.** File paths are shown in full and can be selected and copied. A label
+cannot be selected in JavaFX and elides what will not fit, which for a path
+hides the middle — the part that says which folder it is.
+
+**R33h.** After a split, the destination is stated in full. The application may
+have created that folder itself, so "it made one somewhere" is not enough.
+
 **R33d.** There is no separate finished screen. The outcome of a split appears
 above the options, which remain as they were, so a setting can be adjusted and
 the split repeated in one press. A finished screen whose only exit is "start

@@ -5,6 +5,7 @@
    [clojure.java.io :as io]
    [clojure.string :as str]
    [clojure.test :refer [deftest is testing]]
+   [csv-cleaver.format :as fmt]
    [csv-cleaver.scan :as scan]
    [csv-cleaver.state :as state]
    [csv-cleaver.test-util :as tu]
@@ -412,8 +413,12 @@
       (is (contains? (actions d) ::state/reset))
       (is (contains? (style-classes d) "success"))
       (testing "the log is one click away, not filling the window"
-        (is (empty? (of-type d :text-area)))
-        (is (text-containing d #"Show details"))))))
+        (is (empty? (filter #(contains? (set (:style-class %)) "details-log") (nodes d))))
+        (is (text-containing d #"Show details")))
+      (testing "and it says where the files actually are, since the application
+                may have created that folder itself"
+        (is (text-containing d #"The files are in:"))
+        (is (some #(contains? (set (:style-class %)) "path-area") (nodes d)))))))
 
 (deftest the-details-log-lists-every-file-when-opened
   (tu/with-temp-dir [dir]
@@ -423,8 +428,14 @@
                                  :result {:files [:a] :elapsed-ms 10
                                           :written [{:file (io/file "people_0001.csv") :rows 2}
                                                     {:file (io/file "people_0002.csv") :rows 2}]}))]
-      (is (= 1 (count (of-type d :text-area))))
-      (is (text-containing d #"people_0001.csv  —  2 rows")))))
+      (is (= 1 (count (filter #(contains? (set (:style-class %)) "details-log")
+                              (nodes d)))))
+      (is (text-containing d #"people_0001.csv  —  2 rows"))
+      (testing "and it keeps the class the theme puts its colours on, or it is
+                dark text on a dark background"
+        (let [log (first (filter #(contains? (set (:style-class %)) "details-log")
+                                 (nodes d)))]
+          (is (contains? (set (:style-class log)) "text-input")))))))
 
 (deftest a-cancelled-split-is-reported-as-a-warning-not-a-success
   (tu/with-temp-dir [dir]
@@ -470,6 +481,45 @@
                                               :dialog :collisions
                                               :collisions [(io/file dir "people_0001.csv")]))
                          #"One CSV file in that folder uses this name"))))
+
+(deftest an-alarming-number-of-files-is-asked-about-not-coloured
+  (testing "orange text is easy to read as decoration, especially on first use.
+            Tens of thousands of files is more often a mistyped row count than
+            an intention, and the consequence lands on the file system."
+    (tu/with-temp-dir [dir]
+      (let [many (assoc (ready-state dir "id\n1\n2\n3\n4\n") :rows-text "1")
+            {:keys [state]} (state/handle (assoc-in many [:survey :records] 500000)
+                                          {:event/type ::state/split-requested})]
+        (is (= :confirm-count (:dialog state)) "asked, not merely warned")
+        (let [d (view/content state)]
+          (is (text-containing d #"Create .* files\?"))
+          (is (text-containing d #"slow or unusable"))
+          (testing "cancel takes the accent and the keyboard default"
+            (let [cancel (first (filter #(= ::state/dialog-closed
+                                            (:event/type (:on-action %)))
+                                        (nodes d)))]
+              (is (true? (:default-button cancel)))
+              (is (contains? (set (:style-class cancel)) "accent")))))))))
+
+(deftest a-confirmed-count-goes-ahead-without-asking-twice
+  (tu/with-temp-dir [dir]
+    (let [many (-> (ready-state dir "id\n1\n2\n3\n4\n")
+                   (assoc :rows-text "1")
+                   (assoc-in [:survey :records] 500000))
+          {:keys [state effects]} (state/handle many {:event/type ::state/count-confirmed})]
+      (is (nil? (:dialog state)))
+      (is (= :check-collisions (ffirst effects))))))
+
+(deftest one-row-per-file-reads-as-one-row
+  (testing "\"19 files of 1 rows each\" is what carelessness looks like, and one
+            row per file is exactly what a mistyped number produces"
+    (let [en (:i18n state/initial)]
+      (is (= "This makes 4 files of 1 row each."
+             (fmt/plan-sentence en {:mode :rows :file-count 4 :data-rows 4
+                                    :rows-per-file 1 :last-file-rows 1})))
+      (is (= "Everything fits in one file of 1 row, so nothing would be split."
+             (fmt/plan-sentence en {:mode :rows :file-count 1 :data-rows 1
+                                    :rows-per-file 5 :last-file-rows 1}))))))
 
 (deftest the-destination-says-what-is-already-there
   (testing "before Split is pressed, not at the moment something is about to be

@@ -82,10 +82,10 @@
   :preset/excel-old     "{0} — ancienne limite d'Excel"
   :preset/excel-max     "{0} — maximum d'Excel"
 
-  :plan/one-file        "Tout tient dans un seul fichier de {0} lignes, donc rien ne serait découpé."
-  :plan/even            "Cela crée {0} fichiers de {1} lignes chacun."
-  :plan/uneven          "Cela crée {0} fichiers — {1} avec {2} lignes et un avec {3}."
-  :plan/by-size         "Cela crée environ {0} fichiers, d'à peu près {1} lignes chacun."
+  :plan/one-file {:one "Tout tient dans un seul fichier de {0} ligne, donc rien ne serait découpé." :other "Tout tient dans un seul fichier de {0} lignes, donc rien ne serait découpé."}
+  :plan/even {:one "Cela crée {0} fichiers de {1} ligne chacun." :other "Cela crée {0} fichiers de {1} lignes chacun."}
+  :plan/uneven {:one "Cela crée {0} fichiers — {1} avec {2} ligne et un avec {3}." :other "Cela crée {0} fichiers — {1} avec {2} lignes et un avec {3}."}
+  :plan/by-size {:one "Cela crée environ {0} fichiers, d'à peu près {1} ligne chacun." :other "Cela crée environ {0} fichiers, d'à peu près {1} lignes chacun."}
   :plan/many-files      "Cela créerait {0} fichiers dans un même dossier."
   :plan/over-excel      "Excel ne peut pas ouvrir un fichier de plus de {0} lignes. Le découpage sera fait quand même, au cas où vous les ouvririez ailleurs."
   :plan/capped-at-excel "Les fichiers s'arrêteront aussi à {0} lignes, pour qu'Excel puisse les ouvrir."
@@ -182,4 +182,9 @@
   :clash/replace-note "Remplacer écrase les fichiers listés. Les autres portant des noms identiques vont à la corbeille et peuvent donc être récupérés."
   :clash/replace-note-no-trash "Remplacer écrase les fichiers listés. Les autres portant des noms identiques ne sont pas touchés, car ce système n'a pas de corbeille où les mettre."
   :output/new-folder "Ce dossier n'existe pas encore et sera créé."
-  :output/existing-csv {:one "Attention : ce dossier contient déjà {0} fichier CSV." :other "Attention : ce dossier contient déjà {0} fichiers CSV."}}}
+  :output/existing-csv {:one "Attention : ce dossier contient déjà {0} fichier CSV." :other "Attention : ce dossier contient déjà {0} fichiers CSV."}
+
+  :confirm/many-title "Créer {0} fichiers ?"
+  :confirm/many-body "Autant de fichiers dans un même dossier peut le rendre lent ou inutilisable dans le gestionnaire de fichiers, et le découpage prendra longtemps. Si ce n'était pas votre intention, vérifiez le nombre de lignes par fichier."
+  :action/create-anyway "Les créer quand même"
+  :done/where "Les fichiers se trouvent dans :"}}

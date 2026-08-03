@@ -53,6 +53,25 @@
    :text        (str (if open? "▾ " "▸ ") text)
    :on-action   event})
 
+(defn selectable-path
+  "A file path shown in full, and copyable.
+
+   Two problems with a plain label here. It cannot be selected — JavaFX labels
+   never can — so the one piece of text a user most often wants to paste
+   somewhere else is the one they cannot take. And it elides what will not fit,
+   which for a path hides the middle: precisely the part that says which folder
+   this is. A read-only text area wraps instead of eliding, and allows a copy."
+  [{:keys [text rows]}]
+  {:fx/type        :text-area
+   ;; "text-input" as well as "text-area": the theme's colours live on the
+   ;; former, and leaving it out is what made the details panel invisible in
+   ;; dark mode.
+   :style-class    ["text-input" "text-area" "path-area"]
+   :editable       false
+   :wrap-text      true
+   :pref-row-count (or rows 2)
+   :text           (str text)})
+
 (defn icon-button
   [{:keys [glyph tooltip event]}]
   {:fx/type     :button
@@ -417,12 +436,9 @@
         :spacing   10
         :alignment :center-left
         :children
-        [{:fx/type      :label
-          :h-box/hgrow  :always
-          :max-width    Double/MAX_VALUE
-          :style-class  ["path-label"]
-          :text-overrun :leading-ellipsis
-          :text         (path-of out-dir)}
+        [(assoc (selectable-path {:text (path-of out-dir)})
+                :h-box/hgrow :always
+                :max-width Double/MAX_VALUE)
          {:fx/type   :button
           :text      (i18n/tr ctx :action/change)
           :on-action {:event/type ::state/browse-output-requested}}]}
@@ -620,12 +636,21 @@
                                 (pos? left)
                                 (conj (i18n/trn ctx :done/left-behind left
                                                 (i18n/number ctx left)))))})
+         ;; Where the results actually are. The application may have created
+         ;; this folder, so "it made one somewhere" is not good enough — the
+         ;; path is spelled out, and can be copied.
+         (when-not (:cancelled? result)
+           {:fx/type :v-box
+            :spacing 2
+            :children
+            [{:fx/type :label :style-class ["hint"] :text (i18n/tr ctx :done/where)}
+             (selectable-path {:text (path-of (:out-dir st)) :rows 2})]})
          (disclosure {:open? details-open?
                       :text  (i18n/tr ctx :done/details)
                       :event {:event/type ::state/details-toggled}})
          (when details-open?
            {:fx/type        :text-area
-            :style-class    ["text-area" "details-log"]
+            :style-class    ["text-input" "text-area" "details-log"]
             :editable       false
             :pref-row-count 8
             :text           (details-log st)})])})))
@@ -767,7 +792,7 @@
       {:fx/type      :text-area
        :v-box/vgrow  :always
        :editable     false
-       :style-class  ["text-area" "details-log"]
+       :style-class    ["text-input" "text-area" "details-log"]
        :text         (str/join "\n\n" problems)}
       {:fx/type   :h-box
        :spacing   8
@@ -781,6 +806,34 @@
          :style-class ["button" "accent"]
          :text        "Quit"
          :on-action   {:event/type ::quit-requested}}]}]}}})
+
+(defn confirm-count-dialog
+  "Asked before creating an alarming number of files.
+
+   The inline warning was only a change of text colour, which is easy to read as
+   decoration — especially on first use, with nothing to compare it against —
+   and the consequence lands on the file system rather than on this application.
+   Cancel takes the accent and the keyboard default."
+  [st]
+  (let [ctx    (state/ctx st)
+        n      (:file-count (state/current-plan st) 0)]
+    (overlay
+     [{:fx/type :label :style-class ["label" "title"] :wrap-text true
+       :text    (i18n/tr ctx :confirm/many-title (i18n/number ctx n))}
+      {:fx/type :label :wrap-text true :text (i18n/tr ctx :confirm/many-body)}
+      {:fx/type   :h-box
+       :spacing   8
+       :alignment :center-right
+       :children
+       [{:fx/type     :button
+         :style-class ["button" "danger"]
+         :text        (i18n/tr ctx :action/create-anyway)
+         :on-action   {:event/type ::state/count-confirmed}}
+        {:fx/type        :button
+         :style-class    ["button" "accent"]
+         :default-button true
+         :text           (i18n/tr ctx :action/cancel)
+         :on-action      {:event/type ::state/dialog-closed}}]}])))
 
 (def help-topics
   "Questions a non-expert actually asks, in the order they come up."
@@ -900,9 +953,10 @@
                        :children    [(header-bar (state/ctx st)) (body st)]}}
        (footer st)]}
      (case dialog
-       :collisions (collision-dialog st)
-       :about      (about-dialog st)
-       :help       (help-dialog st)
+       :collisions    (collision-dialog st)
+       :confirm-count (confirm-count-dialog st)
+       :about         (about-dialog st)
+       :help          (help-dialog st)
        nil)])})
 
 (def default-window {:width 720 :height 660})

@@ -29,7 +29,15 @@
 (def busy-file-count
   "Above this many output files, warn the user rather than silently carpeting
    their folder."
-  5000)
+  1000)
+
+(def alarming-file-count
+  "Above this many, a warning is not enough. Tens of thousands of files in one
+   folder makes it slow or unusable in a file manager, takes a long time, and is
+   far more often a mistyped row count than an intention. Orange text is easy to
+   read as decoration — especially the first time someone uses the application,
+   when they have nothing to compare it against — so this asks outright."
+  10000)
 
 (def excel-row-limit
   "The most rows a worksheet can hold in Excel 2007 and later. A file with more

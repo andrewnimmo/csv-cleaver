@@ -82,10 +82,10 @@
   :preset/excel-old     "{0} — alte Excel-Grenze"
   :preset/excel-max     "{0} — Excel-Maximum"
 
-  :plan/one-file        "Alles passt in eine Datei mit {0} Zeilen, es würde also nichts aufgeteilt."
-  :plan/even            "Das ergibt {0} Dateien mit je {1} Zeilen."
-  :plan/uneven          "Das ergibt {0} Dateien — {1} mit {2} Zeilen und eine mit {3}."
-  :plan/by-size         "Das ergibt etwa {0} Dateien mit jeweils rund {1} Zeilen."
+  :plan/one-file {:one "Alles passt in eine Datei mit {0} Zeile, es würde also nichts aufgeteilt." :other "Alles passt in eine Datei mit {0} Zeilen, es würde also nichts aufgeteilt."}
+  :plan/even {:one "Das ergibt {0} Dateien mit je {1} Zeile." :other "Das ergibt {0} Dateien mit je {1} Zeilen."}
+  :plan/uneven {:one "Das ergibt {0} Dateien — {1} mit {2} Zeile und eine mit {3}." :other "Das ergibt {0} Dateien — {1} mit {2} Zeilen und eine mit {3}."}
+  :plan/by-size {:one "Das ergibt etwa {0} Dateien mit jeweils rund {1} Zeile." :other "Das ergibt etwa {0} Dateien mit jeweils rund {1} Zeilen."}
   :plan/many-files      "Das würde {0} Dateien in einem Ordner erzeugen."
   :plan/over-excel      "Excel kann keine Datei mit mehr als {0} Zeilen öffnen. Die Aufteilung wird trotzdem vorgenommen, falls Sie sie anderswo öffnen."
   :plan/capped-at-excel "Die Dateien enden zusätzlich bei {0} Zeilen, damit Excel sie öffnen kann."
@@ -182,4 +182,9 @@
   :clash/replace-note "Ersetzen überschreibt die aufgeführten Dateien. Andere mit übereinstimmenden Namen wandern in den Papierkorb und lassen sich zurückholen."
   :clash/replace-note-no-trash "Ersetzen überschreibt die aufgeführten Dateien. Andere mit übereinstimmenden Namen bleiben unangetastet, da dieses System keinen Papierkorb dafür hat."
   :output/new-folder "Dieser Ordner existiert noch nicht und wird angelegt."
-  :output/existing-csv {:one "Achtung: In diesem Ordner liegt bereits {0} CSV-Datei." :other "Achtung: In diesem Ordner liegen bereits {0} CSV-Dateien."}}}
+  :output/existing-csv {:one "Achtung: In diesem Ordner liegt bereits {0} CSV-Datei." :other "Achtung: In diesem Ordner liegen bereits {0} CSV-Dateien."}
+
+  :confirm/many-title "{0} Dateien erstellen?"
+  :confirm/many-body "So viele Dateien in einem Ordner können ihn im Dateimanager langsam oder unbrauchbar machen, und die Aufteilung dauert lange. War das nicht gemeint, prüfen Sie die Zeilenzahl je Datei."
+  :action/create-anyway "Trotzdem erstellen"
+  :done/where "Die Dateien liegen in:"}}

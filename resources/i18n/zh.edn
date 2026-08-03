@@ -177,4 +177,9 @@
   :clash/replace-note "替换会覆盖列出的文件。其他同名文件将移到废纸篓，因此可以找回。"
   :clash/replace-note-no-trash "替换会覆盖列出的文件。其他同名文件将保持不动，因为本系统没有可供移入的废纸篓。"
   :output/new-folder "该文件夹尚不存在，将会新建。"
-  :output/existing-csv "请注意：该文件夹中已有 {0} 个 CSV 文件。"}}
+  :output/existing-csv "请注意：该文件夹中已有 {0} 个 CSV 文件。"
+
+  :confirm/many-title "要创建 {0} 个文件吗？"
+  :confirm/many-body "一个文件夹中有这么多文件，可能会使文件管理器变慢甚至无法使用，拆分也会耗时很久。如果这不是您的本意，请检查每个文件的行数。"
+  :action/create-anyway "仍然创建"
+  :done/where "文件位于："}}

@@ -129,18 +129,22 @@
       problem
       (message ctx problem)
 
+      ;; Pluralised on the row count, not the file count: "19 files of 1 rows
+      ;; each" is the sort of thing that makes an application look careless, and
+      ;; one row per file is exactly the setting somebody reaches by mistyping.
       (= 1 (long file-count))
-      (i18n/tr ctx :plan/one-file (n data-rows))
+      (i18n/trn ctx :plan/one-file data-rows (n data-rows))
 
       (= mode :bytes)
-      (i18n/tr ctx :plan/by-size (n file-count) (n rows-per-file))
+      (i18n/trn ctx :plan/by-size rows-per-file (n file-count) (n rows-per-file))
 
       (= (long last-file-rows) (long rows-per-file))
-      (i18n/tr ctx :plan/even (n file-count) (n rows-per-file))
+      (i18n/trn ctx :plan/even rows-per-file (n file-count) (n rows-per-file))
 
       :else
-      (i18n/tr ctx :plan/uneven (n file-count) (n (dec (long file-count)))
-               (n rows-per-file) (n last-file-rows)))))
+      (i18n/trn ctx :plan/uneven rows-per-file
+                (n file-count) (n (dec (long file-count)))
+                (n rows-per-file) (n last-file-rows)))))
 
 (defn damage-summary
   "What is wrong with the chosen file, or nil when nothing is.

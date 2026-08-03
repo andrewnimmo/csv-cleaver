@@ -82,10 +82,10 @@
   :preset/excel-old     "{0} — límite del Excel antiguo"
   :preset/excel-max     "{0} — máximo de Excel"
 
-  :plan/one-file        "Todo cabe en un archivo de {0} filas, así que no se dividiría nada."
-  :plan/even            "Se crearán {0} archivos de {1} filas cada uno."
-  :plan/uneven          "Se crearán {0} archivos — {1} con {2} filas y uno con {3}."
-  :plan/by-size         "Se crearán unos {0} archivos, con aproximadamente {1} filas cada uno."
+  :plan/one-file {:one "Todo cabe en un archivo de {0} fila, así que no se dividiría nada." :other "Todo cabe en un archivo de {0} filas, así que no se dividiría nada."}
+  :plan/even {:one "Se crearán {0} archivos de {1} fila cada uno." :other "Se crearán {0} archivos de {1} filas cada uno."}
+  :plan/uneven {:one "Se crearán {0} archivos — {1} con {2} fila y uno con {3}." :other "Se crearán {0} archivos — {1} con {2} filas y uno con {3}."}
+  :plan/by-size {:one "Se crearán unos {0} archivos, con aproximadamente {1} fila cada uno." :other "Se crearán unos {0} archivos, con aproximadamente {1} filas cada uno."}
   :plan/many-files      "Eso crearía {0} archivos en una sola carpeta."
   :plan/over-excel      "Excel no puede abrir un archivo con más de {0} filas. La división se hará igualmente, por si los vas a abrir en otro programa."
   :plan/capped-at-excel "Los archivos se detendrán también en {0} filas, para que Excel pueda abrirlos."
@@ -182,4 +182,9 @@
   :clash/replace-note "Reemplazar sobrescribe los archivos de la lista. Los demás con nombres coincidentes van a la papelera, así que se pueden recuperar."
   :clash/replace-note-no-trash "Reemplazar sobrescribe los archivos de la lista. Los demás con nombres coincidentes se dejan intactos, porque este sistema no tiene papelera a la que moverlos."
   :output/new-folder "Esta carpeta aún no existe y se creará."
-  :output/existing-csv {:one "Atención: esta carpeta ya contiene {0} archivo CSV." :other "Atención: esta carpeta ya contiene {0} archivos CSV."}}}
+  :output/existing-csv {:one "Atención: esta carpeta ya contiene {0} archivo CSV." :other "Atención: esta carpeta ya contiene {0} archivos CSV."}
+
+  :confirm/many-title "¿Crear {0} archivos?"
+  :confirm/many-body "Esa cantidad de archivos en una sola carpeta puede volverla lenta o inutilizable en el explorador de archivos, y la división tardará mucho. Si no era lo que querías, revisa el número de filas por archivo."
+  :action/create-anyway "Crearlos de todos modos"
+  :done/where "Los archivos están en:"}}
