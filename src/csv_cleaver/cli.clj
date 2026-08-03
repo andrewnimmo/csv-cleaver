@@ -47,7 +47,7 @@
   [summary]
   (str/join
    "\n"
-   [(str (branding/app-name) " " (branding/version))
+   [(str (branding/app-name) " " (branding/build-label))
     ;; English, like the rest of this output: the language is what this parser
     ;; is being asked to choose.
     (or (branding/value :tagline)
@@ -62,7 +62,7 @@
     "With no options the window opens in the system language."]))
 
 (defn version-text []
-  (str (branding/app-name) " " (branding/version)))
+  (str (branding/app-name) " " (branding/build-label)))
 
 (defn parse
   "Work out what the user asked for. Returns one of:

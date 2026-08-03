@@ -620,7 +620,7 @@
       ;; words. The default one is ours, so it is translated like the rest.
       {:fx/type :label :style-class ["hint"] :wrap-text true
        :text    (or (branding/value :tagline) (i18n/tr ctx :about/tagline))}
-      {:fx/type :label :text (i18n/tr ctx :about/version (branding/version))}
+      {:fx/type :label :text (i18n/tr ctx :about/version (branding/build-label))}
       {:fx/type :label :style-class ["hint"] :wrap-text true :text (i18n/tr ctx :about/licence)}
       {:fx/type :label :style-class ["hint"] :wrap-text true :text (i18n/tr ctx :about/notices)}
       {:fx/type :separator}

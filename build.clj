@@ -20,6 +20,26 @@
 (defn- basis []
   (b/create-basis {:project "deps.edn"}))
 
+(defn- git-commit
+  "The short commit this is being built from, or nil outside a checkout."
+  []
+  (try
+    (let [{:keys [exit out]} (b/process {:command-args ["git" "rev-parse" "--short" "HEAD"]
+                                         :out :capture})]
+      (when (zero? exit) (clojure.string/trim out)))
+    (catch Exception _ nil)))
+
+(defn- stamp-build!
+  "Record which commit this build came from, so that a running application can
+   say. Without it there is no way to tell a rebuilt installer from a stale one,
+   which turns any question about a fix into guesswork."
+  []
+  (let [file (java.io.File. ^String class-dir "build-info.edn")]
+    (.mkdirs (.getParentFile file))
+    (spit file (pr-str {:commit   (or (git-commit) "unknown")
+                        :built-at (str (java.time.Instant/now))
+                        :version  version}))))
+
 (defn clean
   "Delete the target directory."
   [_]
@@ -41,6 +61,7 @@
                     :src-dirs   ["src"]
                     :ns-compile [main-ns]
                     :class-dir  class-dir})
+    (stamp-build!)
     (b/uber {:class-dir class-dir
              :uber-file uber-file
              :basis     basis
