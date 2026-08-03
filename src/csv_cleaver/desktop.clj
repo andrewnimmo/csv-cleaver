@@ -71,3 +71,11 @@
      :windows (io/file (or (System/getenv "APPDATA") home) "CSV Cleaver" "settings.edn")
      (io/file (or (System/getenv "XDG_CONFIG_HOME") (str home "/.config"))
               "csv-cleaver" "settings.edn"))))
+
+(defn languages-dir
+  "Where a user may drop further translations, beside their settings. Adding
+   Italian means putting it.edn here and restarting — no rebuild required.
+   Everything found there is validated before use; see csv-cleaver.i18n."
+  (^File [] (languages-dir (os) (System/getProperty "user.home")))
+  (^File [os-key ^String home]
+   (io/file (.getParentFile (prefs-file os-key home)) "languages")))

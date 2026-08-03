@@ -21,6 +21,7 @@
    [clojure.java.io :as io]
    [clojure.string :as str])
   (:import
+   (java.io File)
    (java.text NumberFormat)
    (java.util Locale)))
 
@@ -30,21 +31,200 @@
 
 (def fallback-tag "en")
 
+;; ── Translations supplied by the user ───────────────────────────────────────
+;;
+;; A folder beside the settings file may hold further translations, so a
+;; language can be added without rebuilding. Anything read from there is
+;; untrusted and validated before it is allowed anywhere near the window.
+;;
+;; What such a file can and cannot do is worth being precise about. It cannot
+;; execute anything: clojure.edn/read-string evaluates nothing and honours no
+;; reader tags, unlike clojure.core/read-string. What it can do is put words on
+;; the screen, and words on the screen can mislead — which is why an external
+;; file may only replace phrases the application already has, never invent new
+;; ones, and why the About box says where a translation came from.
+
+(def max-bundle-bytes
+  "A translation is a few tens of kilobytes. Anything far larger is not one."
+  262144)
+
+(def max-string-length
+  "Longest phrase accepted. The longest shipped one is a help answer of a few
+   hundred characters."
+  2000)
+
+(def forbidden-characters
+  "Control characters other than newline and tab, and the bidirectional
+   overrides that can make displayed text read in the opposite order to the
+   characters actually stored — a known way to make a label say one thing and
+   mean another."
+  #"[\p{Cntrl}&&[^\n\t]]|[‪-‮⁦-⁩]")
+
+(defonce ^:private external
+  (atom {:dir nil :bundles {} :problems []}))
+
 (defn bundle-resource
   "The EDN resource for `tag`, or nil when there is no such translation."
   [tag]
   (io/resource (str "i18n/" tag ".edn")))
 
-(defn read-bundle
-  "Read one translation file. Returns nil when it is missing or unreadable —
-   a broken translation must never stop the application from starting, it just
-   means English shows through."
+(defn- read-shipped
   [tag]
   (try
     (when-let [url (bundle-resource tag)]
       (let [parsed (edn/read-string (slurp url))]
         (when (map? parsed) parsed)))
     (catch Exception _ nil)))
+
+(defn read-bundle
+  "Read one translation.
+
+   Where a file supplied by the user has the same tag as a shipped one, the two
+   are layered rather than swapped: the supplied phrases win, and the shipped
+   ones fill in the rest. Correcting a single German word should not discard the
+   other two hundred."
+  [tag]
+  (let [shipped  (read-shipped tag)
+        supplied (get-in @external [:bundles tag])]
+    (cond
+      (nil? supplied) shipped
+      (nil? shipped)  supplied
+      :else           {:meta    (merge (:meta shipped) (:meta supplied))
+                       :strings (merge (:strings shipped) (:strings supplied))})))
+
+(defn available-tags
+  "Every language that can be chosen: those shipped, plus any valid ones the
+   user has supplied."
+  []
+  (vec (distinct (concat supported (sort (keys (:bundles @external)))))))
+
+(defn- phrase-strings
+  "Every string an entry could put on screen."
+  [v]
+  (cond (string? v) [v]
+        (map? v)    (filter string? (vals v))
+        :else       []))
+
+(defn- placeholders [v]
+  (reduce into #{} (map #(set (re-seq #"\{\d+\}" %)) (phrase-strings v))))
+
+(defn validate-bundle
+  "Everything wrong with `bundle`, as readable sentences. An empty result means
+   it is safe to show to someone.
+
+   `reference` is the English bundle. An external translation may only replace
+   wording the application already has — it can never introduce a phrase, which
+   is what stops a file dropped into the folder from inventing a prompt that
+   asks for something the application would never ask for."
+  [tag bundle reference]
+  (let [known (set (keys (:strings reference)))]
+    (cond
+      (not (map? bundle))
+      [(str tag ": this is not a translation file.")]
+
+      (not (map? (:strings bundle)))
+      [(str tag ": there is no :strings section, so there is nothing to use.")]
+
+      :else
+      (let [strings (:strings bundle)
+            unknown (sort (remove known (keys strings)))]
+        (cond-> []
+          (str/blank? (str (get-in bundle [:meta :name])))
+          (conj (str tag ": :meta :name is missing, so the language has nothing "
+                     "to be called in the language picker."))
+
+          (seq unknown)
+          (conj (str tag ": contains " (count unknown) " phrase(s) the application "
+                     "does not use (" (str/join ", " (map str (take 5 unknown)))
+                     (when (> (count unknown) 5) ", …")
+                     "). A translation may only replace existing wording."))
+
+          :always
+          (into
+           (for [[k v] (sort-by (comp str key) strings)
+                 :when (known k)
+                 problem
+                 (concat
+                  (when-not (or (string? v) (map? v))
+                    ["is neither a phrase nor a set of singular and plural forms"])
+                  (when (and (map? v) (not (contains? v :other)))
+                    ["has no :other form, so there is nothing to show for a plural"])
+                  (when (some #(> (count %) max-string-length) (phrase-strings v))
+                    [(str "is longer than " max-string-length " characters")])
+                  (when (some #(re-find forbidden-characters %) (phrase-strings v))
+                    ["contains control or text-direction characters, which can make
+                      displayed text read differently from what is stored"])
+                  (let [expected (placeholders (get (:strings reference) k))
+                        actual   (placeholders v)]
+                    (when (not= expected actual)
+                      [(str "should use "
+                            (if (seq expected) (str/join " " (sort expected)) "no placeholders")
+                            " but uses "
+                            (if (seq actual) (str/join " " (sort actual)) "none"))])))]
+             (str tag " → " k ": " (str/replace problem #"\s+" " ")))))))))
+
+(defn- tag-from-filename
+  "The language tag a file name stands for, or nil when the name is not one.
+   Restricted to plain letters, so nothing can reach outside the folder or
+   masquerade as a path."
+  [^String filename]
+  (let [stem (str/lower-case (str/replace filename #"\.edn$" ""))]
+    (when (re-matches #"[a-z]{2,3}" stem) stem)))
+
+(defn load-external!
+  "Read every .edn in `dir` as a translation, keep the valid ones, and report
+   the rest. Returns {:loaded [tags] :problems [sentences]}.
+
+   Called once at startup. Problems are returned rather than thrown so that the
+   caller can decide what to do about them — which, for this application, is to
+   refuse to start in that language and say why."
+  [dir]
+  (let [dir       (when dir (io/file (str dir)))
+        reference (read-shipped fallback-tag)
+        files     (when (and dir (.isDirectory dir))
+                    (->> (.listFiles dir)
+                         (filter (fn [^File f] (.isFile f)))
+                         (filter (fn [^File f] (str/ends-with? (.getName f) ".edn")))
+                         (sort-by (fn [^File f] (.getName f)))))
+        outcomes
+        (for [^File f files]
+          (let [name (.getName f)
+                tag  (tag-from-filename name)]
+            (cond
+              (nil? tag)
+              {:problems [(str name ": the file name should be a language code "
+                               "such as it.edn.")]}
+
+              (> (.length f) max-bundle-bytes)
+              {:problems [(str name ": the file is larger than "
+                               (quot max-bundle-bytes 1024)
+                               " KB, which no translation is.")]}
+
+              :else
+              (let [parsed (try (edn/read-string (slurp f))
+                                (catch Exception e
+                                  {::unreadable (or (.getMessage e) "unreadable")}))]
+                (if (::unreadable parsed)
+                  {:problems [(str name ": the file could not be read — "
+                                   (::unreadable parsed))]}
+                  (let [problems (validate-bundle tag parsed reference)]
+                    (if (seq problems)
+                      {:problems problems}
+                      {:loaded tag :bundle parsed})))))))
+        loaded   (into {} (keep (fn [o] (when (:loaded o) [(:loaded o) (:bundle o)])) outcomes))
+        problems (vec (mapcat :problems outcomes))]
+    (reset! external {:dir dir :bundles loaded :problems problems})
+    {:loaded (vec (sort (keys loaded))) :problems problems}))
+
+(defn external-problems
+  "What was wrong with the translations the user supplied, if anything."
+  []
+  (:problems @external))
+
+(defn forget-external!
+  "Drop everything loaded from outside. For tests."
+  []
+  (reset! external {:dir nil :bundles {} :problems []}))
 
 (defn detect-tag
   "The language to start in: the system's, when we have it, otherwise English."
@@ -55,12 +235,13 @@
 
 (defn normalise-tag
   "Accept what a person might type on the command line — en, EN, en-GB, zh_CN —
-   and return a supported tag, or nil when we have no translation for it."
+   and return an available tag, or nil when we have no translation for it.
+   A language the user has supplied counts, so --locale it works for one."
   [tag]
   (when tag
     (let [language (-> (str tag) (str/replace "_" "-") (str/split #"-") first
                        str/lower-case)]
-      (some #{language} supported))))
+      (some #{language} (available-tags)))))
 
 (defn context
   "Everything language-dependent, in one map.
@@ -78,20 +259,18 @@
       :reviewed? (boolean (get-in chosen [:meta :reviewed?]))
       :strings   (merge (:strings english) (:strings chosen))})))
 
-(def ^:private language-list
-  (delay
-    (mapv (fn [tag]
-            (let [bundle (read-bundle tag)]
-              {:tag       tag
-               :name      (get-in bundle [:meta :name] tag)
-               :reviewed? (boolean (get-in bundle [:meta :reviewed?]))}))
-          supported)))
-
 (defn languages
-  "Every shipped language as {:tag :name :reviewed?}, for the language picker.
-   Read once: the view asks for this on every render."
+  "Every available language as {:tag :name :reviewed? :external?}, for the
+   picker and the About box. External translations are labelled as such: a
+   phrase the application did not ship should say so."
   []
-  @language-list)
+  (mapv (fn [tag]
+          (let [bundle (read-bundle tag)]
+            {:tag       tag
+             :name      (get-in bundle [:meta :name] tag)
+             :reviewed? (boolean (get-in bundle [:meta :reviewed?]))
+             :external? (contains? (:bundles @external) tag)}))
+        (available-tags)))
 
 (defn tag-for-name
   "The language tag whose name is `name`, for turning a picker selection back

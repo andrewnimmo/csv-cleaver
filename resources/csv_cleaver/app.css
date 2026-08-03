@@ -31,8 +31,9 @@
 }
 
 .icon-button {
-    -fx-font-family: serif;
-    -fx-font-size: 13px;
+    /* The interface font, not serif. A serif question mark next to a sans-serif
+       window reads as a mistake rather than as a flourish. */
+    -fx-font-size: 12px;
     -fx-font-weight: bold;
     -fx-min-width: 26px;
     -fx-min-height: 26px;
@@ -49,6 +50,16 @@
 .icon-button:hover {
     -fx-background-color: -color-bg-subtle;
     -fx-text-fill: -color-fg-default;
+}
+
+/* Quit is deliberately quiet: reachable, never the thing your eye lands on. */
+.quit-button {
+    -fx-text-fill: -color-fg-muted;
+}
+
+.quit-button:hover {
+    -fx-text-fill: -color-danger-fg;
+    -fx-border-color: -color-danger-emphasis;
 }
 
 .section-label {

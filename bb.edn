@@ -62,10 +62,10 @@
 
   package
   {:doc  "Build a native installer for this machine's platform with jpackage."
-   :task (do (clj "-T:build" "uber")
-             (shell (str "./package/build-" (case (System/getProperty "os.name")
-                                              ("Mac OS X" "macOS") "mac.sh"
-                                              "linux.sh"))))}
+   ;; The script builds the uberjar itself; doing it here as well built it twice.
+   :task (shell (str "./package/build-" (case (System/getProperty "os.name")
+                                          ("Mac OS X" "macOS") "mac.sh"
+                                          "linux.sh")))}
 
   brand
   {:doc  "Change branding without editing code:

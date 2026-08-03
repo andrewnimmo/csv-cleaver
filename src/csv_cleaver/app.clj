@@ -125,6 +125,17 @@
   [_]
   (reset! cancel-flag true))
 
+(def exit!
+  "Ending the process, behind a var so that a test can watch the intent without
+   the test run being ended along with it."
+  (fn [status]
+    (Platform/exit)
+    (System/exit (int status))))
+
+(defmethod perform! :quit
+  [_]
+  (exit! 0))
+
 (defmethod perform! :reveal
   [[_ dir]]
   (desktop/reveal! dir))
@@ -275,21 +286,64 @@
    given on the command line wins, then what was saved last time, then the
    system's own language and appearance."
   [base saved options]
-  (let [language (or (:locale options) (:language saved) (i18n/detect-tag))
-        theme    (or (:theme options) (:theme saved) :system)]
+  (let [requested (:locale options)
+        language  (or requested (:language saved) (i18n/detect-tag))
+        theme     (or (:theme options) (:theme saved) :system)]
+    ;; A language we do not have is not fatal, but saying nothing about it would
+    ;; leave someone staring at an English window wondering why --locale it did
+    ;; nothing.
+    (when (and requested (nil? (i18n/normalise-tag requested)))
+      (binding [*out* *err*]
+        (println (str "No translation for '" requested "'. Available: "
+                      (str/join ", " (i18n/available-tags))
+                      ". Starting in English."))))
     (-> base
         (merge (dissoc saved :language :theme))
         (state/with-language language)
         (assoc :theme theme))))
+
+(defn start-window!
+  [options]
+  (reset! *state (startup-state state/initial (prefs/load-prefs) options))
+  (fx/mount-renderer *state renderer)
+  (perform! [:apply-theme (:theme @*state)])
+  (watch-system-appearance!))
+
+(defn show-language-problems!
+  "Refuse to start in a language we cannot vouch for, and say why.
+
+   Continuing in English is offered as well as quitting. Making a rejected file
+   fatal would mean anything dropped into that folder — by a careless editor as
+   easily as by anyone else — could leave the application permanently unable to
+   open, which is a worse failure than the one being guarded against."
+  [problems options]
+  (binding [*out* *err*]
+    (println "Refused one or more translations:")
+    (doseq [p problems] (println " -" p)))
+  (let [*error (atom {:problems problems})
+        window (atom nil)]
+    (reset! window
+            (fx/create-renderer
+             :middleware (fx/wrap-map-desc view/startup-error-window)
+             :opts {:fx.opt/map-event-handler
+                    (fn [event]
+                      (case (:event/type event)
+                        ::view/quit-requested (exit! 2)
+                        ::view/continue-in-english
+                        (do (fx/unmount-renderer *error @window)
+                            (i18n/forget-external!)
+                            (start-window! (assoc options :locale "en")))
+                        nil))}))
+    (fx/mount-renderer *error @window)))
 
 (defn -main
   [& args]
   (let [{:keys [action status message options]} (cli/parse args)]
     (if (= action :exit)
       (do (println message)
-          (System/exit (int status)))
-      (do
-        (reset! *state (startup-state state/initial (prefs/load-prefs) options))
-        (fx/mount-renderer *state renderer)
-        (perform! [:apply-theme (:theme @*state)])
-        (watch-system-appearance!)))))
+          (exit! status))
+      (let [dir      (or (:languages options) (desktop/languages-dir))
+            {:keys [problems]} (i18n/load-external! dir)]
+        (if (seq problems)
+          (show-language-problems! problems options)
+          (start-window! options))))))

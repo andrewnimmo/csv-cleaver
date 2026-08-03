@@ -184,4 +184,6 @@
   :delimiter/comma "Comma  ,"
   :delimiter/semicolon "Semicolon  ;"
   :delimiter/tab "Tab"
-  :delimiter/pipe "Vertical bar  |"}}
+  :delimiter/pipe "Vertical bar  |"
+
+  :action/quit "Quit"}}

@@ -283,6 +283,13 @@
                                               {:event/type ::state/language-changed
                                                :tag "klingon"}))))))
 
+(deftest quitting-is-an-effect-not-an-immediate-exit
+  (testing "so the decision to end the process is data, and testable"
+    (let [{:keys [state effects]} (state/handle state/initial
+                                                {:event/type ::state/quit-requested})]
+      (is (= state/initial state) "nothing about the window changes")
+      (is (= [[:quit]] effects)))))
+
 (deftest the-overlays-open-and-close
   (is (= :about (:dialog (state/apply-event state/initial
                                             {:event/type ::state/about-toggled}))))

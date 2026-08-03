@@ -157,4 +157,6 @@
   :delimiter/comma "Komma  ,"
   :delimiter/semicolon "Semikolon  ;"
   :delimiter/tab "Tabulator"
-  :delimiter/pipe "Senkrechter Strich  |"}}
+  :delimiter/pipe "Senkrechter Strich  |"
+
+  :action/quit "Beenden"}}

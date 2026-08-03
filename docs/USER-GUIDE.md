@@ -138,6 +138,40 @@ French, German, Chinese, Japanese — and English otherwise.
 The five non-English translations were produced by machine and have not yet been
 checked by a native speaker. The About box says so.
 
+### Adding a language yourself
+
+You can add one without waiting for a new version. Copy the English file from
+the application, translate it, and put it in this folder:
+
+| Your computer | Folder |
+|---|---|
+| macOS | `~/Library/Application Support/CSV Cleaver/languages/` |
+| Windows | `%APPDATA%\CSV Cleaver\languages\` |
+| Linux | `~/.config/csv-cleaver/languages/` |
+
+Name it after the language — `it.edn` for Italian — and restart. It then appears
+in the language list like any other.
+
+Files placed there are checked before they are used, because a file that arrived
+by some other route could otherwise put words on your screen that the
+application would never say. A file is refused if it invents wording that does
+not correspond to something already in the application, if it is implausibly
+large, or if it contains characters that can make text display differently from
+what it really says.
+
+If anything is refused, the application says so and does not start in that
+language. You can quit, or carry on in English.
+
+---
+
+## Quitting
+
+Close the window, or press the **i** button and choose **Quit**.
+
+It is placed there, rather than on the main window, so that it cannot be pressed
+by mistake while you are working. Your computer's usual shortcut — ⌘Q on macOS,
+Alt+F4 on Windows — works as well.
+
 ---
 
 ## Light and dark

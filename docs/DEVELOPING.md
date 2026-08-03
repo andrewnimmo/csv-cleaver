@@ -150,6 +150,36 @@ To add a language:
 Mark a file `:reviewed? true` in its `:meta` only once a native speaker has been
 over it. `bb languages` lists the current state.
 
+### Adding a language without rebuilding
+
+A translation can also be dropped in at run time, which is how someone who is
+not a developer can add one:
+
+| Platform | Folder |
+|---|---|
+| macOS | `~/Library/Application Support/CSV Cleaver/languages/` |
+| Windows | `%APPDATA%\CSV Cleaver\languages\` |
+| Linux | `~/.config/csv-cleaver/languages/` |
+
+Put `it.edn` there, restart, and `--locale it` works. Or point somewhere else
+with `--languages DIR`, which is the convenient way to test one.
+
+**Everything in that folder is untrusted**, and `i18n/validate-bundle` decides
+whether it may be shown. The threat is not code execution — `clojure.edn`
+evaluates nothing and honours no reader tags — it is **misleading text**: a file
+that reworks a phrase into something the application would never say. Hence the
+central rule, R46: a supplied file may only *replace* wording that already
+exists, never introduce a key. A file that invents one is refused whole.
+
+Also refused: oversized files, oversized phrases, control characters,
+bidirectional overrides (which can make a label read in the opposite order to
+the characters stored), mismatched `{0}` placeholders, plural entries missing
+`:other`, and file names that are not language codes.
+
+When anything is refused the main window does not open. An English error window
+lists the problems and offers Quit or Continue in English — both, because making
+a bad file fatal would let one leave the application permanently unopenable.
+
 ---
 
 ## Rebranding

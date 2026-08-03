@@ -34,6 +34,8 @@ MAIN_JAR=$(basename "$STAGE_DIR"/*.jar)
 ICON_OPT=()
 if [ -f "$ICON" ]; then
   ICON_OPT=(--icon "$ICON")
+else
+  echo "==> No icon at $ICON; building with the default"
 fi
 
 echo "==> jpackage"
@@ -50,7 +52,10 @@ jpackage \
   --dest "$DIST_DIR" \
   --java-options "--enable-native-access=ALL-UNNAMED" \
   --java-options "-Dfile.encoding=UTF-8" \
-  "${ICON_OPT[@]}"
+  ${ICON_OPT[@]+"${ICON_OPT[@]}"}
+  # ^ macOS still ships bash 3.2, where expanding an empty array under `set -u`
+  #   is an "unbound variable" error. The ${x[@]+...} form is the portable way
+  #   to say "these arguments, if there are any".
 
 echo "==> Done"
 ls -la "$DIST_DIR"

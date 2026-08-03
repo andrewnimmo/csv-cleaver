@@ -559,12 +559,72 @@
           :selected    (= theme value)
           :on-action   {:event/type ::state/theme-changed :theme value}})}
 
+      {:fx/type :separator}
+
+      ;; Quit sits at the far end of the row from Close, is not the accented
+      ;; button, and is two clicks deep behind the information button. Nobody
+      ;; reaches it by accident on the way to something else.
       {:fx/type   :h-box
-       :alignment :center-right
-       :children  [{:fx/type     :button
-                    :style-class ["button" "accent"]
-                    :text        (i18n/tr ctx :action/close)
-                    :on-action   {:event/type ::state/dialog-closed}}]}])))
+       :spacing   8
+       :alignment :center-left
+       :children
+       [{:fx/type     :button
+         :style-class ["button" "quit-button"]
+         :text        (i18n/tr ctx :action/quit)
+         :on-action   {:event/type ::state/quit-requested}}
+        {:fx/type :region :h-box/hgrow :always}
+        {:fx/type     :button
+         :style-class ["button" "accent"]
+         :text        (i18n/tr ctx :action/close)
+         :on-action   {:event/type ::state/dialog-closed}}]}])))
+
+(defn startup-error-window
+  "Shown instead of the main window when a translation the user supplied cannot
+   be trusted.
+
+   Deliberately in English and deliberately not translated: the translations are
+   the very thing that is wrong, so none of them can be relied upon to explain
+   it. Continuing in English is offered as well as quitting, so that a bad file
+   dropped into the folder cannot leave the application permanently unusable."
+  [{:keys [problems]}]
+  {:fx/type          :stage
+   :title            (str (branding/app-name) " — translation problem")
+   :showing          true
+   :width            620
+   :height           420
+   :on-close-request {:event/type ::quit-requested}
+   :scene
+   {:fx/type     :scene
+    :stylesheets (branding/stylesheets)
+    :root
+    {:fx/type     :v-box
+     :style-class ["window-body"]
+     :spacing     10
+     :children
+     [{:fx/type :label :style-class ["title"]
+       :text    "A translation could not be used"}
+      {:fx/type :label :wrap-text true
+       :text    (str "One or more of the translation files in your languages "
+                     "folder was refused. Nothing has been changed and no data "
+                     "is at risk — the application simply will not show wording "
+                     "it cannot vouch for.")}
+      {:fx/type      :text-area
+       :v-box/vgrow  :always
+       :editable     false
+       :style-class  ["text-area" "details-log"]
+       :text         (str/join "\n\n" problems)}
+      {:fx/type   :h-box
+       :spacing   8
+       :alignment :center-left
+       :children
+       [{:fx/type   :button
+         :text      "Continue in English"
+         :on-action {:event/type ::continue-in-english}}
+        {:fx/type :region :h-box/hgrow :always}
+        {:fx/type     :button
+         :style-class ["button" "accent"]
+         :text        "Quit"
+         :on-action   {:event/type ::quit-requested}}]}]}}})
 
 (def help-topics
   "Questions a non-expert actually asks, in the order they come up."

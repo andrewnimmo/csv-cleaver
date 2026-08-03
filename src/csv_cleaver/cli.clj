@@ -20,8 +20,13 @@
   [["-l" "--locale TAG"
     (str "Interface language: " (str/join ", " i18n/supported)
          ". Defaults to the system language, or English.")
-    :validate [#(some? (i18n/normalise-tag %))
-               (str "Unknown language. Choose one of: " (str/join ", " i18n/supported))]]
+    ;; Only the shape is checked here. Whether we actually have that language
+    ;; cannot be known yet: an extra translation supplied by the user has not
+    ;; been loaded at the moment the command line is parsed, and refusing
+    ;; --locale it before looking would defeat the point of allowing one. An
+    ;; unknown code is reported at startup, not here.
+    :validate [#(re-matches #"[A-Za-z]{2,3}([-_].+)?" (str %))
+               "Use a language code such as en, de or it"]]
 
    ["-t" "--theme NAME"
     "Appearance: auto, light or dark. Auto follows the system and is the default."
@@ -30,6 +35,10 @@
                  ;; code calls it. Both are accepted.
                  (if (= k :auto) :system k))
     :validate [#{:system :light :dark} "Choose one of: auto, light, dark"]]
+
+   ["-L" "--languages DIR"
+    (str "Folder of extra translation files. Defaults to a languages folder "
+         "beside your settings. Each file is checked before use.")]
 
    ["-h" "--help" "Show this message and exit."]
    ["-V" "--version" "Show the version and exit."]])

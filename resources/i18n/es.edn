@@ -157,4 +157,6 @@
   :delimiter/comma "Coma  ,"
   :delimiter/semicolon "Punto y coma  ;"
   :delimiter/tab "Tabulador"
-  :delimiter/pipe "Barra vertical  |"}}
+  :delimiter/pipe "Barra vertical  |"
+
+  :action/quit "Salir"}}

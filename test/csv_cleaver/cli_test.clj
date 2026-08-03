@@ -17,12 +17,19 @@
     (is (= "ja" (get-in (cli/parse ["--locale=ja"]) [:options :locale])))
     (is (= "ja" (get-in (cli/parse ["-l" "ja"]) [:options :locale])))))
 
-(deftest an-unknown-language-is-refused-with-the-list
-  (let [{:keys [action status message]} (cli/parse ["--locale" "klingon"])]
-    (is (= :exit action))
-    (is (= 1 status))
-    (is (re-find #"Unknown language" message))
-    (is (re-find #"en, es, fr, de, zh, ja" message))))
+(deftest only-the-shape-of-a-language-code-is-checked-here
+  (testing "whether we have that language cannot be known until the user's own
+            translation files have been read, which happens after parsing"
+    (is (= "it" (get-in (cli/parse ["--locale" "it"]) [:options :locale]))
+        "a language not shipped is accepted; startup decides")
+    (let [{:keys [action status message]} (cli/parse ["--locale" "klingon"])]
+      (is (= :exit action) "but nonsense is still refused")
+      (is (= 1 status))
+      (is (re-find #"language code" message)))))
+
+(deftest a-folder-of-extra-translations-can-be-named
+  (is (= "/tmp/langs" (get-in (cli/parse ["--languages" "/tmp/langs"]) [:options :languages])))
+  (is (= "/tmp/langs" (get-in (cli/parse ["-L" "/tmp/langs"]) [:options :languages]))))
 
 (deftest the-theme-can-be-forced
   (is (= :dark (get-in (cli/parse ["--theme" "dark"]) [:options :theme])))

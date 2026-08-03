@@ -47,14 +47,17 @@ COMMON=(
   --java-options "-Dfile.encoding=UTF-8"
 )
 
+# The ${x[@]+...} form expands to nothing when the array is empty, rather than
+# failing under `set -u`.
 echo "==> jpackage (.deb)"
 jpackage --type deb --dest "$DIST_DIR" \
   --linux-shortcut \
   --linux-menu-group Utility \
-  "${COMMON[@]}" "${ICON_OPT[@]}"
+  "${COMMON[@]}" ${ICON_OPT[@]+"${ICON_OPT[@]}"}
 
 echo "==> jpackage (app image, for the AppImage)"
-jpackage --type app-image --dest "$APP_DIR" "${COMMON[@]}" "${ICON_OPT[@]}"
+jpackage --type app-image --dest "$APP_DIR" \
+  "${COMMON[@]}" ${ICON_OPT[@]+"${ICON_OPT[@]}"}
 
 if command -v appimagetool >/dev/null 2>&1; then
   echo "==> AppImage"

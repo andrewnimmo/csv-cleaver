@@ -153,4 +153,6 @@
   :delimiter/comma "逗号  ,"
   :delimiter/semicolon "分号  ;"
   :delimiter/tab "制表符"
-  :delimiter/pipe "竖线  |"}}
+  :delimiter/pipe "竖线  |"
+
+  :action/quit "退出"}}

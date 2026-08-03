@@ -157,4 +157,6 @@
   :delimiter/comma "Virgule  ,"
   :delimiter/semicolon "Point-virgule  ;"
   :delimiter/tab "Tabulation"
-  :delimiter/pipe "Barre verticale  |"}}
+  :delimiter/pipe "Barre verticale  |"
+
+  :action/quit "Quitter"}}

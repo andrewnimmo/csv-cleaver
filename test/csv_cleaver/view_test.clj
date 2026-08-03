@@ -227,6 +227,32 @@
       (is (text-containing d #"1,048,576"))
       (is (contains? (actions d) ::state/dialog-closed)))))
 
+(deftest quitting-is-reachable-but-not-by-accident
+  (testing "two clicks deep behind the information button, at the opposite end
+            of the row from Close, and not the accented button"
+    (is (not (contains? (actions (view/content state/initial)) ::state/quit-requested))
+        "not on the main window, where it could be hit on the way to Split")
+    (let [about (view/content (assoc state/initial :dialog :about))
+          quit  (first (filter #(= ::state/quit-requested (:event/type (:on-action %)))
+                               (nodes about)))]
+      (is (some? quit) "but present in About")
+      (is (contains? (set (:style-class quit)) "quit-button"))
+      (is (not (contains? (set (:style-class quit)) "accent"))
+          "the accented button in that row is Close, not Quit"))))
+
+(deftest the-startup-error-window-explains-itself-in-english
+  (testing "the translations are the thing that is broken, so none of them can
+            be trusted to describe the breakage"
+    (let [d (view/startup-error-window {:problems ["it → :action/cancel: contains control characters"
+                                                   "pt.edn: the file could not be read"]})]
+      (is (= :stage (:fx/type d)))
+      (is (text-containing d #"A translation could not be used"))
+      (is (text-containing d #"no data is at risk"))
+      (is (text-containing d #"contains control characters"))
+      (testing "and offers both ways out, so a bad file cannot brick the application"
+        (is (contains? (actions d) ::view/quit-requested))
+        (is (contains? (actions d) ::view/continue-in-english))))))
+
 (deftest presets-explain-themselves
   (tu/with-temp-dir [dir]
     (let [d (view/content (ready-state dir))]

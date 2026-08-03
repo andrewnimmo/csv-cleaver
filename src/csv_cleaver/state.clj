@@ -250,6 +250,10 @@
   [state _]
   (with-effects (assoc state :dialog (when-not (= :about (:dialog state)) :about))))
 
+(defmethod handle ::quit-requested
+  [state _]
+  (with-effects state [:quit]))
+
 (defmethod handle ::dialog-closed
   [state _]
   (with-effects (assoc state :dialog nil)))

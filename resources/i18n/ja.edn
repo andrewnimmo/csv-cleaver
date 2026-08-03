@@ -153,4 +153,6 @@
   :delimiter/comma "カンマ  ,"
   :delimiter/semicolon "セミコロン  ;"
   :delimiter/tab "タブ"
-  :delimiter/pipe "縦棒  |"}}
+  :delimiter/pipe "縦棒  |"
+
+  :action/quit "終了"}}

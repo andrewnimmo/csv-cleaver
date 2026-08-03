@@ -186,6 +186,52 @@ means sixty-five thousand to a German user.
 **R32.** Plural wording follows each language's own rule. French treats zero as
 singular; Chinese and Japanese have no plural form.
 
+### Translations supplied by the user
+
+**R44.** A language may be added without rebuilding, by placing an EDN file in a
+`languages` folder beside the settings file, or in a folder named with
+`--languages`. Such a language is then selectable from `--locale` and from the
+About dialog like any other.
+
+**R45.** Everything read from that folder is untrusted and validated before use.
+Nothing in such a file is ever evaluated: `clojure.edn/read-string` honours no
+reader tags, unlike `clojure.core/read-string`.
+
+**R46.** A supplied translation may only replace wording the application already
+has. A file containing a key that does not exist in English is refused in its
+entirety. This is what prevents a file dropped into the folder from introducing
+a prompt the application would never otherwise show.
+
+**R47.** A file is refused if it: is larger than 256 KB; is not readable as EDN;
+is not a map with a `:strings` section; has no `:meta :name`; contains a phrase
+longer than 2,000 characters; contains control characters or bidirectional
+overrides, which can make displayed text read differently from what is stored;
+has a plural entry with no `:other` form; or uses a different set of `{0}`
+placeholders from the English phrase it replaces.
+
+**R48.** A file name that is not a two- or three-letter language code is
+refused, which also means nothing can address a path outside the folder.
+
+**R49.** Where a supplied file shares a tag with a shipped translation, the two
+are layered: supplied phrases win, shipped ones fill the remainder.
+
+**R50.** If any file is refused, the application does not open its main window.
+It shows an error window naming each problem, with **Quit** and **Continue in
+English**. Both are offered deliberately: making a refused file fatal would let
+anything dropped into that folder leave the application permanently unable to
+start, which is a worse failure than the one being guarded against. The problems
+are also written to standard error.
+
+**R51.** The error window is in English and is not translated, because the
+translations are the thing that is wrong.
+
+### Quitting
+
+**R52.** The application can be quit from within its own interface, not only by
+closing the window. The control lives in the About dialog, at the opposite end
+of its row from the primary action, and is not the accented button — reachable
+deliberately, never on the way to something else.
+
 ---
 
 ## 7. Behaviour of the interface
