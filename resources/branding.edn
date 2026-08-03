@@ -14,7 +14,7 @@
 ;; -color-accent-emphasis and -color-accent-subtle.
 
 {:name      "CSV Cleaver"
- :tagline   "Split large CSV files into pieces Excel can open"
+ :tagline   nil
  :version   "2.0.0"
  :bundle-id "dev.nimmo.csvcleaver"
  :vendor    "Andrew Nimmo"

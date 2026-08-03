@@ -256,7 +256,7 @@
                                                     :progress p}))))
     (let [done (state/apply-event running {:event/type ::state/split-succeeded
                                            :result {:files [:a] :elapsed-ms 10}})]
-      (is (= :done (:phase done)))
+      (is (= :ready (:phase done)) "back to the options, with the outcome above them")
       (is (= [:a] (get-in done [:result :files]))))))
 
 (deftest a-failed-split-says-so-without-losing-the-file

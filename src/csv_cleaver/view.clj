@@ -73,9 +73,14 @@
    On macOS this becomes the system menu bar at the top of the screen. The
    information and question-mark buttons stay as the quick route to the same
    two overlays."
-  [ctx]
+  [ctx system-menu?]
   {:fx/type             :menu-bar
    :use-system-menu-bar true
+   ;; On macOS the menus move to the bar at the top of the screen, but the node
+   ;; itself stays in the layout and reserves about ten pixels of empty strip
+   ;; under the title bar. Leaving it unmanaged keeps it in the scene — which is
+   ;; what populates the system bar — while taking no room.
+   :managed             (not system-menu?)
    :menus
    [{:fx/type :menu
      :text    (i18n/tr ctx :menu/file)
@@ -111,11 +116,9 @@
 (defn drop-zone
   [{:keys [drag-over?] :as st}]
   (let [ctx (state/ctx st)]
-    {:fx/type         :v-box
-     :style-class     (cond-> ["drop-zone"] drag-over? (conj "active"))
-     :on-drag-over    {:event/type ::drag-over}
-     :on-drag-exited  {:event/type ::state/drag-exited}
-     :on-drag-dropped {:event/type ::drag-dropped}
+    ;; The drag handlers live on the whole window, not here — see `content`.
+    {:fx/type     :v-box
+     :style-class (cond-> ["drop-zone"] drag-over? (conj "active"))
      :children
      [{:fx/type :label :style-class ["headline"]
        :text    (i18n/tr ctx (if drag-over? :empty/headline-active :empty/headline))}
@@ -159,6 +162,24 @@
 
 ;; ── File card ───────────────────────────────────────────────────────────────
 
+(defn separated-key
+  "Which phrase describes this separator on the file card."
+  [delimiter]
+  (case delimiter
+    \; :file/separated-semicolons
+    \tab :file/separated-tabs
+    \| :file/separated-pipes
+    :file/separated-commas))
+
+(defn separator-name-key
+  "The separator's name in running text, for the Advanced note."
+  [delimiter]
+  (case delimiter
+    \; :delimiter/name-semicolon
+    \tab :delimiter/name-tab
+    \| :delimiter/name-pipe
+    :delimiter/name-comma))
+
 (defn file-chips
   [{:keys [survey has-header?] :as st}]
   (let [ctx    (state/ctx st)
@@ -170,15 +191,35 @@
                           rows (i18n/number ctx rows))}
       {:fx/type chip :text (fmt/file-size ctx (:bytes survey))}
       {:fx/type chip :text (i18n/tr ctx :file/encoding (get-in survey [:encoding :label]))}
-      (when-let [delimiter-key (case (:delimiter survey)
-                                 \; :file/separated-semicolons
-                                 \tab :file/separated-tabs
-                                 \| :file/separated-pipes
-                                 nil)]
-        {:fx/type chip :text (i18n/tr ctx delimiter-key)})
+      ;; Always shown, including for a comma. Reporting the separator only when
+      ;; it is unusual is the opposite of what the encoding chip does, and it
+      ;; leaves the commonest case as the one you cannot verify.
+      {:fx/type chip :text (i18n/tr ctx (separated-key (:delimiter survey)))}
       (if damage
         {:fx/type chip :kind :warn :text (:headline damage)}
         {:fx/type chip :kind :good :text (i18n/tr ctx :file/healthy)})])))
+
+(defn preview-rows
+  "The first rows as they were parsed.
+
+   This is what makes the separator and the header decision checkable rather
+   than merely asserted: seeing id · name · city above 1 · Ann · Leeds tells you
+   both that the columns were found correctly and which row is which."
+  [{:keys [survey] :as st}]
+  (let [ctx  (state/ctx st)
+        rows (:preview survey)]
+    (when (seq rows)
+      {:fx/type :v-box
+       :spacing 3
+       :children
+       [{:fx/type :label :style-class ["hint"] :text (i18n/tr ctx :file/preview)}
+        ;; One block, not one per row: separate boxes for consecutive lines of
+        ;; the same file read as unrelated things.
+        {:fx/type      :label
+         :style-class  ["file-list"]
+         :max-width    Double/MAX_VALUE
+         :text-overrun :ellipsis
+         :text         (str/join "\n" (for [row rows] (str/join "   ·   " row)))}]})))
 
 (defn header-question
   "Shown only when the detection genuinely cannot tell whether the first row
@@ -188,17 +229,16 @@
    \"header\" can still recognise id · name · city as labels the moment they see
    them. Asking in the abstract would get a shrug; asking about what is on the
    screen gets an answer."
-  [{:keys [survey] :as st}]
+  [st]
   (let [ctx (state/ctx st)]
     {:fx/type     :v-box
      :style-class ["callout" "warning"]
      :spacing     6
      :children
+     ;; The rows themselves are shown just above by preview-rows, so the
+     ;; question does not repeat them.
      [{:fx/type :label :style-class ["label"] :wrap-text true
        :text    (i18n/tr ctx :header/question)}
-      {:fx/type :label :style-class ["file-list"] :max-width Double/MAX_VALUE
-       :text    (str (i18n/tr ctx :header/first-row) ":  "
-                     (str/join "   ·   " (:first-row survey)))}
       {:fx/type   :h-box
        :spacing   8
        :children
@@ -234,6 +274,7 @@
           :text      (i18n/tr ctx :action/change)
           :on-action {:event/type ::state/browse-input-requested}}]}
        {:fx/type :flow-pane :hgap 6 :vgap 6 :children (file-chips st)}
+       (preview-rows st)
        (when damage
          {:fx/type :label :style-class ["hint"] :wrap-text true :text (:detail damage)})
        (when (state/header-uncertain? st) (header-question st))])}))
@@ -402,7 +443,9 @@
           :items            (mapv #(i18n/tr ctx (:label-key %)) state/selectable-delimiters)
           :on-value-changed {:event/type ::delimiter-picked :event/value-key :label}}
          {:fx/type :label :style-class ["hint"] :wrap-text true
-          :text    (i18n/tr ctx :advanced/delimiter-hint)}]}
+          :text    (str (i18n/tr ctx :advanced/delimiter-detected
+                                 (i18n/tr ctx (separator-name-key (:delimiter survey))))
+                        " " (i18n/tr ctx :advanced/delimiter-hint))}]}
 
        {:fx/type :v-box
         :spacing 4
@@ -419,13 +462,18 @@
 
 ;; ── Ready ───────────────────────────────────────────────────────────────────
 
+;; Defined below with the rest of the result wording, but shown at the top of
+;; the ready screen.
+(declare result-panel)
+
 (defn ready-body
   [{:keys [advanced-open? error] :as st}]
   (let [ctx (state/ctx st)]
     {:fx/type :v-box
      :children
      (compact
-      [(file-card st)
+      [(result-panel st)
+       (file-card st)
        (when error (callout {:kind :danger :body (fmt/message ctx error)}))
        {:fx/type :label :style-class ["section-label"] :text (i18n/tr ctx :options/split-into)}
        (mode-toggle st)
@@ -489,26 +537,32 @@
               (for [{:keys [^File file rows]} (:written result)]
                 (i18n/tr ctx :done/log-line (.getName file) (i18n/number ctx rows))))))
 
-(defn done-body
-  [{:keys [result survey details-open?] :as st}]
-  (let [ctx    (state/ctx st)
-        damage (fmt/damage-summary ctx survey)]
-    {:fx/type :v-box
-     :spacing 10
-     :children
-     (compact
-      [(callout {:kind     (if (:cancelled? result) :warning :success)
-                 :headline (fmt/completion-sentence ctx result)
-                 :body     (:detail damage)})
-       (disclosure {:open? details-open?
-                    :text  (i18n/tr ctx :done/details)
-                    :event {:event/type ::state/details-toggled}})
-       (when details-open?
-         {:fx/type        :text-area
-          :style-class    ["text-area" "details-log"]
-          :editable       false
-          :pref-row-count 8
-          :text           (details-log st)})])}))
+(defn result-panel
+  "What the last split did, shown above the options rather than on a screen of
+   its own.
+
+   There used to be a separate finished screen, which was a dead end: the only
+   way on was to start again with another file, so adjusting the row count and
+   re-running meant re-choosing the same file. Keeping the options in place and
+   putting the outcome above them removes a screen and the dead end together."
+  [{:keys [result details-open?] :as st}]
+  (let [ctx (state/ctx st)]
+    (when result
+      {:fx/type :v-box
+       :spacing 6
+       :children
+       (compact
+        [(callout {:kind     (if (:cancelled? result) :warning :success)
+                   :headline (fmt/completion-sentence ctx result)})
+         (disclosure {:open? details-open?
+                      :text  (i18n/tr ctx :done/details)
+                      :event {:event/type ::state/details-toggled}})
+         (when details-open?
+           {:fx/type        :text-area
+            :style-class    ["text-area" "details-log"]
+            :editable       false
+            :pref-row-count 8
+            :text           (details-log st)})])})))
 
 ;; ── Overlays ────────────────────────────────────────────────────────────────
 
@@ -562,8 +616,10 @@
     (overlay
      [{:fx/type :label :style-class ["title"]
        :text    (i18n/tr ctx :about/title (branding/app-name))}
+      ;; A rebranded application keeps whatever tagline its owner set, in their
+      ;; words. The default one is ours, so it is translated like the rest.
       {:fx/type :label :style-class ["hint"] :wrap-text true
-       :text    (branding/value :tagline)}
+       :text    (or (branding/value :tagline) (i18n/tr ctx :about/tagline))}
       {:fx/type :label :text (i18n/tr ctx :about/version (branding/version))}
       {:fx/type :label :style-class ["hint"] :wrap-text true :text (i18n/tr ctx :about/licence)}
       {:fx/type :label :style-class ["hint"] :wrap-text true :text (i18n/tr ctx :about/notices)}
@@ -686,36 +742,40 @@
 ;; ── Footer ──────────────────────────────────────────────────────────────────
 
 (defn footer
-  [{:keys [phase] :as st}]
+  [{:keys [phase result] :as st}]
   (let [ctx    (state/ctx st)
         spacer {:fx/type :region :h-box/hgrow :always}]
     {:fx/type     :h-box
      :style-class ["footer-bar"]
      :alignment   :center-right
+     :spacing     8
      :children
      (case phase
        (:empty :scanning) [spacer]
 
-       :ready [spacer
-               {:fx/type     :button
-                :style-class ["button" "accent"]
-                :text        (i18n/tr ctx :action/split)
-                :disable     (not (state/ready? st))
-                :on-action   {:event/type ::state/split-requested}}]
+       ;; After a split the options are still here, so Split file stays the
+       ;; primary action and re-running is one press. The extra two only appear
+       ;; once there is a result to reveal or to move on from.
+       :ready (compact
+               [spacer
+                (when result
+                  {:fx/type   :button
+                   :text      (i18n/tr ctx :action/split-again)
+                   :on-action {:event/type ::state/reset}})
+                (when result
+                  {:fx/type   :button
+                   :text      (i18n/tr ctx (desktop/reveal-label-key))
+                   :on-action {:event/type ::state/reveal-requested}})
+                {:fx/type     :button
+                 :style-class ["button" "accent"]
+                 :text        (i18n/tr ctx :action/split)
+                 :disable     (not (state/ready? st))
+                 :on-action   {:event/type ::state/split-requested}}])
 
        :splitting [spacer
                    {:fx/type   :button
                     :text      (i18n/tr ctx :action/cancel)
-                    :on-action {:event/type ::state/cancel-requested}}]
-
-       :done [spacer
-              {:fx/type   :button
-               :text      (i18n/tr ctx :action/split-again)
-               :on-action {:event/type ::state/reset}}
-              {:fx/type     :button
-               :style-class ["button" "accent"]
-               :text        (i18n/tr ctx (desktop/reveal-label-key))
-               :on-action   {:event/type ::state/reveal-requested}}])}))
+                    :on-action {:event/type ::state/cancel-requested}}])}))
 
 ;; ── Root ────────────────────────────────────────────────────────────────────
 
@@ -725,17 +785,26 @@
     :empty     (empty-body st)
     :scanning  (scanning-body st)
     :ready     (ready-body st)
-    :splitting (splitting-body st)
-    :done      (done-body st)))
+    :splitting (splitting-body st)))
 
 (defn content
-  [{:keys [dialog] :as st}]
-  {:fx/type :stack-pane
+  "The window's contents.
+
+   Dropping a file is handled here rather than on the drop zone, so a new file
+   can be dropped anywhere at any time — including when one is already open,
+   which previously forced the user through the Browse dialog instead. No new
+   control was needed; a restriction was removed."
+  [{:keys [dialog drag-over?] :as st}]
+  {:fx/type         :stack-pane
+   :style-class     (cond-> ["drag-target"] drag-over? (conj "active"))
+   :on-drag-over    {:event/type ::drag-over}
+   :on-drag-exited  {:event/type ::state/drag-exited}
+   :on-drag-dropped {:event/type ::drag-dropped}
    :children
    (compact
     [{:fx/type :v-box
       :children
-      [(menu-bar (state/ctx st))
+      [(menu-bar (state/ctx st) (= :mac (desktop/os)))
        {:fx/type      :scroll-pane
         :v-box/vgrow  :always
         :fit-to-width true
@@ -750,16 +819,32 @@
        :help       (help-dialog st)
        nil)])})
 
+(def default-window {:width 720 :height 660})
+
+(defn remembered-window
+  "Where the window was left last time, if that is still a sensible place for
+   it. A size saved on a monitor that is no longer attached, or a nonsense one
+   from a corrupted settings file, is ignored rather than obeyed."
+  [{:keys [width height x y]}]
+  (let [sane? (fn [v lo hi] (and (number? v) (<= lo v hi)))]
+    (cond-> {}
+      (and (sane? width 400 20000) (sane? height 300 20000))
+      (assoc :width (double width) :height (double height))
+
+      (and (sane? x -20000 20000) (sane? y -20000 20000))
+      (assoc :x (double x) :y (double y)))))
+
 (defn root
   [st]
-  {:fx/type          :stage
-   :title            (branding/app-name)
-   :showing          true
-   :width            720
-   :height           660
-   :min-width        520
-   :min-height       460
-   :on-close-request {:event/type ::close-requested}
-   :scene            {:fx/type     :scene
-                      :stylesheets (branding/stylesheets)
-                      :root        (content st)}})
+  (merge
+   {:fx/type          :stage
+    :title            (branding/app-name)
+    :showing          true
+    :min-width        520
+    :min-height       460
+    :on-close-request {:event/type ::close-requested}}
+   default-window
+   (remembered-window (:window st))
+   {:scene {:fx/type     :scene
+            :stylesheets (branding/stylesheets)
+            :root        (content st)}}))

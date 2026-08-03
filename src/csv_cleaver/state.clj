@@ -383,7 +383,10 @@
 
 (defmethod handle ::split-succeeded
   [state {:keys [result]}]
-  (with-effects (assoc state :phase :done :result result)))
+  ;; Back to the options, not on to a screen of their own. The outcome appears
+  ;; above the settings that produced it, so adjusting one and going again is a
+  ;; single press rather than a journey back through the file chooser.
+  (with-effects (assoc state :phase :ready :result result)))
 
 (defmethod handle ::split-failed
   [state {:keys [message]}]

@@ -48,7 +48,10 @@
   (str/join
    "\n"
    [(str (branding/app-name) " " (branding/version))
-    (branding/value :tagline)
+    ;; English, like the rest of this output: the language is what this parser
+    ;; is being asked to choose.
+    (or (branding/value :tagline)
+        (i18n/tr (i18n/context i18n/fallback-tag) :about/tagline))
     ""
     (str "Usage: " (-> (branding/app-name) str/lower-case (str/replace " " "-"))
          " [options]")

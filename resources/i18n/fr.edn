@@ -162,4 +162,13 @@
   :action/quit "Quitter"
 
   :menu/file "Fichier"
-  :menu/help "Aide"}}
+  :menu/help "Aide"
+
+  :about/tagline "Découpe les gros fichiers CSV en fichiers plus petits qu'Excel peut ouvrir."
+  :file/separated-commas "Séparé par des virgules"
+  :file/preview "Premières lignes"
+  :advanced/delimiter-detected "Détecté : {0}."
+  :delimiter/name-comma "virgules"
+  :delimiter/name-semicolon "points-virgules"
+  :delimiter/name-tab "tabulations"
+  :delimiter/name-pipe "barres verticales"}}

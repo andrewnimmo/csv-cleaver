@@ -15,7 +15,7 @@
   "Settings restored at startup. Deliberately excludes anything about a
    particular file — the window always opens ready for a new one."
   [:theme :language :template :mode :rows-text :size-text :advanced-open?
-   :excel-safe? :out-dir])
+   :excel-safe? :out-dir :window])
 
 (defn load-prefs
   "Read remembered settings, or an empty map when there are none."

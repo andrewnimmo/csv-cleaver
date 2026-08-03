@@ -267,7 +267,11 @@
       :delimiter      delimiter
       :records        (:records counted)
       :fields         (or (:fields counted) 0)
+      ;; The first two rows as parsed. Shown on the file card so that the
+      ;; separator and the header decision can both be checked by eye — neither
+      ;; is any use as a claim the user cannot verify.
       :first-row      (vec first-row)
+      :preview        (vec (take 2 preview))
       :header         evidence
       :header-likely? (= :header (:verdict evidence))
       :damage         damage

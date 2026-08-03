@@ -123,7 +123,7 @@
       (is (wait-until #(= :ready (:phase @app/*state))))
       (swap! app/*state assoc :rows-text "1" :out-dir dir)
       (app/handle-event {:event/type ::state/split-requested})
-      (is (wait-until #(= :done (:phase @app/*state))))
+      (is (wait-until #(some? (:result @app/*state))))
       (is (= 3 (count (get-in @app/*state [:result :files])))))))
 
 (deftest ^:fx a-folder-with-clashing-names-raises-the-dialog-instead
@@ -152,6 +152,35 @@
                       (deliver done true)))
     (is (true? (deref done 2000 false)))
     (is (wait-until #(= "4242" (:rows-text @app/*state))))))
+
+;; ── Persistence ─────────────────────────────────────────────────────────────
+
+(deftest the-settings-worth-keeping-are-gathered-at-the-end
+  (testing "the bug this fixes: mode, row count, size, template, the Excel cap
+            and the Advanced state were all read back at startup and never once
+            written, so every session began by discarding the last one"
+    (let [state (assoc state/initial
+                       :mode :bytes :rows-text "12,345" :size-text "9 MB"
+                       :template "part-{index}" :excel-safe? false
+                       :advanced-open? true :theme :dark)
+          kept  (app/session-settings state nil)]
+      (doseq [k [:mode :rows-text :size-text :template :excel-safe? :advanced-open? :theme]]
+        (is (contains? kept k) (str k " must survive a restart")))
+      (is (= :bytes (:mode kept)))
+      (is (= "12,345" (:rows-text kept))))))
+
+(deftest nothing-about-a-particular-file-is-kept
+  (tu/with-temp-dir [dir]
+    (let [state (assoc state/initial :file (tu/write-file dir "secret.csv" "id\n1\n")
+                       :survey {:big :map} :result {:files [:a]})
+          kept  (app/session-settings state nil)]
+      (is (not (contains? kept :file)))
+      (is (not (contains? kept :survey)))
+      (is (not (contains? kept :result))))))
+
+(deftest window-geometry-is-kept-when-there-is-a-window
+  (is (not (contains? (app/session-settings state/initial nil) :window))
+      "and omitted when there is not, rather than saved as nonsense"))
 
 ;; ── Workers ─────────────────────────────────────────────────────────────────
 

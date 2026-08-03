@@ -158,4 +158,13 @@
   :action/quit "退出"
 
   :menu/file "文件"
-  :menu/help "帮助"}}
+  :menu/help "帮助"
+
+  :about/tagline "把很大的 CSV 文件拆分成 Excel 能够打开的较小文件。"
+  :file/separated-commas "以逗号分隔"
+  :file/preview "开头几行"
+  :advanced/delimiter-detected "检测到：{0}。"
+  :delimiter/name-comma "逗号"
+  :delimiter/name-semicolon "分号"
+  :delimiter/name-tab "制表符"
+  :delimiter/name-pipe "竖线"}}

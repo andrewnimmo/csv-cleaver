@@ -52,6 +52,27 @@
 
 ;; ── Root ────────────────────────────────────────────────────────────────────
 
+(deftest the-window-reopens-where-it-was-left
+  (is (= {:width 900.0 :height 700.0 :x 100.0 :y 50.0}
+         (view/remembered-window {:width 900 :height 700 :x 100 :y 50})))
+  (testing "a size saved on a monitor no longer attached, or from a corrupted
+            settings file, is ignored rather than obeyed"
+    (is (= {} (view/remembered-window {:width 10 :height 5})))
+    (is (= {} (view/remembered-window {:width 99999 :height 99999})))
+    (is (= {} (view/remembered-window {:width "wide" :height nil})))
+    (is (= {} (view/remembered-window nil))))
+  (testing "and a remembered size reaches the stage"
+    (is (= 900.0 (:width (view/root (assoc state/initial
+                                           :window {:width 900 :height 700})))))
+    (is (= 720 (:width (view/root state/initial))) "or the default")))
+
+(deftest the-menu-bar-takes-no-room-where-the-system-provides-one
+  (testing "the empty ten-pixel strip under the macOS title bar: the menus move
+            to the system bar but the node still reserved layout space"
+    (is (false? (:managed (view/menu-bar (:i18n state/initial) true))))
+    (is (true? (:managed (view/menu-bar (:i18n state/initial) false)))
+        "on Windows and Linux it is the actual menu bar and must be laid out")))
+
 (deftest the-window-has-a-title-and-a-scene
   (let [r (view/root state/initial)]
     (is (= :stage (:fx/type r)))
@@ -112,12 +133,58 @@
       (is (text-containing d #"nothing is lost"))
       (is (not (text-containing d #"Looks healthy"))))))
 
-(deftest an-unusual-delimiter-is-pointed-out
+(deftest the-separator-is-always-reported
+  (testing "including a comma. Naming it only when unusual left the commonest
+            case as the one the user could not check, which is backwards from
+            how the encoding is reported."
+    (tu/with-temp-dir [dir]
+      (is (text-containing (view/content (ready-state dir "id;name\n1;Ann\n2;Bob\n"))
+                           #"Separated by semicolons"))
+      (is (text-containing (view/content (ready-state dir)) #"Separated by commas")))))
+
+(deftest the-first-rows-are-shown-so-the-parse-can-be-checked
+  (testing "a claim about the separator and the header is worth little if the
+            user cannot see what it produced"
+    (tu/with-temp-dir [dir]
+      (let [d (view/content (ready-state dir))]
+        (is (text-containing d #"First rows"))
+        (is (text-containing d #"id   ·   name"))
+        (is (text-containing d #"1   ·   Ann"))))))
+
+(deftest the-outcome-appears-above-the-options-not-instead-of-them
+  (testing "the finished screen used to be a dead end: the only way on was to
+            start again with another file"
+    (tu/with-temp-dir [dir]
+      (let [d (view/content (assoc (ready-state dir)
+                                   :result {:files [:a :b] :elapsed-ms 6432 :written []}))]
+        (is (text-containing d #"2 files created"))
+        (is (text-containing d #"Split into") "the options are still here")
+        (is (text-containing d #"rows in each file"))
+        (testing "and splitting again is one press, with the extra actions beside it"
+          (is (contains? (actions d) ::state/split-requested))
+          (is (contains? (actions d) ::state/reveal-requested))
+          (is (contains? (actions d) ::state/reset)))))))
+
+(deftest before-a-split-the-footer-holds-only-the-primary-action
   (tu/with-temp-dir [dir]
-    (is (text-containing (view/content (ready-state dir "id;name\n1;Ann\n2;Bob\n"))
-                         #"Separated by semicolons"))
-    (testing "commas are unremarkable and go unmentioned"
-      (is (not (text-containing (view/content (ready-state dir)) #"Separated by"))))))
+    (let [d (view/content (ready-state dir))]
+      (is (contains? (actions d) ::state/split-requested))
+      (is (not (contains? (actions d) ::state/reveal-requested))
+          "nothing to reveal yet"))))
+
+(deftest a-file-can-be-dropped-anywhere-at-any-time
+  (testing "the handlers are on the window, not on the empty-state target, so a
+            second file does not have to go through the Browse dialog"
+    (tu/with-temp-dir [dir]
+      (doseq [[label st] {"empty" state/initial
+                          "ready" (ready-state dir)}]
+        (testing label
+          (let [d (view/content st)]
+            (is (= ::view/drag-dropped (:event/type (:on-drag-dropped d))))
+            (is (= ::view/drag-over (:event/type (:on-drag-over d))))))))
+    (testing "and the whole window acknowledges the drag"
+      (is (contains? (set (:style-class (view/content (assoc state/initial :drag-over? true))))
+                     "active")))))
 
 (deftest the-plan-is-spelled-out-before-anything-happens
   (tu/with-temp-dir [dir]
@@ -295,7 +362,7 @@
 (deftest finishing-says-what-happened-and-offers-the-folder
   (tu/with-temp-dir [dir]
     (let [d (view/content (assoc (ready-state dir)
-                                 :phase :done
+                                 :phase :ready
                                  :result {:files [:a :b] :elapsed-ms 6432
                                           :written [{:file (io/file "a_0001.csv") :rows 2}]}))]
       (is (text-containing d #"2 files created in 6.4 seconds"))
@@ -309,7 +376,7 @@
 (deftest the-details-log-lists-every-file-when-opened
   (tu/with-temp-dir [dir]
     (let [d (view/content (assoc (ready-state dir)
-                                 :phase :done
+                                 :phase :ready
                                  :details-open? true
                                  :result {:files [:a] :elapsed-ms 10
                                           :written [{:file (io/file "people_0001.csv") :rows 2}
@@ -320,7 +387,7 @@
 (deftest a-cancelled-split-is-reported-as-a-warning-not-a-success
   (tu/with-temp-dir [dir]
     (let [d (view/content (assoc (ready-state dir)
-                                 :phase :done
+                                 :phase :ready
                                  :result {:files [:a] :cancelled? true :written []}))]
       (is (text-containing d #"Stopped"))
       (is (contains? (style-classes d) "warning")))))

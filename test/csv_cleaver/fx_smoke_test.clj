@@ -55,13 +55,13 @@
                                  :progress {:rows-done 2 :files-done 1
                                             :current-name "people_0002.csv"
                                             :elapsed-ms 3000})
-           "done"         (assoc ready :phase :done
+           "done"         (assoc ready :phase :ready
                                  :result {:files [:a :b] :elapsed-ms 6432
                                           :written [{:file (File. "people_0001.csv") :rows 2}]})
-           "details open" (assoc ready :phase :done :details-open? true
+           "details open" (assoc ready :phase :ready :details-open? true
                                  :result {:files [:a] :elapsed-ms 10
                                           :written [{:file (File. "people_0001.csv") :rows 2}]})
-           "cancelled"    (assoc ready :phase :done
+           "cancelled"    (assoc ready :phase :ready
                                  :result {:files [] :cancelled? true :written []})
            "name clash"   (assoc ready :dialog :collisions
                                  :collisions (mapv #(File. dir (format "people_%04d.csv" %))

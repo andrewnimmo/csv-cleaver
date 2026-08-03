@@ -25,7 +25,7 @@
    (java.util Date)
    (javafx.application Application Platform)
    (javafx.scene.input DragEvent TransferMode)
-   (javafx.stage DirectoryChooser FileChooser FileChooser$ExtensionFilter))
+   (javafx.stage DirectoryChooser FileChooser FileChooser$ExtensionFilter Stage Window))
   (:gen-class))
 
 (defonce *state (atom state/initial))
@@ -132,8 +132,33 @@
     (Platform/exit)
     (System/exit (int status))))
 
+(defn primary-stage
+  "The application's window, or nil before it exists."
+  ^Stage []
+  (first (filter #(instance? Stage %) (Window/getWindows))))
+
+(defn session-settings
+  "What is worth keeping for next time: the settings the user chose, and where
+   they left the window.
+
+   Gathered at the moment of closing rather than saved as each one changes.
+   Typing into the rows box changes the state on every keystroke, and writing
+   the settings file that often would be absurd."
+  ([] (session-settings @*state (primary-stage)))
+  ([state ^Stage stage]
+   (cond-> (select-keys state prefs/remembered)
+     stage (assoc :window {:x      (.getX stage)
+                           :y      (.getY stage)
+                           :width  (.getWidth stage)
+                           :height (.getHeight stage)}))))
+
+(defn save-session!
+  []
+  (prefs/save-prefs! (session-settings)))
+
 (defmethod perform! :quit
   [_]
+  (save-session!)
   (exit! 0))
 
 (defmethod perform! :reveal
@@ -231,7 +256,7 @@
     (case (:event/type event)
       ::view/drag-over    (accept-drag! (:fx/event event))
       ::view/drag-dropped (complete-drop! (:fx/event event))
-      ::view/close-requested (Platform/exit)
+      ::view/close-requested (do (save-session!) (Platform/exit))
 
       ;; The picker shows translated labels, so the label has to be mapped back
       ;; to the character it stands for.

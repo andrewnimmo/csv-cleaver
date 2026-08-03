@@ -210,3 +210,11 @@
     -fx-text-fill: -color-fg-muted;
     -fx-padding: 4px 0 0 0;
 }
+
+/* A file may be dropped anywhere in the window, at any time. The whole surface
+   acknowledges the drag rather than only the empty-state target. */
+.drag-target.active {
+    -fx-border-color: -color-accent-emphasis;
+    -fx-border-width: 3px;
+    -fx-border-insets: 0;
+}

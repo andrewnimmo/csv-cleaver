@@ -95,7 +95,7 @@
                            :progress {:rows-done 758 :files-done 1
                                       :current-name "customers-2024_0002.csv"
                                       :elapsed-ms 4200})]
-     ["6-done"      (assoc ready :phase :done
+     ["6-done"      (assoc ready :phase :ready
                            :result {:files [:a :b :c] :elapsed-ms 6432
                                     :written [{:file (io/file "customers-2024_0001.csv") :rows 500}
                                               {:file (io/file "customers-2024_0002.csv") :rows 500}

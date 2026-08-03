@@ -248,6 +248,24 @@ quick one, the menu is the discoverable one.
 **R33.** No option is shown before a file has been chosen, because none of them
 means anything until then.
 
+**R33a.** Once a file is chosen, the first rows are shown as they were parsed.
+This is what makes the separator and the header decision checkable rather than
+merely asserted: seeing `id · name · city` above `1 · Ann · Leeds` demonstrates
+both that the columns were found correctly and which row is which.
+
+**R33b.** The detected separator is always named, including when it is a comma.
+Reporting it only when unusual leaves the commonest case as the one the user
+cannot verify, and is inconsistent with how the encoding is reported.
+
+**R33c.** A file may be dropped onto the window at any time, including when one
+is already open. There is no separate drop target to hit and no need to go
+through the file dialog to change files.
+
+**R33d.** There is no separate finished screen. The outcome of a split appears
+above the options, which remain as they were, so a setting can be adjusted and
+the split repeated in one press. A finished screen whose only exit is "start
+again with another file" is a dead end.
+
 **R34.** Before splitting, the consequence is stated in a sentence: how many
 files, of what size. A person who cannot judge 65,000 against 100,000 can judge
 19 files against 30.
@@ -261,6 +279,30 @@ one we recognise.
 
 **R37.** The application follows the system's light or dark appearance by
 default, and continues to follow it while running.
+
+### Remembering settings
+
+**R54.** Settings are stored in each platform's conventional location:
+`~/Library/Application Support/CSV Cleaver/` on macOS, `%APPDATA%\CSV Cleaver\`
+on Windows, `$XDG_CONFIG_HOME/csv-cleaver/` on Linux.
+
+**R55.** Kept between sessions: appearance, language, output folder, splitting
+mode, row count, size, file name pattern, the Excel row cap, whether Advanced
+was open, and the window's size and position.
+
+**R56.** Nothing about a particular file is kept — no path, no survey, no
+result. The window always opens ready for a new file.
+
+**R57.** Settings are gathered when the application closes rather than written
+as each one changes. Typing into the row-count box changes state on every
+keystroke, and writing the settings file that often would be absurd.
+
+**R58.** A remembered window size or position that is no longer sensible — from
+a monitor that has been detached, or a corrupted settings file — is ignored
+rather than obeyed.
+
+**R59.** An unreadable settings file is not an error. It means the defaults
+apply, which is what happened the first time the application was ever run.
 
 ---
 

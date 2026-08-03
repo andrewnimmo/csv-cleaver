@@ -162,4 +162,13 @@
   :action/quit "Beenden"
 
   :menu/file "Datei"
-  :menu/help "Hilfe"}}
+  :menu/help "Hilfe"
+
+  :about/tagline "Teilt große CSV-Dateien in kleinere auf, die Excel öffnen kann."
+  :file/separated-commas "Durch Kommas getrennt"
+  :file/preview "Erste Zeilen"
+  :advanced/delimiter-detected "Erkannt: {0}."
+  :delimiter/name-comma "Kommas"
+  :delimiter/name-semicolon "Semikolons"
+  :delimiter/name-tab "Tabulatoren"
+  :delimiter/name-pipe "senkrechte Striche"}}

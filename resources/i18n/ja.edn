@@ -158,4 +158,13 @@
   :action/quit "終了"
 
   :menu/file "ファイル"
-  :menu/help "ヘルプ"}}
+  :menu/help "ヘルプ"
+
+  :about/tagline "大きな CSV ファイルを、Excel で開ける小さなファイルに分割します。"
+  :file/separated-commas "カンマ区切り"
+  :file/preview "先頭の数行"
+  :advanced/delimiter-detected "判別結果: {0}。"
+  :delimiter/name-comma "カンマ"
+  :delimiter/name-semicolon "セミコロン"
+  :delimiter/name-tab "タブ"
+  :delimiter/name-pipe "縦棒"}}

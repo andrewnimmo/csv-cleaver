@@ -189,4 +189,13 @@
   :action/quit "Quit"
 
   :menu/file "File"
-  :menu/help "Help"}}
+  :menu/help "Help"
+
+  :about/tagline "Split large CSV files into smaller files that Excel can open."
+  :file/separated-commas "Separated by commas"
+  :file/preview "First rows"
+  :advanced/delimiter-detected "Detected: {0}."
+  :delimiter/name-comma "commas"
+  :delimiter/name-semicolon "semicolons"
+  :delimiter/name-tab "tabs"
+  :delimiter/name-pipe "vertical bars"}}
