@@ -186,4 +186,7 @@
   :delimiter/tab "Tab"
   :delimiter/pipe "Vertical bar  |"
 
-  :action/quit "Quit"}}
+  :action/quit "Quit"
+
+  :menu/file "File"
+  :menu/help "Help"}}

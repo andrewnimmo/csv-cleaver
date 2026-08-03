@@ -155,4 +155,7 @@
   :delimiter/tab "タブ"
   :delimiter/pipe "縦棒  |"
 
-  :action/quit "終了"}}
+  :action/quit "終了"
+
+  :menu/file "ファイル"
+  :menu/help "ヘルプ"}}

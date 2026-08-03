@@ -159,4 +159,7 @@
   :delimiter/tab "Tabulator"
   :delimiter/pipe "Senkrechter Strich  |"
 
-  :action/quit "Beenden"}}
+  :action/quit "Beenden"
+
+  :menu/file "Datei"
+  :menu/help "Hilfe"}}

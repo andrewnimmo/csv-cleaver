@@ -166,11 +166,14 @@ language. You can quit, or carry on in English.
 
 ## Quitting
 
-Close the window, or press the **i** button and choose **Quit**.
+**File → Quit**, or the usual keyboard shortcut for your computer — ⌘Q on macOS,
+Ctrl+Q on Windows and Linux. Closing the window works too.
 
-It is placed there, rather than on the main window, so that it cannot be pressed
-by mistake while you are working. Your computer's usual shortcut — ⌘Q on macOS,
-Alt+F4 on Windows — works as well.
+On a Mac the menu appears at the top of the screen, as it does for every other
+application; on Windows and Linux it is at the top of the window.
+
+Quit is in a menu rather than on the window itself so that it cannot be pressed
+by accident while you are working.
 
 ---
 

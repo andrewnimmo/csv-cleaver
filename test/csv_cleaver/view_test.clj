@@ -227,18 +227,41 @@
       (is (text-containing d #"1,048,576"))
       (is (contains? (actions d) ::state/dialog-closed)))))
 
-(deftest quitting-is-reachable-but-not-by-accident
-  (testing "two clicks deep behind the information button, at the opposite end
-            of the row from Close, and not the accented button"
-    (is (not (contains? (actions (view/content state/initial)) ::state/quit-requested))
-        "not on the main window, where it could be hit on the way to Split")
-    (let [about (view/content (assoc state/initial :dialog :about))
-          quit  (first (filter #(= ::state/quit-requested (:event/type (:on-action %)))
-                               (nodes about)))]
-      (is (some? quit) "but present in About")
-      (is (contains? (set (:style-class quit)) "quit-button"))
-      (is (not (contains? (set (:style-class quit)) "accent"))
-          "the accented button in that row is Close, not Quit"))))
+(deftest quitting-lives-where-people-look-for-it
+  (testing "in the File menu, which is both findable and impossible to brush
+            past. It was in the About dialog, which met the requirement that it
+            not be easy to press by accident and failed the requirement that it
+            be findable at all."
+    (let [d    (view/content state/initial)
+          quit (first (filter #(= ::state/quit-requested (:event/type (:on-action %)))
+                              (nodes d)))]
+      (is (= :menu-item (:fx/type quit)) "a menu item, not a button")
+      (is (= [:shortcut :q] (:accelerator quit)) "with the platform shortcut")
+      (is (empty? (filter #(and (= :button (:fx/type %))
+                                (= ::state/quit-requested (:event/type (:on-action %))))
+                          (nodes d)))
+          "and no button anywhere that could be hit on the way to Split"))))
+
+(deftest the-menu-bar-offers-the-conventional-things
+  (let [d     (view/content state/initial)
+        menus (of-type d :menu)]
+    (is (= ["File" "Help"] (mapv :text menus)))
+    (is (:use-system-menu-bar (first (of-type d :menu-bar)))
+        "so macOS puts it in the system bar where it belongs")
+    (testing "Help reaches the same two overlays as the icon buttons"
+      (let [items (mapcat :items menus)
+            types (set (keep #(:event/type (:on-action %)) items))]
+        (is (contains? types ::state/help-toggled))
+        (is (contains? types ::state/about-toggled))))
+    (testing "and the icon buttons remain as the quick route"
+      (is (some #(and (= :button (:fx/type %))
+                      (= ::state/about-toggled (:event/type (:on-action %))))
+                (nodes d))))))
+
+(deftest the-menus-are-translated-like-everything-else
+  (let [german (view/content (state/with-language state/initial "de"))]
+    (is (= ["Datei" "Hilfe"] (mapv :text (of-type german :menu))))
+    (is (some #(= "Beenden" (:text %)) (of-type german :menu-item)))))
 
 (deftest the-startup-error-window-explains-itself-in-english
   (testing "the translations are the thing that is broken, so none of them can

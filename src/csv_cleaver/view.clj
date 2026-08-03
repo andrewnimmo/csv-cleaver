@@ -61,9 +61,41 @@
    :tooltip     {:fx/type :tooltip :text tooltip}
    :on-action   event})
 
+(defn menu-bar
+  "A conventional menu bar, which exists for one reason: Quit has to be
+   somewhere a person would think to look for it.
+
+   It was in the About dialog, which met the requirement that it not be easy to
+   press by accident and comprehensively failed the requirement that it be
+   findable — nobody opens an About box looking for the way out. A menu is where
+   everyone looks, and needs two deliberate actions, so it satisfies both.
+
+   On macOS this becomes the system menu bar at the top of the screen. The
+   information and question-mark buttons stay as the quick route to the same
+   two overlays."
+  [ctx]
+  {:fx/type             :menu-bar
+   :use-system-menu-bar true
+   :menus
+   [{:fx/type :menu
+     :text    (i18n/tr ctx :menu/file)
+     :items   [{:fx/type     :menu-item
+                :text        (i18n/tr ctx :action/quit)
+                :accelerator [:shortcut :q]
+                :on-action   {:event/type ::state/quit-requested}}]}
+    {:fx/type :menu
+     :text    (i18n/tr ctx :menu/help)
+     :items   [{:fx/type   :menu-item
+                :text      (i18n/tr ctx :action/help)
+                :on-action {:event/type ::state/help-toggled}}
+               {:fx/type :separator-menu-item}
+               {:fx/type   :menu-item
+                :text      (i18n/tr ctx :action/about)
+                :on-action {:event/type ::state/about-toggled}}]}]})
+
 (defn header-bar
-  "The strip along the top holding the two overlay buttons. Deliberately the
-   only chrome: this window has one job and does not need a menu bar."
+  "The strip along the top holding the two overlay buttons — the quick route to
+   what the Help menu also offers."
   [ctx]
   {:fx/type     :h-box
    :style-class ["header-bar"]
@@ -559,24 +591,14 @@
           :selected    (= theme value)
           :on-action   {:event/type ::state/theme-changed :theme value}})}
 
-      {:fx/type :separator}
-
-      ;; Quit sits at the far end of the row from Close, is not the accented
-      ;; button, and is two clicks deep behind the information button. Nobody
-      ;; reaches it by accident on the way to something else.
+      ;; Quit is not here. It was, and that was wrong: an About box is not
+      ;; where anyone looks for the way out. It lives in the File menu.
       {:fx/type   :h-box
-       :spacing   8
-       :alignment :center-left
-       :children
-       [{:fx/type     :button
-         :style-class ["button" "quit-button"]
-         :text        (i18n/tr ctx :action/quit)
-         :on-action   {:event/type ::state/quit-requested}}
-        {:fx/type :region :h-box/hgrow :always}
-        {:fx/type     :button
-         :style-class ["button" "accent"]
-         :text        (i18n/tr ctx :action/close)
-         :on-action   {:event/type ::state/dialog-closed}}]}])))
+       :alignment :center-right
+       :children  [{:fx/type     :button
+                    :style-class ["button" "accent"]
+                    :text        (i18n/tr ctx :action/close)
+                    :on-action   {:event/type ::state/dialog-closed}}]}])))
 
 (defn startup-error-window
   "Shown instead of the main window when a translation the user supplied cannot
@@ -713,7 +735,8 @@
    (compact
     [{:fx/type :v-box
       :children
-      [{:fx/type      :scroll-pane
+      [(menu-bar (state/ctx st))
+       {:fx/type      :scroll-pane
         :v-box/vgrow  :always
         :fit-to-width true
         :style-class  ["scroll-pane" "edge-to-edge"]

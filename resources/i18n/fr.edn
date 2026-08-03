@@ -159,4 +159,7 @@
   :delimiter/tab "Tabulation"
   :delimiter/pipe "Barre verticale  |"
 
-  :action/quit "Quitter"}}
+  :action/quit "Quitter"
+
+  :menu/file "Fichier"
+  :menu/help "Aide"}}

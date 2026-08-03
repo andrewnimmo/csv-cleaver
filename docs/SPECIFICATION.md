@@ -228,9 +228,18 @@ translations are the thing that is wrong.
 ### Quitting
 
 **R52.** The application can be quit from within its own interface, not only by
-closing the window. The control lives in the About dialog, at the opposite end
-of its row from the primary action, and is not the accented button — reachable
-deliberately, never on the way to something else.
+closing the window. Quit lives in a **File menu**, with the platform's usual
+accelerator, and on macOS in the system menu bar.
+
+A menu satisfies both halves of the requirement at once: it is where people look
+for the way out, and it takes two deliberate actions, so it cannot be brushed.
+An earlier attempt put Quit in the About dialog. That could not be pressed by
+accident and could not be found either — nobody opens an About box looking for
+the way out. Being unreachable is a failure as much as being too reachable is.
+
+**R53.** The Help menu offers the same Help and About overlays as the ⓘ and ?
+buttons. Two routes to the same thing is not duplication: the buttons are the
+quick one, the menu is the discoverable one.
 
 ---
 

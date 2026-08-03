@@ -52,16 +52,6 @@
     -fx-text-fill: -color-fg-default;
 }
 
-/* Quit is deliberately quiet: reachable, never the thing your eye lands on. */
-.quit-button {
-    -fx-text-fill: -color-fg-muted;
-}
-
-.quit-button:hover {
-    -fx-text-fill: -color-danger-fg;
-    -fx-border-color: -color-danger-emphasis;
-}
-
 .section-label {
     -fx-font-weight: bold;
     -fx-text-fill: -color-fg-default;
