@@ -84,8 +84,17 @@ will happen before it happens:
 If that is not what you wanted, change the number and the sentence changes with
 it. Nothing has been written yet.
 
-**6. Choose where they go.** By default the new files go beside the original.
-Underneath, you are shown what they will be called.
+**6. Choose where they go.** By default the results go into a **new folder named
+after your file** — splitting `customers-2024.csv` creates a `customers-2024
+split` folder beside it. That way the results cannot get mixed up with anything
+else, and it is obvious which run they came from.
+
+Underneath, you are shown what the files will be called, and whether the folder
+already exists. If it does and already holds CSV files, you are told how many —
+so a folder chosen by mistake is visible now, rather than later.
+
+You can change the destination. Wherever you choose is remembered as the home
+for the next file's folder.
 
 **7. Press *Split file*.**
 
@@ -93,15 +102,26 @@ Underneath, you are shown what they will be called.
 
 ## Things it may tell you
 
-### "6 files would be replaced"
+### "6 CSV files in that folder use these names"
 
 The folder already contains files with the names this split would use. **Nothing
-has been written yet.** You have three choices:
+has been written yet.**
 
-- **Use a new folder** — the safe one. The results go into a new folder and
-  nothing existing is touched.
-- **Replace them** — the old files are overwritten.
+The application deliberately does not tell you what those files are, because it
+cannot know. They might be the results of a previous split — or they might be
+your own files, in a folder you picked by mistake. All it has observed is that
+the names clash. The dialog shows you the folder's full path so you can check.
+
+Your three choices:
+
+- **Use a new folder** — the safe one, and the one already selected. The results
+  go somewhere new and nothing existing is touched.
+- **Replace them** — the listed files are written over. Any *other* files whose
+  names match go to the Trash or Recycle Bin, so a mistake can be undone. On a
+  system with no Trash they are left alone and you are told so.
 - **Cancel** — nothing happens at all.
+
+Pressing Return chooses the safe option. Nothing is ever removed by accident.
 
 ### "12 rows look damaged"
 

@@ -72,8 +72,9 @@
   :action/reveal-windows "Mostrar en el Explorador"
   :action/reveal-other   "Abrir carpeta"
 
-  :clash/title {:one "Se reemplazaría un archivo" :other "Se reemplazarían {0} archivos"}
-  :clash/body  "Esa carpeta ya contiene archivos con los nombres que usaría esta división. Todavía no se ha escrito nada."
+  :clash/title {:one "Un archivo CSV de esa carpeta usa este nombre"
+                :other "{0} archivos CSV de esa carpeta usan estos nombres"}
+  :clash/body  "Todavía no se ha escrito nada. Esta aplicación no puede saber qué son esos archivos, solo que sus nombres coinciden."
   :clash/more  "y {0} más"
 
   :options/common-sizes "Tamaños habituales"
@@ -174,4 +175,11 @@
   :delimiter/name-pipe "barras verticales"
 
   :problem/nothing-to-split "Este archivo ya cabe en un solo archivo de {0} filas, así que no hay nada que dividir."
-  :done/removed-leftovers {:one "Se ha eliminado {0} archivo sobrante de una división anterior." :other "Se han eliminado {0} archivos sobrantes de una división anterior."}}}
+
+  :done/trashed {:one "Se ha movido a la papelera {0} archivo con un nombre coincidente." :other "Se han movido a la papelera {0} archivos con nombres coincidentes."}
+  :done/left-behind {:one "{0} archivo con un nombre coincidente sigue en esa carpeta." :other "{0} archivos con nombres coincidentes siguen en esa carpeta."}
+  :clash/folder "Carpeta: {0}"
+  :clash/replace-note "Reemplazar sobrescribe los archivos de la lista. Los demás con nombres coincidentes van a la papelera, así que se pueden recuperar."
+  :clash/replace-note-no-trash "Reemplazar sobrescribe los archivos de la lista. Los demás con nombres coincidentes se dejan intactos, porque este sistema no tiene papelera a la que moverlos."
+  :output/new-folder "Esta carpeta aún no existe y se creará."
+  :output/existing-csv {:one "Atención: esta carpeta ya contiene {0} archivo CSV." :other "Atención: esta carpeta ya contiene {0} archivos CSV."}}}

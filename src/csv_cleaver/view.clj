@@ -427,7 +427,25 @@
           :text      (i18n/tr ctx :action/change)
           :on-action {:event/type ::state/browse-output-requested}}]}
        (when (nil? (naming/template-problem template))
-         {:fx/type :label :style-class ["hint"] :text (naming-example st)})])}))
+         {:fx/type :label :style-class ["hint"] :text (naming-example st)})
+
+       ;; What is already at the destination, said before Split is pressed
+       ;; rather than at the moment something is about to be replaced. A folder
+       ;; chosen by mistake shows up here, while it is still harmless.
+       (let [{:keys [exists? csv-count]} (:out-dir-info st)]
+         (cond
+           (and exists? (pos? (long (or csv-count 0))))
+           {:fx/type     :label
+            :style-class ["hint" "caution"]
+            :wrap-text   true
+            :text        (i18n/trn ctx :output/existing-csv csv-count
+                                   (i18n/number ctx csv-count))}
+
+           (and (some? (:out-dir-info st)) (not exists?))
+           {:fx/type :label :style-class ["hint"] :wrap-text true
+            :text    (i18n/tr ctx :output/new-folder)}
+
+           :else nil))])}))
 
 ;; ── Advanced ────────────────────────────────────────────────────────────────
 
@@ -581,7 +599,8 @@
    putting the outcome above them removes a screen and the dead end together."
   [{:keys [result details-open?] :as st}]
   (let [ctx     (state/ctx st)
-        removed (count (:removed result))]
+        trashed (count (:trashed result))
+        left    (count (:left-behind result))]
     (when result
       {:fx/type      :v-box
        :spacing      6
@@ -592,9 +611,15 @@
        (compact
         [(callout {:kind     (if (:cancelled? result) :warning :success)
                    :headline (fmt/completion-sentence ctx result)
-                   :body     (when (pos? removed)
-                               (i18n/trn ctx :done/removed-leftovers removed
-                                         (i18n/number ctx removed)))})
+                   :body     (str/join
+                              " "
+                              (cond-> []
+                                (pos? trashed)
+                                (conj (i18n/trn ctx :done/trashed trashed
+                                                (i18n/number ctx trashed)))
+                                (pos? left)
+                                (conj (i18n/trn ctx :done/left-behind left
+                                                (i18n/number ctx left)))))})
          (disclosure {:open? details-open?
                       :text  (i18n/tr ctx :done/details)
                       :event {:event/type ::state/details-toggled}})
@@ -620,7 +645,7 @@
      :children             (compact children)}]})
 
 (defn collision-dialog
-  [{:keys [collisions] :as st}]
+  [{:keys [collisions out-dir] :as st}]
   (let [ctx   (state/ctx st)
         shown (take 4 collisions)
         extra (- (count collisions) (count shown))
@@ -628,12 +653,21 @@
     (overlay
      [{:fx/type :label :style-class ["label" "title"] :wrap-text true
        :text    (i18n/trn ctx :clash/title total (i18n/number ctx total))}
+      ;; The folder, spelled out. If the wrong one was chosen this is where it
+      ;; becomes obvious, and it is the last moment at which that costs nothing.
+      {:fx/type :label :style-class ["hint"] :wrap-text true
+       :text    (i18n/tr ctx :clash/folder (path-of out-dir))}
       {:fx/type :label :wrap-text true :text (i18n/tr ctx :clash/body)}
       {:fx/type :label :style-class ["file-list"] :max-width Double/MAX_VALUE
        :text    (str/join "\n"
                           (concat (map (fn [^File f] (.getName f)) shown)
                                   (when (pos? extra)
                                     [(i18n/tr ctx :clash/more (i18n/number ctx extra))])))}
+      ;; Exactly what "Replace them" will do, including to files not listed.
+      {:fx/type :label :style-class ["hint"] :wrap-text true
+       :text    (i18n/tr ctx (if (desktop/trash-supported?)
+                               :clash/replace-note
+                               :clash/replace-note-no-trash))}
       {:fx/type   :h-box
        :spacing   8
        :alignment :center-right
@@ -645,8 +679,11 @@
          :style-class ["button" "danger"]
          :text        (i18n/tr ctx :action/replace)
          :on-action   {:event/type ::state/collision-resolved :choice :replace}}
+        ;; The safe way out is the accented one, and the one keyboard focus
+        ;; lands on. Nobody should reach a deletion by pressing Return.
         {:fx/type     :button
          :style-class ["button" "accent"]
+         :default-button true
          :text        (i18n/tr ctx :action/new-folder)
          :on-action   {:event/type ::new-folder-requested}}]}])))
 

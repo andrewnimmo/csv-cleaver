@@ -72,8 +72,9 @@
   :action/reveal-windows "Im Explorer anzeigen"
   :action/reveal-other   "Ordner öffnen"
 
-  :clash/title {:one "Eine Datei würde ersetzt" :other "{0} Dateien würden ersetzt"}
-  :clash/body  "In diesem Ordner liegen bereits Dateien mit den Namen, die diese Aufteilung verwenden würde. Es wurde noch nichts geschrieben."
+  :clash/title {:one "Eine CSV-Datei in diesem Ordner trägt diesen Namen"
+                :other "{0} CSV-Dateien in diesem Ordner tragen diese Namen"}
+  :clash/body  "Es wurde noch nichts geschrieben. Diese Anwendung kann nicht wissen, was diese Dateien sind — nur, dass ihre Namen übereinstimmen."
   :clash/more  "und {0} weitere"
 
   :options/common-sizes "Übliche Größen"
@@ -174,4 +175,11 @@
   :delimiter/name-pipe "senkrechte Striche"
 
   :problem/nothing-to-split "Diese Datei passt bereits in eine Datei mit {0} Zeilen, es gibt also nichts aufzuteilen."
-  :done/removed-leftovers {:one "{0} übrig gebliebene Datei aus einer früheren Aufteilung wurde entfernt." :other "{0} übrig gebliebene Dateien aus einer früheren Aufteilung wurden entfernt."}}}
+
+  :done/trashed {:one "{0} Datei mit übereinstimmendem Namen wurde in den Papierkorb verschoben." :other "{0} Dateien mit übereinstimmenden Namen wurden in den Papierkorb verschoben."}
+  :done/left-behind {:one "{0} Datei mit übereinstimmendem Namen liegt weiterhin in diesem Ordner." :other "{0} Dateien mit übereinstimmenden Namen liegen weiterhin in diesem Ordner."}
+  :clash/folder "Ordner: {0}"
+  :clash/replace-note "Ersetzen überschreibt die aufgeführten Dateien. Andere mit übereinstimmenden Namen wandern in den Papierkorb und lassen sich zurückholen."
+  :clash/replace-note-no-trash "Ersetzen überschreibt die aufgeführten Dateien. Andere mit übereinstimmenden Namen bleiben unangetastet, da dieses System keinen Papierkorb dafür hat."
+  :output/new-folder "Dieser Ordner existiert noch nicht und wird angelegt."
+  :output/existing-csv {:one "Achtung: In diesem Ordner liegt bereits {0} CSV-Datei." :other "Achtung: In diesem Ordner liegen bereits {0} CSV-Dateien."}}}

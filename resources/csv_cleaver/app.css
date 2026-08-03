@@ -224,3 +224,8 @@
     -fx-border-width: 3px;
     -fx-border-insets: 0;
 }
+
+/* Says what is already at the destination, before anything is written. */
+.caution {
+    -fx-text-fill: -color-warning-fg;
+}

@@ -11,6 +11,7 @@
    [clojure.string :as str]
    [csv-cleaver.cli :as cli]
    [csv-cleaver.desktop :as desktop]
+   [csv-cleaver.files :as files]
    [csv-cleaver.i18n :as i18n]
    [csv-cleaver.prefs :as prefs]
    [csv-cleaver.scan :as scan]
@@ -111,6 +112,12 @@
 (defmethod perform! :scan
   [[_ request]]
   (run-async! #(scan-worker request dispatch!)))
+
+(defmethod perform! :inspect-out-dir
+  [[_ dir]]
+  (run-async! #(dispatch! {:event/type ::state/out-dir-inspected
+                           :dir        dir
+                           :info       (files/inspect-dir dir)})))
 
 (defmethod perform! :check-collisions
   [[_ request]]

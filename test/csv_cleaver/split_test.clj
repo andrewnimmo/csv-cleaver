@@ -327,27 +327,48 @@
 
 ;; ── replacing, and what "replace" has to mean ───────────────────────────────
 
-(deftest replacing-removes-the-leftovers-it-promised-to-replace
-  (testing "the user is shown a list and agrees to those files being replaced.
-            Leaving behind the ones this run happens not to write strands output
-            from an earlier, larger split in the folder, looking for all the
-            world like part of the new results."
+(deftest replacing-clears-the-matching-files-it-does-not-write
+  (testing "the user was shown a list and agreed to those files being replaced.
+            Leaving the ones this run happens not to write produces a folder
+            that is part new and part old with nothing to tell them apart.
+
+            They go to the Trash, never to deletion: these files were recognised
+            by name alone, and the folder may have been chosen by mistake."
     (tu/with-temp-dir [dir]
-      ;; An earlier, larger split left eight files behind.
       (doseq [i (range 1 9)]
-        (tu/write-file dir (format "people_%04d.csv" i) "stale\n"))
-      (let [s     (survey-of dir "people.csv" "id\n1\n2\n3\n4\n")
-            old   (split/collisions {:survey s :out-dir dir})
-            _     (is (= 8 (count old)))
-            plan  (split/plan {:survey s :mode :rows :value 2 :has-header? true})
-            r     (split/execute! {:survey s :out-dir dir :mode :rows :value 2
-                                   :has-header? true :include-header? true
-                                   :plan plan :replace-existing old})]
+        (tu/write-file dir (format "people_%04d.csv" i) "not necessarily ours\n"))
+      (let [s       (survey-of dir "people.csv" "id\n1\n2\n3\n4\n")
+            old     (split/collisions {:survey s :out-dir dir})
+            _       (is (= 8 (count old)))
+            binned  (atom [])
+            r       (split/execute! {:survey s :out-dir dir :mode :rows :value 2
+                                     :has-header? true :include-header? true
+                                     :plan (split/plan {:survey s :mode :rows :value 2
+                                                        :has-header? true})
+                                     :replace-existing old
+                                     :remove-file (fn [f] (swap! binned conj f)
+                                                    (.delete ^File f))})]
         (is (= 2 (count (:files r))) "this run writes two")
-        (is (= 6 (count (:removed r))) "and the six it did not write are gone")
-        (is (= ["people_0001.csv" "people_0002.csv"]
-               (tu/names (split/collisions {:survey s :out-dir dir})))
-            "so the folder holds this split's output and nothing else")))))
+        (is (= 6 (count (:trashed r))) "and the six it did not write are binned")
+        (is (empty? (:left-behind r)))
+        (is (= 6 (count @binned)) "through the injected remover, never a delete")))))
+
+(deftest what-cannot-be-binned-is-reported-rather-than-deleted
+  (testing "on a platform with no Trash nothing is removed, and the window says
+            so instead of quietly turning a recoverable act into a permanent one"
+    (tu/with-temp-dir [dir]
+      (doseq [i (range 1 5)]
+        (tu/write-file dir (format "people_%04d.csv" i) "theirs\n"))
+      (let [s (survey-of dir "people.csv" "id\n1\n2\n")
+            r (split/execute! {:survey s :out-dir dir :mode :rows :value 1
+                               :has-header? true :include-header? true
+                               :plan (split/plan {:survey s :mode :rows :value 1
+                                                  :has-header? true})
+                               :replace-existing (split/collisions {:survey s :out-dir dir})
+                               :remove-file (constantly false)})]
+        (is (empty? (:trashed r)))
+        (is (= 2 (count (:left-behind r))))
+        (is (.exists (io/file dir "people_0003.csv")) "and they are all still there")))))
 
 (deftest a-failed-or-cancelled-split-never-removes-anything
   (testing "leftovers are cleared only after success, so a failure costs nobody

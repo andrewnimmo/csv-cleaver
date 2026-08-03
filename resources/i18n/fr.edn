@@ -72,8 +72,9 @@
   :action/reveal-windows "Afficher dans l'Explorateur"
   :action/reveal-other   "Ouvrir le dossier"
 
-  :clash/title {:one "Un fichier serait remplacé" :other "{0} fichiers seraient remplacés"}
-  :clash/body  "Ce dossier contient déjà des fichiers portant les noms que ce découpage utiliserait. Rien n'a encore été écrit."
+  :clash/title {:one "Un fichier CSV de ce dossier porte ce nom"
+                :other "{0} fichiers CSV de ce dossier portent ces noms"}
+  :clash/body  "Rien n'a encore été écrit. Cette application ne peut pas savoir ce que sont ces fichiers, seulement que leurs noms coïncident."
   :clash/more  "et {0} de plus"
 
   :options/common-sizes "Tailles courantes"
@@ -174,4 +175,11 @@
   :delimiter/name-pipe "barres verticales"
 
   :problem/nothing-to-split "Ce fichier tient déjà dans un seul fichier de {0} lignes, il n'y a donc rien à découper."
-  :done/removed-leftovers {:one "{0} fichier restant d'un découpage précédent a été supprimé." :other "{0} fichiers restants d'un découpage précédent ont été supprimés."}}}
+
+  :done/trashed {:one "{0} fichier portant un nom identique a été mis à la corbeille." :other "{0} fichiers portant des noms identiques ont été mis à la corbeille."}
+  :done/left-behind {:one "{0} fichier portant un nom identique se trouve toujours dans ce dossier." :other "{0} fichiers portant des noms identiques se trouvent toujours dans ce dossier."}
+  :clash/folder "Dossier : {0}"
+  :clash/replace-note "Remplacer écrase les fichiers listés. Les autres portant des noms identiques vont à la corbeille et peuvent donc être récupérés."
+  :clash/replace-note-no-trash "Remplacer écrase les fichiers listés. Les autres portant des noms identiques ne sont pas touchés, car ce système n'a pas de corbeille où les mettre."
+  :output/new-folder "Ce dossier n'existe pas encore et sera créé."
+  :output/existing-csv {:one "Attention : ce dossier contient déjà {0} fichier CSV." :other "Attention : ce dossier contient déjà {0} fichiers CSV."}}}

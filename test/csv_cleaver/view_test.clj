@@ -436,22 +436,50 @@
 
 ;; ── Name clash ──────────────────────────────────────────────────────────────
 
-(deftest the-clash-dialog-leads-with-the-safe-choice
-  (tu/with-temp-dir [dir]
-    (let [files (mapv #(io/file dir (format "people_%04d.csv" %)) (range 1 7))
-          d     (view/content (assoc (ready-state dir) :dialog :collisions :collisions files))]
-      (is (text-containing d #"6 files would be replaced"))
-      (is (text-containing d #"Nothing has been written yet"))
-      (testing "the list is truncated rather than filling the screen"
-        (is (text-containing d #"and 2 more")))
-      (testing "replacing is offered, but it is the dangerous-looking one"
-        (is (contains? (style-classes d) "danger")))
-      (is (contains? (actions d) ::view/new-folder-requested))
-      (is (contains? (actions d) ::state/collision-resolved)))))
+(deftest the-clash-dialog-claims-nothing-it-cannot-know
+  (testing "those files might be output from an earlier split, or they might be
+            the user's own files in a folder chosen by mistake. The wording says
+            only what was observed: names that clash."
+    (tu/with-temp-dir [dir]
+      (let [files (mapv #(io/file dir (format "people_%04d.csv" %)) (range 1 7))
+            d     (view/content (assoc (ready-state dir) :dialog :collisions
+                                       :collisions files :out-dir dir))]
+        (is (text-containing d #"6 CSV files in that folder use these names"))
+        (is (text-containing d #"cannot tell what those files are"))
+        (is (not (text-containing d #"earlier split"))
+            "no claim about where they came from")
+        (testing "and the folder is spelled out, so a wrong one is visible now"
+          (is (text-containing d (re-pattern (java.util.regex.Pattern/quote
+                                              (.getName dir))))))
+        (testing "the list is truncated rather than filling the screen"
+          (is (text-containing d #"and 2 more")))
+        (testing "replacing looks dangerous; the safe way out takes the accent
+                  and the keyboard default, so Return never deletes anything"
+          (is (contains? (style-classes d) "danger"))
+          (let [safe (first (filter #(= ::view/new-folder-requested
+                                        (:event/type (:on-action %)))
+                                    (nodes d)))]
+            (is (true? (:default-button safe)))
+            (is (contains? (set (:style-class safe)) "accent"))))
+        (testing "and it says what replacing will do to files not listed"
+          (is (text-containing d #"Trash|left alone")))))))
 
 (deftest one-clashing-file-is-described-in-the-singular
   (tu/with-temp-dir [dir]
     (is (text-containing (view/content (assoc (ready-state dir)
                                               :dialog :collisions
                                               :collisions [(io/file dir "people_0001.csv")]))
-                         #"One file would be replaced"))))
+                         #"One CSV file in that folder uses this name"))))
+
+(deftest the-destination-says-what-is-already-there
+  (testing "before Split is pressed, not at the moment something is about to be
+            replaced — a folder chosen by mistake shows up while it is harmless"
+    (tu/with-temp-dir [dir]
+      (let [with-files (view/content (assoc (ready-state dir)
+                                            :out-dir-info {:exists? true :csv-count 8}))
+            brand-new  (view/content (assoc (ready-state dir)
+                                            :out-dir-info {:exists? false :csv-count 0}))]
+        (is (text-containing with-files #"already contains 8 CSV files"))
+        (is (contains? (style-classes with-files) "caution"))
+        (is (text-containing brand-new #"does not exist yet and will be created"))
+        (is (not (text-containing brand-new #"already contains")))))))

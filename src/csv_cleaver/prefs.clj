@@ -15,7 +15,7 @@
   "Settings restored at startup. Deliberately excludes anything about a
    particular file — the window always opens ready for a new one."
   [:theme :language :template :mode :rows-text :size-text :advanced-open?
-   :excel-safe? :out-dir :window])
+   :excel-safe? :output-base :window])
 
 (defn load-prefs
   "Read remembered settings, or an empty map when there are none."
@@ -26,7 +26,7 @@
        (let [saved (edn/read-string (slurp file))]
          (if (map? saved)
            (cond-> (select-keys saved remembered)
-             (string? (:out-dir saved)) (assoc :out-dir (io/file (:out-dir saved))))
+             (string? (:output-base saved)) (assoc :output-base (io/file (:output-base saved))))
            {}))
        {})
      (catch Exception _ {}))))
@@ -41,7 +41,7 @@
            existing (if (map? existing) existing {})
            merged   (-> (merge existing settings)
                         (select-keys remembered)
-                        (update :out-dir #(when % (str %))))]
+                        (update :output-base #(when % (str %))))]
        (spit file (pr-str (into {} (remove (comp nil? val) merged))))
        true)
      (catch Exception _ false))))

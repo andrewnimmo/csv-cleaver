@@ -10,7 +10,9 @@
    Effects are data — [:scan file], [:split opts] — and are carried out in
    csv-cleaver.app, which is the only namespace that knows how."
   (:require
+   [clojure.java.io :as io]
    [clojure.string :as str]
+   [csv-cleaver.files :as files]
    [csv-cleaver.format :as fmt]
    [csv-cleaver.i18n :as i18n]
    [csv-cleaver.naming :as naming]
@@ -55,6 +57,8 @@
    :survey          nil
    :scan-rows       0
    :out-dir         nil
+   :out-dir-info    nil
+   :output-base     nil
    :mode            :rows
    :rows-text       default-rows
    :size-text       default-size
@@ -124,6 +128,27 @@
                 (nil? (naming/template-problem template))
                 (nil? (:problem (current-plan state))))))
 
+(def output-folder-suffix " split")
+
+(defn default-out-dir
+  "Where this file's pieces should go unless the user says otherwise: a new
+   folder named after the file.
+
+   Writing beside the input invites the results to mix with whatever is already
+   there, which is how a folder ends up half new and half old, and how a
+   mis-chosen folder goes unnoticed until something is about to be replaced. A
+   folder the application creates for this one file is self-evidently the output
+   of this one run.
+
+   It is placed inside whatever location the user last chose, if they chose one,
+   so \"I always split into ~/Splits\" keeps working."
+  ^File [{:keys [output-base]} ^File file]
+  (when file
+    (let [source (.getAbsoluteFile file)
+          base   (or output-base (.getParentFile source))
+          stem   (files/base-name source)]
+      (io/file base (str stem output-folder-suffix)))))
+
 (defn header-uncertain?
   "Whether to ask the user about the first row rather than guess at it.
 
@@ -192,8 +217,18 @@
              ;; who disagrees can still change it; most never have to.
              :has-header? (:header-likely? survey)
              :header-answered? false
-             :out-dir (or (:out-dir state)
-                          (when file (.getParentFile (.getAbsoluteFile ^File file))))))))
+             :out-dir-info nil
+             :out-dir (default-out-dir state file))
+      ;; What is already at the destination is worth knowing before pressing
+      ;; Split, not at the moment something is about to be replaced.
+      [:inspect-out-dir (default-out-dir state file)])))
+
+(defmethod handle ::out-dir-inspected
+  [state {:keys [dir info]}]
+  ;; Ignore a reply about a folder the user has since moved on from.
+  (if (= (str dir) (str (:out-dir state)))
+    (with-effects (assoc state :out-dir-info info))
+    (with-effects state)))
 
 (defmethod handle ::scan-failed
   [state {:keys [message]}]
@@ -305,7 +340,12 @@
 (defmethod handle ::out-dir-chosen
   [state {:keys [^File dir]}]
   (if dir
-    (with-effects (assoc state :out-dir dir) [:save-prefs {:out-dir (.getAbsolutePath dir)}])
+    ;; The folder they picked is used exactly as picked. It is also remembered
+    ;; as the home for the next file's folder, so somebody who always splits
+    ;; into one place keeps doing so without saying it every time.
+    (with-effects (assoc state :out-dir dir :output-base dir :out-dir-info nil)
+      [:save-prefs {:output-base (.getAbsolutePath dir)}]
+      [:inspect-out-dir dir])
     (with-effects state)))
 
 (defmethod handle ::drag-entered

@@ -70,8 +70,8 @@
   :action/reveal-windows "在资源管理器中显示"
   :action/reveal-other   "打开文件夹"
 
-  :clash/title "将会替换 {0} 个文件"
-  :clash/body  "该文件夹中已有与本次拆分将使用的名称相同的文件。目前尚未写入任何内容。"
+  :clash/title "该文件夹中有 {0} 个 CSV 文件使用了这些名称"
+  :clash/body  "目前尚未写入任何内容。本程序无法判断这些文件是什么，只知道名称相同。"
   :clash/more  "以及另外 {0} 个"
 
   :options/common-sizes "常用大小"
@@ -170,4 +170,11 @@
   :delimiter/name-pipe "竖线"
 
   :problem/nothing-to-split "该文件已经可以放入一个 {0} 行的文件中，因此无需拆分。"
-  :done/removed-leftovers "已删除上次拆分遗留的 {0} 个文件。"}}
+
+  :done/trashed "已将 {0} 个同名文件移到废纸篓。"
+  :done/left-behind "仍有 {0} 个同名文件留在该文件夹中。"
+  :clash/folder "文件夹：{0}"
+  :clash/replace-note "替换会覆盖列出的文件。其他同名文件将移到废纸篓，因此可以找回。"
+  :clash/replace-note-no-trash "替换会覆盖列出的文件。其他同名文件将保持不动，因为本系统没有可供移入的废纸篓。"
+  :output/new-folder "该文件夹尚不存在，将会新建。"
+  :output/existing-csv "请注意：该文件夹中已有 {0} 个 CSV 文件。"}}

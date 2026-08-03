@@ -8,6 +8,8 @@
        leans on that mark to open a UTF-8 file correctly; dropping it turns
        every accented character into mojibake the moment the user double-clicks
        one of the results."
+  (:require
+   [clojure.string :as str])
   (:import
    (java.io BufferedWriter File FileInputStream FileOutputStream
             InputStreamReader OutputStreamWriter Reader Writer)
@@ -61,3 +63,19 @@
    size rather than a row count."
   ^long [^String text ^Charset charset]
   (alength (.getBytes text charset)))
+
+(defn inspect-dir
+  "What is already at the destination, so the window can say so before anything
+   is written rather than at the moment something is about to be replaced.
+
+   Counts CSV files only: those are the ones that could be confused with, or
+   taken over by, this split's output."
+  [^File dir]
+  (if (and dir (.isDirectory dir))
+    {:exists?   true
+     :csv-count (count (filter (fn [^File f]
+                                 (and (.isFile f)
+                                      (str/ends-with?
+                                       (str/lower-case (.getName f)) ".csv")))
+                               (or (.listFiles dir) (make-array File 0))))}
+    {:exists? false :csv-count 0}))

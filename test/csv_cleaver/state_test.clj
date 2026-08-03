@@ -47,8 +47,12 @@
     (let [s (ready-state dir)]
       (is (= :ready (:phase s)))
       (is (:has-header? s) "the checkbox follows what the file looks like")
-      (is (= (.getCanonicalFile dir) (.getCanonicalFile ^File (:out-dir s)))
-          "output defaults to the folder the file came from"))))
+      (testing "results go into a new folder named after the file, beside it —
+                so they cannot mix with whatever is already in the source folder
+                and a mis-chosen destination is visible rather than inferred"
+        (is (= "people split" (.getName ^File (:out-dir s))))
+        (is (= (.getCanonicalFile dir)
+               (.getCanonicalFile (.getParentFile ^File (:out-dir s)))))))))
 
 (deftest a-header-less-file-unticks-the-box
   (tu/with-temp-dir [dir]
@@ -121,8 +125,11 @@
   (tu/with-temp-dir [dir]
     (let [{:keys [state effects]} (state/handle state/initial
                                                 {:event/type ::state/out-dir-chosen :dir dir})]
-      (is (= dir (:out-dir state)))
-      (is (= [[:save-prefs {:out-dir (.getAbsolutePath dir)}]] effects))))
+      (is (= dir (:out-dir state)) "used exactly as picked")
+      (is (= dir (:output-base state)) "and remembered as the home for the next file")
+      (is (= [[:save-prefs {:output-base (.getAbsolutePath dir)}]
+              [:inspect-out-dir dir]]
+             effects))))
   (testing "cancelling the dialog changes nothing"
     (is (= state/initial (state/apply-event state/initial
                                             {:event/type ::state/out-dir-chosen :dir nil})))))
@@ -325,7 +332,7 @@
         (is (= "999" (:rows-text again)))
         (is (= "x{index}" (:template again)))
         (is (= :bytes (:mode again)))
-        (is (= dir (:out-dir again)))))))
+        (is (= "people split" (.getName ^File (:out-dir again))))))))
 
 (deftest an-unknown-event-changes-nothing
   (is (= state/initial (state/apply-event state/initial {:event/type ::nonsense}))))

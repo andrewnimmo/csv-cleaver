@@ -15,6 +15,7 @@
    performs it."
   (:require
    [csv-cleaver.csv :as csv]
+   [csv-cleaver.desktop :as desktop]
    [csv-cleaver.files :as files]
    [csv-cleaver.naming :as naming]
    [csv-cleaver.scan :as scan])
@@ -202,11 +203,13 @@
    On cancellation the file being written is closed and removed, so what is left
    on disk is always a whole number of complete output files."
   [{:keys [survey out-dir mode value has-header? include-header? template
-           cancelled? on-progress replace-existing]
+           cancelled? on-progress replace-existing remove-file]
     file-plan :plan
     :or   {template    naming/default-template
            cancelled?  (constantly false)
-           on-progress (fn [_])}}]
+           on-progress (fn [_])
+           ;; Injectable so that tests never go near the real Trash.
+           remove-file desktop/move-to-trash!}}]
   (let [{:keys [file encoding delimiter]} survey
         charset   (:charset encoding)
         dir       (ensure-dir! out-dir)
@@ -297,27 +300,28 @@
                nil))
             cancelled (= outcome :cancelled)
             abandoned (if cancelled (abandon!) (do (close-current!) nil))
-            ;; "Replace them" has to mean it. The user was shown a list and
-            ;; agreed to those files being replaced; leaving behind the ones
-            ;; this run happens not to write would strand output from an
-            ;; earlier, larger split in the folder, looking for all the world
-            ;; like part of the new results. Removed only after the split has
-            ;; succeeded, so a failure never costs anyone their old files.
-            removed   (when (and (seq replace-existing) (not cancelled))
+            ;; "Replace them" has to mean it, or the folder ends up part new and
+            ;; part old with nothing to tell them apart. But these files were
+            ;; recognised by their names alone — this application has no idea
+            ;; what they actually are, and the folder may have been chosen by
+            ;; mistake. So they go to the Trash, never to deletion, and only
+            ;; after the split has succeeded.
+            others    (when (and (seq replace-existing) (not cancelled))
                         (let [kept (set (map (fn [^File f] (.getAbsolutePath f))
                                              (:files @state)))]
-                          (vec (for [^File f replace-existing
-                                     :when (and (not (contains? kept (.getAbsolutePath f)))
-                                                (.exists f)
-                                                (.delete f))]
-                                 f))))]
-        {:files      (:files @state)
-         :written    (:written @state)
-         :removed    (vec removed)
-         :rows       (long (:total @state 0))
-         :elapsed-ms (quot (- (System/nanoTime) started) 1000000)
-         :cancelled? cancelled
-         :abandoned  abandoned}))))
+                          (remove #(contains? kept (.getAbsolutePath ^File %))
+                                  replace-existing)))
+            sorted    (group-by #(boolean (remove-file %)) others)]
+        {:files       (:files @state)
+         :written     (:written @state)
+         ;; What went to the Trash, and what could not be moved there — on a
+         ;; platform without one, nothing is touched and the window says so.
+         :trashed     (vec (get sorted true))
+         :left-behind (vec (get sorted false))
+         :rows        (long (:total @state 0))
+         :elapsed-ms  (quot (- (System/nanoTime) started) 1000000)
+         :cancelled?  cancelled
+         :abandoned   abandoned}))))
 
 (defn collisions
   "Files already sitting in `out-dir` that this split would take the names of.

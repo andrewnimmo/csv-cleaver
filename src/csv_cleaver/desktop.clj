@@ -4,7 +4,7 @@
    [clojure.java.io :as io]
    [clojure.string :as str])
   (:import
-   (java.awt Desktop)
+   (java.awt Desktop Desktop$Action)
    (java.io File)))
 
 (defn os
@@ -79,3 +79,28 @@
   (^File [] (languages-dir (os) (System/getProperty "user.home")))
   (^File [os-key ^String home]
    (io/file (.getParentFile (prefs-file os-key home)) "languages")))
+
+(defn trash-supported?
+  "Whether this platform can move a file to the Trash or Recycle Bin.
+
+   macOS and Windows can; several Linux desktops cannot. Where it is
+   unsupported nothing is removed at all — falling back to deletion would
+   quietly turn a recoverable action into an irreversible one, which is the
+   opposite of the point."
+  []
+  (try
+    (and (Desktop/isDesktopSupported)
+         (.isSupported (Desktop/getDesktop) Desktop$Action/MOVE_TO_TRASH))
+    (catch Throwable _ false)))
+
+(defn move-to-trash!
+  "Move `file` to the Trash. Returns true when it went. Never deletes: a file
+   this application merely recognised by name is not one it should destroy."
+  [^File file]
+  (boolean
+   (try
+     (and file
+          (.exists file)
+          (trash-supported?)
+          (.moveToTrash (Desktop/getDesktop) file))
+     (catch Throwable _ false))))

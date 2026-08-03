@@ -70,8 +70,8 @@
   :action/reveal-windows "エクスプローラーで表示"
   :action/reveal-other   "フォルダを開く"
 
-  :clash/title "{0} 個のファイルが置き換えられます"
-  :clash/body  "そのフォルダには、この分割で使う名前と同じファイルがすでにあります。まだ何も書き込んでいません。"
+  :clash/title "そのフォルダにある CSV ファイル {0} 個が同じ名前を使っています"
+  :clash/body  "まだ何も書き込んでいません。このアプリはそれらのファイルが何であるかを判断できません。名前が一致していることだけが分かっています。"
   :clash/more  "ほか {0} 個"
 
   :options/common-sizes "よく使う値"
@@ -170,4 +170,11 @@
   :delimiter/name-pipe "縦棒"
 
   :problem/nothing-to-split "このファイルは {0} 行の 1 ファイルに収まるため、分割の必要はありません。"
-  :done/removed-leftovers "以前の分割で残っていた {0} 個のファイルを削除しました。"}}
+
+  :done/trashed "同名のファイル {0} 個をゴミ箱に移動しました。"
+  :done/left-behind "同名のファイル {0} 個がそのフォルダに残っています。"
+  :clash/folder "フォルダ: {0}"
+  :clash/replace-note "置き換えると、一覧のファイルは上書きされます。同名の他のファイルはゴミ箱に移動するので、元に戻せます。"
+  :clash/replace-note-no-trash "置き換えると、一覧のファイルは上書きされます。同名の他のファイルはそのまま残ります。このシステムには移動先のゴミ箱がないためです。"
+  :output/new-folder "このフォルダはまだ存在しないため、新しく作成されます。"
+  :output/existing-csv "注意: このフォルダには CSV ファイルがすでに {0} 個あります。"}}

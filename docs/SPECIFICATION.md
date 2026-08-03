@@ -108,18 +108,42 @@ leftovers from an earlier and larger split of the same file are found too.
 and offered three choices: cancel, replace them, or write to a new folder. The
 safe choice is the prominent one; replacement is styled as destructive.
 
-**R20a.** "Replace them" replaces all of them. Files that were listed but that
-this run does not itself write are removed, and the user is told how many. The
-alternative — writing three files and silently leaving five from an earlier,
-larger split — produces a folder whose contents are part new and part stale,
-with nothing to distinguish them.
+**R20a.** Nothing the application says about those files may claim to know what
+they are. It observed one thing — that their names clash — and it says only
+that. They might be output from an earlier split; they might equally be the
+user's own files in a folder chosen by mistake.
 
-**R20b.** Leftovers are removed only after the split has succeeded. A failure or
-a cancellation never costs anyone their existing files.
+**R20b.** "Replace them" replaces all of them. Files that were listed but that
+this run does not itself write are cleared too, and the user is told how many.
+The alternative — writing three files and silently leaving five — produces a
+folder that is part new and part old with nothing to distinguish them.
 
-**R20c.** A split that would produce a single file is refused, with an
+**R20c.** Clearing means **moving to the system Trash or Recycle Bin**, never
+deleting. These files were identified by name alone. Where the platform offers
+no Trash, nothing is removed at all and the result says so: falling back to
+deletion would quietly turn a recoverable act into an irreversible one.
+
+**R20d.** Files are cleared only after the split has succeeded. A failure or a
+cancellation never costs anyone their existing files.
+
+**R20e.** The clash dialog names the destination folder in full, states what
+replacing will do to files not listed, and gives the accent and the keyboard
+default to the safe choice. Pressing Return must never remove anything.
+
+**R20f.** A split that would produce a single file is refused, with an
 explanation. Copying the input under a new name is not a split, and proceeding
 would also raise a name-clash dialog about files the run will never write.
+
+**R20g.** Results go by default into a **new folder named after the input
+file** — `customers-2024 split` — rather than into the input's own folder. A
+folder the application created for one run cannot be confused with anything
+else, so the clash dialog becomes exceptional rather than routine, and the
+dangerous path is rarely reached at all. If the user chooses a destination, that
+location is remembered and used as the home for the next file's folder.
+
+**R20h.** Before Split is pressed, the destination line says whether the folder
+already exists and how many CSV files it holds. A folder chosen by mistake is
+then visible while noticing it still costs nothing.
 
 **R21.** Cancelling a split in progress removes the file being written and keeps
 those already finished, so what remains on disk is always a whole number of

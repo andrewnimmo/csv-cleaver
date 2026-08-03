@@ -89,8 +89,13 @@
   :action/reveal-other   "Open folder"
 
   ;; Files that would be replaced
-  :clash/title {:one "One file would be replaced" :other "{0} files would be replaced"}
-  :clash/body  "That folder already holds files with the names this split would use. Nothing has been written yet."
+  ;; States only what was observed — names that clash. It says nothing about
+  ;; where those files came from, because the application does not know: they
+  ;; might be output from an earlier split, or they might be the user's own
+  ;; files in a folder chosen by mistake.
+  :clash/title {:one "One CSV file in that folder uses this name"
+                :other "{0} CSV files in that folder use these names"}
+  :clash/body  "Nothing has been written yet. This application cannot tell what those files are, only that their names clash."
   :clash/more  "and {0} more"
 
   ;; Row-count shortcuts
@@ -201,4 +206,11 @@
   :delimiter/name-pipe "vertical bars"
 
   :problem/nothing-to-split "This file already fits in one file of {0} rows, so there is nothing to split."
-  :done/removed-leftovers {:one "{0} leftover file from an earlier split was removed." :other "{0} leftover files from an earlier split were removed."}}}
+
+  :done/trashed {:one "{0} file with a matching name was moved to the Trash." :other "{0} files with matching names were moved to the Trash."}
+  :done/left-behind {:one "{0} file with a matching name is still in that folder." :other "{0} files with matching names are still in that folder."}
+  :clash/folder "Folder: {0}"
+  :clash/replace-note "Replacing writes over the files listed. Any others with matching names go to the Trash, so they can be got back."
+  :clash/replace-note-no-trash "Replacing writes over the files listed. Any others with matching names are left alone, because this system has no Trash to move them to."
+  :output/new-folder "This folder does not exist yet and will be created."
+  :output/existing-csv {:one "Careful: this folder already contains {0} CSV file." :other "Careful: this folder already contains {0} CSV files."}}}

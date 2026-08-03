@@ -18,10 +18,10 @@
 (deftest a-folder-comes-back-as-a-file-not-a-string
   (tu/with-temp-dir [dir]
     (let [file (io/file dir "settings.edn")]
-      (prefs/save-prefs! file {:out-dir dir})
-      (is (instance? File (:out-dir (prefs/load-prefs file))))
+      (prefs/save-prefs! file {:output-base dir})
+      (is (instance? File (:output-base (prefs/load-prefs file))))
       (is (= (.getAbsolutePath dir)
-             (.getAbsolutePath ^File (:out-dir (prefs/load-prefs file))))))))
+             (.getAbsolutePath ^File (:output-base (prefs/load-prefs file))))))))
 
 (deftest saving-merges-rather-than-replaces
   (tu/with-temp-dir [dir]
