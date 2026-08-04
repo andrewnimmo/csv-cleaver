@@ -29,6 +29,48 @@
   {:doc  "Run the whole test suite."
    :task (clj "-M:test")}
 
+  mutate
+  {:doc  "Break the code on purpose and check the tests notice. Slow — minutes, not seconds. See dev/mutations.edn."
+   :task
+   ;; A test that has never been seen to fail has not been shown to test
+   ;; anything. This applies each deliberate defect in dev/mutations.edn, runs
+   ;; the tests that claim to guard it, and puts the source back.
+   (let [mutations (read-string (slurp "dev/mutations.edn"))
+         dirty     (-> (shell {:out :string} "git status --porcelain") :out str/trim)]
+     ;; Refuse on a dirty tree. Every mutation is written to a real source file
+     ;; and undone afterwards; if that goes wrong, uncommitted work is what
+     ;; would be lost.
+     (when (seq dirty)
+       (println "Commit or stash first — this edits source files in place.")
+       (println dirty)
+       (System/exit 1))
+     (let [results
+           (doall
+            (for [{:keys [label file find replace namespace]} mutations]
+              (let [original (slurp file)]
+                (if-not (str/includes? original find)
+                  (do (println "STALE   " label) [:stale label])
+                  (try
+                    (spit file (str/replace-first original find replace))
+                    (let [{:keys [out err exit]}
+                          (shell {:out :string :err :string :continue true}
+                                 (str "clojure -M:test --namespace " namespace))
+                          noticed (or (not (zero? exit))
+                                      (not (str/includes? (str out err)
+                                                          "0 failures, 0 errors")))]
+                      (println (if noticed "caught  " "MISSED  ") label)
+                      [(if noticed :caught :missed) label])
+                    (finally (spit file original)))))))
+           bad (remove (comp #{:caught} first) results)]
+       (println (format "\n%d of %d mutations caught."
+                        (count (filter (comp #{:caught} first) results))
+                        (count results)))
+       (when (seq bad)
+         (println "\nThese changed the behaviour of the application and no test failed:")
+         (doseq [[verdict label] bad] (println " " (name verdict) label))
+         (println "\nA test that cannot fail is not protecting anything.")
+         (System/exit 1))))}
+
   test:fast
   {:doc  "Run everything except the tests that need a JavaFX toolkit."
    :task (clj "-M:test" "--exclude" ":fx")}

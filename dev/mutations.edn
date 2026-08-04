@@ -1,0 +1,136 @@
+;; Deliberate defects, each with the test namespace that must notice it.
+;;
+;; Run with `bb mutate`. Every entry is applied to the source, the named tests
+;; are run, and the source is put back. A mutation that no test notices is
+;; reported as MISSED and fails the task.
+;;
+;; This exists because a test that has never been seen to fail has not been
+;; shown to test anything. Two real examples, both found by running this:
+;;
+;;   - packaging_test searched the build script for the string "jdk.localedata"
+;;     and passed with the module removed, because the name also appears in the
+;;     script's own error message.
+;;   - the parser that replaced it matched the words "--add-modules replaces"
+;;     out of a comment and returned the module list #{"replaces"}, on which
+;;     every assertion was vacuous.
+;;
+;; Neither announced itself. Both were ordinary-looking green tests.
+;;
+;; Each :find must appear exactly once and must be the real defect, not a
+;; syntactic accident: breaking a function so it throws proves only that the
+;; tests call it. The mutations below each reintroduce a fault this project has
+;; actually shipped or nearly shipped.
+
+[{:label     "restate does nothing — the R80 bug: 65,000 in a German window"
+  :file      "src/csv_cleaver/format.clj"
+  :find      "  [from to s]\n  (let [text (str s)]\n    (if-let [[_ digits tail]"
+  :replace   "  [from to s]\n  (let [text (str s)]\n    (if-let [[_ digits tail] nil #_"
+  :namespace "csv-cleaver.format-test"}
+
+ {:label     "with-language leaves the row box alone"
+  :file      "src/csv_cleaver/state.clj"
+  :find      ":rows-text (fmt/restate from to (:rows-text state))"
+  :replace   ":rows-text (:rows-text state)"
+  :namespace "csv-cleaver.state-test"}
+
+ {:label     "a size loses its unit across a language change"
+  :file      "src/csv_cleaver/state.clj"
+  :find      ":size-text (fmt/restate-size from to (:size-text state))"
+  :replace   ":size-text (:size-text state)"
+  :namespace "csv-cleaver.state-test"}
+
+ {:label     "parse-size stops understanding this language's own units"
+  :file      "src/csv_cleaver/format.clj"
+  :find      "  (-> (i18n/tr ctx size-key \"\") str/trim str/upper-case not-empty))"
+  :replace   "  nil)"
+  :namespace "csv-cleaver.state-test"}
+
+ {:label     "startup-state trusts whatever is in the settings file"
+  :file      "src/csv_cleaver/app.clj"
+  :find      "(merge (apply dissoc (select-keys saved prefs/remembered)\n                      [:language :theme :rows :size-bytes]))"
+  :replace   "(merge (apply dissoc saved [:language :theme :rows :size-bytes]))"
+  :namespace "csv-cleaver.app-test"}
+
+ {:label     "preferences remember formatted text again"
+  :file      "src/csv_cleaver/prefs.clj"
+  :find      "[:theme :language :template :mode :rows :size-bytes :advanced-open?"
+  :replace   "[:theme :language :template :mode :rows :size-bytes :rows-text :advanced-open?"
+  :namespace "csv-cleaver.state-test"}
+
+ {:label     "i18n/number stops following the display language"
+  :file      "src/csv_cleaver/i18n.clj"
+  :find      "(.format (NumberFormat/getIntegerInstance (locale-of ctx)) (long n)))"
+  :replace   "(.format (NumberFormat/getIntegerInstance java.util.Locale/ENGLISH) (long n)))"
+  :namespace "csv-cleaver.i18n-test"}
+
+ {:label     "i18n/decimal stops following the display language"
+  :file      "src/csv_cleaver/i18n.clj"
+  :find      "(let [f (doto (NumberFormat/getNumberInstance (locale-of ctx))"
+  :replace   "(let [f (doto (NumberFormat/getNumberInstance java.util.Locale/ENGLISH)"
+  :namespace "csv-cleaver.i18n-test"}
+
+ {:label     "the installer stops bundling locale data"
+  :file      "package/build-mac.sh"
+  :find      "MODULES=\"java.se,jdk.localedata,"
+  :replace   "MODULES=\"java.se,"
+  :namespace "csv-cleaver.packaging-test"}
+
+ {:label     "the Linux installer stops bundling locale data"
+  :file      "package/build-linux.sh"
+  :find      "MODULES=\"java.se,jdk.localedata,"
+  :replace   "MODULES=\"java.se,"
+  :namespace "csv-cleaver.packaging-test"}
+
+ {:label     "the Windows installer stops bundling locale data"
+  :file      "package/build-windows.bat"
+  :find      "--add-modules java.se,jdk.localedata,"
+  :replace   "--add-modules java.se,"
+  :namespace "csv-cleaver.packaging-test"}
+
+ {:label     "someone reaches for ALL-DEFAULT again — a runtime of java.base alone"
+  :file      "package/build-mac.sh"
+  :find      "MODULES=\"java.se,jdk.localedata"
+  :replace   "MODULES=\"ALL-DEFAULT,jdk.localedata"
+  :namespace "csv-cleaver.packaging-test"}
+
+ {:label     "the window module is dropped from the runtime"
+  :file      "package/build-mac.sh"
+  :find      "MODULES=\"java.se,"
+  :replace   "MODULES=\"java.logging,"
+  :namespace "csv-cleaver.packaging-test"}
+
+ {:label     "jdk.unsupported is dropped, so Clojure cannot start"
+  :file      "package/build-mac.sh"
+  :find      ",jdk.unsupported"
+  :replace   ""
+  :namespace "csv-cleaver.packaging-test"}
+
+ {:label     "the API answers without a token"
+  :file      "src/csv_cleaver/api/server.clj"
+  :find      "(if (or (not (str/starts-with? (str uri) \"/api/\"))\n            (contains? open-paths (str uri)))"
+  :replace   "(if true"
+  :namespace "csv-cleaver.api-test"}
+
+ {:label     "the API ignores --api-input and accepts any path"
+  :file      "src/csv_cleaver/api/server.clj"
+  :find      "(and path (not (#{:path :both} input-mode)))"
+  :replace   "(and path false)"
+  :namespace "csv-cleaver.api-test"}
+
+ {:label     "a split with an impossible plan is started rather than refused"
+  :file      "src/csv_cleaver/api/server.clj"
+  :find      "(if-let [problem (:problem (:plan opts))]"
+  :replace   "(if-let [problem nil]"
+  :namespace "csv-cleaver.api-test"}
+
+ {:label     "archive entries can collide, producing a broken zip"
+  :file      "src/csv_cleaver/api/zip.clj"
+  :find      "[(conj names (if (zero? n) base (str n \"-\" base)))"
+  :replace   "[(conj names base)"
+  :namespace "csv-cleaver.api-test"}
+
+ {:label     "the entry point requires cljfx, so --headless dies on a server"
+  :file      "src/csv_cleaver/main.clj"
+  :find      "   [csv-cleaver.api.server :as api]"
+  :replace   "   [cljfx.api :as fx]\n   [csv-cleaver.api.server :as api]"
+  :namespace "csv-cleaver.main-test"}]
