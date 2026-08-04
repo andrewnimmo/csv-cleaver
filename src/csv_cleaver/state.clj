@@ -143,21 +143,21 @@
    not words: translating them would be inventing encodings that do not exist.
    Getting this wrong the other way is what shipped — the sentinel went into the
    picker untranslated, so a Chinese window offered a menu reading \"Detected\"."
-  [ctx charset]
+  [context charset]
   (if (= charset detected-charset)
-    (i18n/tr ctx :advanced/encoding-detected)
+    (i18n/tr context :advanced/encoding-detected)
     charset))
 
 (defn charset-labels
   "Every encoding choice as the user sees it, in order."
-  [ctx]
-  (mapv #(charset-label ctx %) selectable-charsets))
+  [context]
+  (mapv #(charset-label context %) selectable-charsets))
 
 (defn charset-for-label
   "The choice a displayed label stands for. Falls back to the sentinel rather
    than to nil: an unrecognised label means detection, which is the safe answer."
-  [ctx label]
-  (or (first (filter #(= label (charset-label ctx %)) selectable-charsets))
+  [context label]
+  (or (first (filter #(= label (charset-label context %)) selectable-charsets))
       detected-charset))
 
 (defn split-value

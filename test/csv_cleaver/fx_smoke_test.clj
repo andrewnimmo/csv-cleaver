@@ -10,9 +10,9 @@
    They need a JavaFX toolkit. On a headless CI machine run them under xvfb."
   (:require
    [cljfx.api :as fx]
+   [clojure.string :as str]
    [clojure.test :refer [deftest is testing]]
    [csv-cleaver.branding :as branding]
-   [clojure.string :as str]
    [csv-cleaver.i18n :as i18n]
    [csv-cleaver.naming :as naming]
    [csv-cleaver.scan :as scan]
@@ -184,16 +184,35 @@
    them.
 
    Placeholders are matched loosely, so a template ending in bytes accepts a
-   rendering ending in bytes."
+   rendering ending in bytes.
+
+   Templates that are nothing but a placeholder are excluded, and that omission
+   is the whole reason this docstring is long. :preset/plain is \"{0}\", which
+   became the pattern .* and therefore vouched for every string in the window —
+   so the test passed while three deliberately untranslated labels sat in front
+   of it. It was a precise-looking test that accepted anything, and only
+   breaking the code on purpose showed it up."
   [tag s]
-  (let [pattern-of (fn [template]
-                     (->> (str/split (str template) #"\{\d+\}" -1)
+  (let [words-of   (fn [template] (str/split (str template) #"\{\d+\}" -1))
+        pattern-of (fn [template]
+                     (->> (words-of template)
                           (map #(java.util.regex.Pattern/quote %))
                           (str/join ".*")
                           (str "(?s)")
                           (re-pattern)))]
-    (boolean (some #(re-matches (pattern-of %) s)
+    (boolean (some #(and (some (complement str/blank?) (words-of %))
+                         (re-matches (pattern-of %) s))
                    (vals (:strings (i18n/context tag)))))))
+
+(deftest ^:fx a-phrase-check-that-accepts-everything-would-hide-everything
+  (testing "the guard on the guard. :preset/plain is \"{0}\", and taken as a
+            pattern it matches any string at all — which silently turned the
+            whole sweep into a test that could not fail."
+    (is (not (phrase-of? "es" "Detected"))
+        "a string no Spanish phrase can produce")
+    (is (not (phrase-of? "es" "Split into")))
+    (is (phrase-of? "es" "25 bytes") "Spanish really does say bytes")
+    (is (phrase-of? "de" "Text: UTF-8") "and German really does say Text")))
 
 (deftest ^:fx no-english-survives-into-a-translated-window
   (testing "the encoding picker offered \"Detected\" in every language, because
@@ -242,28 +261,36 @@
 
 (deftest ^:fx a-picker-keeps-its-width-when-the-language-changes
   (testing "left to size themselves, the Advanced pickers measured their widest
-            item when the skin was built and never again, so after a language
-            change the box kept a width computed for the previous language —
-            Spanish text in a box sized for German, or the arrow overlapping the
-            words. A fixed width cannot do that, and does not resize under the
-            pointer either."
+            item when the skin was built and never again. Building each language
+            fresh does not show this — every one measures correctly on its own.
+            It only appears when one live window changes language, which is what
+            a user does and what this test does."
     (tu/with-temp-dir [dir]
-      (let [state  (assoc (ready-state dir) :advanced-open? true)
-            widths (fn [tag]
-                     (let [root (laid-out (view/content (state/with-language state tag)))
-                           acc  (atom [])]
-                       (letfn [(visit [x]
-                                 (when (instance? javafx.scene.control.ChoiceBox x)
-                                   (swap! acc conj (.getWidth ^javafx.scene.control.ChoiceBox x)))
-                                 (when (instance? javafx.scene.control.ScrollPane x)
-                                   (some-> (.getContent ^javafx.scene.control.ScrollPane x) visit))
-                                 (when (instance? javafx.scene.Parent x)
-                                   (doseq [c (.getChildrenUnmodifiable ^javafx.scene.Parent x)]
-                                     (visit c))))]
-                         (visit root))
-                       @acc))
-            english (widths "en")]
-        (is (seq english) "there are pickers to measure")
-        (doseq [tag (remove #{"en"} i18n/supported)]
-          (is (= english (widths tag))
-              (str tag " sizes its pickers differently from English")))))))
+      (let [opts    {:fx.opt/map-event-handler (fn [_])}
+            state   (assoc (ready-state dir) :advanced-open? true)
+            choice-widths
+            (fn [root]
+              (let [acc (atom [])]
+                (letfn [(visit [x]
+                          (when (instance? javafx.scene.control.ChoiceBox x)
+                            (swap! acc conj (.getWidth ^javafx.scene.control.ChoiceBox x)))
+                          (when (instance? javafx.scene.control.ScrollPane x)
+                            (some-> (.getContent ^javafx.scene.control.ScrollPane x) visit))
+                          (when (instance? javafx.scene.Parent x)
+                            (doseq [c (.getChildrenUnmodifiable ^javafx.scene.Parent x)]
+                              (visit c))))]
+                  (visit root))
+                @acc))]
+        @(fx/on-fx-thread
+          (let [start (state/with-language state "en")
+                built (fx/create-component (view/content start) opts)]
+            (javafx.scene.Scene. ^javafx.scene.Parent (fx/instance built) 1100 950)
+            (doto ^javafx.scene.Parent (fx/instance built) (.applyCss) (.layout))
+            (let [before (choice-widths (fx/instance built))]
+              (is (seq before) "there are pickers to measure")
+              (doseq [tag (remove #{"en"} i18n/supported)]
+                (let [changed (state/with-language start tag)
+                      updated (fx/advance-component built (view/content changed) opts)]
+                  (doto ^javafx.scene.Parent (fx/instance updated) (.applyCss) (.layout))
+                  (is (= before (choice-widths (fx/instance updated)))
+                      (str "changing to " tag " changed a picker's width")))))))))))

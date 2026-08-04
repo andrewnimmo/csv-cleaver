@@ -149,7 +149,7 @@
 
  {:label     "the encoding picker shows its sentinel untranslated"
   :file      "src/csv_cleaver/state.clj"
-  :find      "  (if (= charset detected-charset)\n    (i18n/tr ctx :advanced/encoding-detected)\n    charset))"
+  :find      "  (if (= charset detected-charset)\n    (i18n/tr context :advanced/encoding-detected)\n    charset))"
   :replace   "  charset)"
   :namespace "csv-cleaver.fx-smoke-test"}
 
