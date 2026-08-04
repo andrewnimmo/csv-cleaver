@@ -35,6 +35,15 @@ if [ -f "$ICON" ]; then
   ICON_OPT=(--icon "$ICON")
 fi
 
+# jlink includes only the modules something declares a dependency on, and
+# nothing declares one on locale data. Without jdk.localedata the bundled
+# runtime carries data for a single locale and java.text formats every language
+# as English — Spanish text with 470,128 in the middle of it, which is what
+# shipped. --add-modules replaces jpackage's own detection rather than adding to
+# it, so the set is named in full; java.se is the aggregator for the standard
+# edition and is stable across JDK releases.
+MODULES="java.se,jdk.localedata,jdk.charsets,jdk.crypto.ec,jdk.unsupported,jdk.zipfs,jdk.management"
+
 COMMON=(
   --name "$APP_NAME"
   --app-version "$APP_VERSION"
@@ -42,6 +51,7 @@ COMMON=(
   --copyright "$COPYRIGHT"
   --input "$STAGE_DIR"
   --main-jar "$MAIN_JAR"
+  --add-modules "$MODULES"
   --main-class csv_cleaver.main
   --java-options "--enable-native-access=ALL-UNNAMED"
   --java-options "-Dfile.encoding=UTF-8"
@@ -58,6 +68,13 @@ jpackage --type deb --dest "$DIST_DIR" \
 echo "==> jpackage (app image, for the AppImage)"
 jpackage --type app-image --dest "$APP_DIR" \
   "${COMMON[@]}" ${ICON_OPT[@]+"${ICON_OPT[@]}"}
+
+RUNTIME_RELEASE="$APP_DIR/$APP_NAME/lib/runtime/release"
+if [ -f "$RUNTIME_RELEASE" ] && ! grep -q "jdk.localedata" "$RUNTIME_RELEASE"; then
+  echo "!!! jdk.localedata is missing from the bundled runtime." >&2
+  echo "    Every language would show English number formatting." >&2
+  exit 1
+fi
 
 if command -v appimagetool >/dev/null 2>&1; then
   echo "==> AppImage"

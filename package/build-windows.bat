@@ -32,6 +32,12 @@ for %%f in ("%STAGE_DIR%\*.jar") do set MAIN_JAR=%%~nxf
 set ICON_OPT=
 if exist "%ICON%" set ICON_OPT=--icon "%ICON%"
 
+REM jlink includes only the modules something declares a dependency on, and
+REM nothing declares one on locale data. Without jdk.localedata the bundled
+REM runtime carries data for a single locale and java.text formats every
+REM language as English - Spanish text with 470,128 in it, which is what
+REM shipped. --add-modules replaces jpackage's own detection rather than adding
+REM to it, so the set is named in full.
 echo ==^> jpackage
 jpackage ^
   --type msi ^
@@ -41,6 +47,7 @@ jpackage ^
   --copyright "%COPYRIGHT%" ^
   --input "%STAGE_DIR%" ^
   --main-jar "%MAIN_JAR%" ^
+  --add-modules java.se,jdk.localedata,jdk.charsets,jdk.crypto.ec,jdk.unsupported,jdk.zipfs,jdk.management ^
   --main-class csv_cleaver.main ^
   --dest "%DIST_DIR%" ^
   --win-dir-chooser ^

@@ -239,6 +239,11 @@ it as the wrong one turns a hundred thousand into a hundred. Text stored by
 earlier versions is ignored rather than guessed at: forgetting a row count once
 is a smaller harm than silently dividing it by a thousand.
 
+**R83.** The bundled runtime in every installer contains locale data for every
+language the application offers. Number formatting comes from the Java runtime,
+not from the translation files, so a runtime without it renders every language's
+numbers as English while the words around them are translated.
+
 **R82.** A size is read in each language's own words for its units as well as in
 the ASCII forms — a French user may type `25 Mo`, which is what the application
 itself shows them, as well as `25 MB`. Changing the language keeps the unit the

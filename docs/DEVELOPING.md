@@ -296,6 +296,17 @@ loses the theme's default text fill and resolves to black — invisible in dark
 mode. Either keep the control's own class in the list (`["label" "chip"]`) or
 set `-fx-text-fill` in the rule. Both are used here; the bold headings do both.
 
+**The bundled runtime is not the JDK you test on.** `jpackage` runs `jlink`,
+which includes only modules something declares a dependency on. Nothing declares
+one on `jdk.localedata`, so it was dropped — and the shipped application
+formatted every language's numbers as English while the words around them were
+translated. Every test in this suite runs on a full JDK, where that module is
+always present, so nothing here could ever have caught it. The packaging scripts
+now name their module set in full, the build fails if the module is absent from
+the image it just made, and it launches the packaged binary before wrapping it
+in an installer. When you change anything about packaging, check the built
+artefact, not the source tree.
+
 **Tests here cover functions; the bugs that got out lived between them.** Every
 defect found by using the built application rather than by the suite has been
 the same shape: two functions, each correct and each tested, with an unstated
