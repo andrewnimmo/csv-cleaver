@@ -25,7 +25,7 @@
    (reduce (fn [[names seen] ^File f]
              (let [base (.getName f)
                    n    (get seen base 0)]
-               [(conj names (if (zero? n) base (str n "-" base)))
+               [(conj names base)
                 (assoc seen base (inc n))]))
            [[] {}]
            files)))

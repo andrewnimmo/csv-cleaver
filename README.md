@@ -125,6 +125,7 @@ bb tasks
 |---|---|
 | `bb test` | The whole test suite |
 | `bb coverage` | Tests plus a coverage report in `target/coverage` |
+| `bb mutate` | Break the code on purpose and check the tests notice |
 | `bb lint` | clj-kondo |
 | `bb format` | Reformat with cljfmt |
 | `bb check` | Everything CI runs |

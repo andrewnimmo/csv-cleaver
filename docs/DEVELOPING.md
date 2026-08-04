@@ -154,6 +154,40 @@ restates what the code currently does will pass through a regression. When a
 test and the code disagree, the default assumption is that the **code** is
 wrong; changing the assertion needs a reason you could defend out loud.
 
+### Testing the tests
+
+Coverage says a line was executed. It does not say that anything would have
+noticed had the line been wrong, and every defect this project shipped got past
+a green suite.
+
+```bash
+bb mutate
+```
+
+applies each deliberate defect in `dev/mutations.edn` — every one a fault this
+project has shipped or nearly shipped — runs the tests that claim to guard it,
+and puts the source back. A mutation nothing notices is reported and fails the
+task. It takes minutes rather than seconds, so it is not part of `bb check`; run
+it when you add a test, and add a mutation when you fix a bug.
+
+Two rules follow from what it has already found:
+
+**A test must be seen to fail.** `packaging_test` searched the build script for
+the string `jdk.localedata` and passed with the module removed from the build,
+because the name also appears in the script's own error message. It asserted its
+own spelling. The replacement parses the `--add-modules` value — and the first
+parser matched `--add-modules replaces` out of a comment and returned the module
+list `#{"replaces"}`, on which every assertion below it was meaningless. Neither
+version announced anything; both looked like ordinary green tests.
+
+**Expectations come from outside the code.** `i18n_test/cldr-groupings` holds the
+number forms for all six languages as literals, because an expectation generated
+by calling `i18n/number` would agree with `i18n/number` however wrong it was —
+and several other tests are built on top of that one. There is a further check
+that the six forms are not all quietly identical, since a runtime with no locale
+data returns the English form for every language, which is how the installers
+shipped for weeks.
+
 ### Coverage
 
 Around 94% of forms. What is not covered is the native file and directory
