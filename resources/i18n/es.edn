@@ -91,6 +91,7 @@
   :plan/capped-at-excel "Los archivos se detendrán también en {0} filas, para que Excel pueda abrirlos."
 
   :problem/rows-needed   "Indica cuántas filas debe contener cada archivo."
+  :problem/number-too-large "Ese número es demasiado grande. Prueba con uno más pequeño."
   :problem/size-needed   "Indica qué tamaño debe tener cada archivo."
   :problem/no-data       "Este archivo no tiene filas de datos que dividir."
   :problem/pattern-empty "El patrón de nombre no puede estar vacío."

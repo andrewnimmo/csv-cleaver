@@ -88,6 +88,7 @@
   :plan/capped-at-excel "文件还会在 {0} 行处断开，以便 Excel 能够打开。"
 
   :problem/rows-needed   "请输入每个文件应包含的行数。"
+  :problem/number-too-large "这个数字太大了。请输入较小的数字。"
   :problem/size-needed   "请输入每个文件应有的大小。"
   :problem/no-data       "该文件没有可拆分的数据行。"
   :problem/pattern-empty "文件名格式不能为空。"

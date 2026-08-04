@@ -197,3 +197,63 @@
           (is (= 65000 (fmt/parse-count ca text)) (str a " reads its own text"))
           (is (= 65000 (fmt/parse-count cb (fmt/restate ca cb text)))
               (str a "→" b " keeps the number")))))))
+
+;; ── Numbers too big to use ──────────────────────────────────────────────────
+
+(def a-thousand-ones (apply str (repeat 1000 "1")))
+
+(deftest a-number-too-large-to-use-never-throws
+  (testing "reported against the built application: with a thousand digits in
+            the row box, changing the language did nothing at all. Numbers
+            arrive as doubles, a long enough run of digits becomes infinity
+            rather than overflowing visibly, and asking for that as a long
+            throws — inside the language switch, so the whole event was lost.
+
+            Written as a battery because the same parse sits under four
+            different callers, and only one of them was reported."
+    (doseq [text [a-thousand-ones
+                  (apply str (repeat 400 "9"))
+                  "99999999999999999999"
+                  (str a-thousand-ones " GB")
+                  (str a-thousand-ones ",5")]]
+      (testing (str (count text) " characters")
+        (is (string? (fmt/restate en de text)) "restate must return text")
+        (is (string? (fmt/restate-size en de text)) "restate-size must return text")
+        (is (nil? (fmt/parse-count en text)) "and refuse to call it a count")
+        (is (nil? (fmt/parse-size en text)) "or a size")))))
+
+(deftest a-number-too-large-is-left-exactly-as-typed
+  (testing "the same promise as any other text this language cannot read: what
+            the user typed is theirs"
+    (is (= a-thousand-ones (fmt/restate en de a-thousand-ones)))
+    (is (= a-thousand-ones (fmt/restate-size en de a-thousand-ones)))))
+
+(deftest a-unit-can-push-a-usable-number-past-what-we-can-use
+  (testing "a number can be perfectly usable until the unit multiplies it.
+
+            Long/MAX_VALUE is 9,223,372,036,854,775,807, a little over 9.2e18.
+            A million million megabytes is 1e12 * 1048576 = 1.05e18, which fits.
+            The same figure in gigabytes is 1.07e21, which does not — and ten
+            million million megabytes is 1.05e19, which does not either. The
+            first draft of this test asserted that last one fits, because
+            nobody had done the multiplication."
+    (is (some? (fmt/parse-count en "9999999999999"))
+        "as a row count it is unremarkable")
+    (is (some? (fmt/parse-size en "1000000000000")) "1e12 MB = 1.05e18 bytes")
+    (is (nil? (fmt/parse-size en "10000000000000")) "1e13 MB = 1.05e19 bytes")
+    (is (nil? (fmt/parse-size en "1000000000000 GB")) "1e12 GB = 1.07e21 bytes")))
+
+(deftest too-large-is-told-apart-from-not-a-number
+  (testing "\"enter how many rows\" is not a useful thing to say to someone who
+            plainly has. Compared as an exact integer, because the difficulty is
+            precisely that doubles stop being able to tell."
+    (is (true? (fmt/too-large? a-thousand-ones)))
+    (is (true? (fmt/too-large? "9223372036854775808")) "one past Long/MAX_VALUE")
+    (is (false? (fmt/too-large? "9223372036854775807")) "Long/MAX_VALUE itself")
+    (is (false? (fmt/too-large? "65,000")))
+    (is (false? (fmt/too-large? "25 MB")))
+    (is (false? (fmt/too-large? "abc")))
+    (is (false? (fmt/too-large? "")))
+    (testing "grouping separators are not digits, whatever the language"
+      (is (true? (fmt/too-large? "111.111.111.111.111.111.111.111")))
+      (is (true? (fmt/too-large? "111,111,111,111,111,111,111,111"))))))

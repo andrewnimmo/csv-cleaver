@@ -91,6 +91,7 @@
   :plan/capped-at-excel "Die Dateien enden zusätzlich bei {0} Zeilen, damit Excel sie öffnen kann."
 
   :problem/rows-needed   "Geben Sie an, wie viele Zeilen jede Datei enthalten soll."
+  :problem/number-too-large "Diese Zahl ist zu groß. Versuchen Sie eine kleinere."
   :problem/size-needed   "Geben Sie an, wie groß jede Datei sein soll."
   :problem/no-data       "Diese Datei enthält keine Datenzeilen zum Aufteilen."
   :problem/pattern-empty "Das Namensmuster darf nicht leer sein."

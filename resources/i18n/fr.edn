@@ -91,6 +91,7 @@
   :plan/capped-at-excel "Les fichiers s'arrêteront aussi à {0} lignes, pour qu'Excel puisse les ouvrir."
 
   :problem/rows-needed   "Indiquez combien de lignes chaque fichier doit contenir."
+  :problem/number-too-large "Ce nombre est trop grand. Essayez-en un plus petit."
   :problem/size-needed   "Indiquez quelle taille chaque fichier doit avoir."
   :problem/no-data       "Ce fichier ne contient aucune ligne de données à découper."
   :problem/pattern-empty "Le modèle de nom ne peut pas être vide."

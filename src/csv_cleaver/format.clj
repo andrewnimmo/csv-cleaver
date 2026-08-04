@@ -55,10 +55,36 @@
 
 ;; ── Reading what the user typed ─────────────────────────────────────────────
 
+(defn usable?
+  "Whether a parsed number is one this application can actually act on.
+
+   Numbers arrive as doubles, and a long enough run of digits does not overflow
+   in any visible way — it simply becomes infinity, which then throws the moment
+   anything asks for it as a long. A thousand ones typed into the row box did
+   exactly that, and because the throw happened inside the language switch, the
+   window silently refused to change language at all."
+  [value]
+  (and (number? value)
+       (Double/isFinite (double value))
+       (< (Math/abs (double value)) (double Long/MAX_VALUE))))
+
+(defn too-large?
+  "Whether `s` is a number too big to use, as distinct from not a number.
+
+   Compared as an exact integer rather than by parsing to a double, because the
+   whole difficulty is that doubles stop being able to tell. Locale-independent:
+   only the digits matter, and no language writes a different set of them."
+  [s]
+  (let [digits (str/replace (str s) #"[^0-9]" "")]
+    (boolean
+     (and (seq digits)
+          (pos? (.compareTo (BigInteger. digits)
+                            (BigInteger/valueOf Long/MAX_VALUE)))))))
+
 (defn parse-number
   "Parse `s` the way this language writes numbers, so that a German user typing
    65.000 means sixty-five thousand rather than sixty-five. Returns nil unless
-   the whole string was consumed."
+   the whole string was consumed and the result is one we can work with."
   [ctx s]
   (let [trimmed (str/trim (str s))]
     (when (seq trimmed)
@@ -66,7 +92,11 @@
             position (ParsePosition. 0)
             parsed   (.parse nf trimmed position)]
         (when (and parsed (= (.getIndex position) (count trimmed)))
-          (.doubleValue parsed))))))
+          (let [value (.doubleValue parsed)]
+            ;; Infinity is what a very long number becomes here, and returning
+            ;; it would push the failure into every caller instead of ending it
+            ;; at the one place that knows the string was unusable.
+            (when (usable? value) value)))))))
 
 (defn parse-count
   "A row count as the user typed it — 65,000 or 65.000 or 65 000 — as a long,
@@ -74,9 +104,7 @@
   [ctx s]
   (let [cleaned (str/replace (str s) whitespace "")]
     (when-let [value (parse-number ctx cleaned)]
-      (when (and (pos? value)
-                 (== value (Math/floor value))
-                 (< value (double Long/MAX_VALUE)))
+      (when (and (pos? value) (== value (Math/floor value)))
         (long value)))))
 
 (defn unit-word
@@ -117,7 +145,9 @@
                   (size-tokens ctx))
             [text :size/mb (* 1024 1024)])]
     (when-let [value (parse-number ctx (str/replace (str/trim digits) whitespace ""))]
-      (when (pos? value)
+      ;; The unit multiplies, so a value that was usable on its own may not be
+      ;; once it becomes bytes. Checked here rather than after the throw.
+      (when (and (pos? value) (usable? (* value (long factor))))
         {:value value :unit unit :factor factor}))))
 
 (defn parse-size

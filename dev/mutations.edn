@@ -129,6 +129,24 @@
   :replace   "[(conj names base)"
   :namespace "csv-cleaver.api-test"}
 
+ {:label     "a number too large throws again, losing the language change"
+  :file      "src/csv_cleaver/format.clj"
+  :find      "            (when (usable? value) value)))))))"
+  :replace   "            value))))))"
+  :namespace "csv-cleaver.format-test"}
+
+ {:label     "a unit is allowed to push a size past what a long can hold"
+  :file      "src/csv_cleaver/format.clj"
+  :find      "      (when (and (pos? value) (usable? (* value (long factor))))"
+  :replace   "      (when (pos? value)"
+  :namespace "csv-cleaver.format-test"}
+
+ {:label     "a number too large is reported as an empty box"
+  :file      "src/csv_cleaver/state.clj"
+  :find      "            (fmt/too-large? (if (= mode :rows) (:rows-text state) (:size-text state)))\n            :problem/number-too-large\n\n"
+  :replace   ""
+  :namespace "csv-cleaver.state-test"}
+
  {:label     "the entry point requires cljfx, so --headless dies on a server"
   :file      "src/csv_cleaver/main.clj"
   :find      "   [csv-cleaver.api.server :as api]"

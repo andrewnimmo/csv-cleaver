@@ -115,6 +115,7 @@
 
   ;; Things that stop a split
   :problem/rows-needed   "Enter how many rows each file should hold."
+  :problem/number-too-large "That number is too large. Try a smaller one."
   :problem/size-needed   "Enter how big each file should be."
   :problem/no-data       "This file has no data rows to split."
   :problem/pattern-empty "The file name pattern cannot be empty."

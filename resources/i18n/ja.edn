@@ -88,6 +88,7 @@
   :plan/capped-at-excel "Excel で開けるよう、ファイルは {0} 行でも区切られます。"
 
   :problem/rows-needed   "1 ファイルあたりの行数を入力してください。"
+  :problem/number-too-large "この数値は大きすぎます。もっと小さい数値を入力してください。"
   :problem/size-needed   "1 ファイルあたりのサイズを入力してください。"
   :problem/no-data       "このファイルには分割できるデータ行がありません。"
   :problem/pattern-empty "ファイル名の書式は空にできません。"

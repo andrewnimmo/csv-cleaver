@@ -199,13 +199,19 @@
 (defn blocking-problem
   "The one thing stopping the user pressing Split, as a translation key or a
    message map, or nil. The view turns it into a sentence."
-  [{:keys [phase template] :as state}]
+  [{:keys [phase template mode] :as state}]
   (when (= phase :ready)
     (or (naming/template-problem template)
         (when-not (split-value state)
-          (if (= (:mode state) :rows)
-            :problem/rows-needed
-            :problem/size-needed))
+          (cond
+            ;; "Enter how many rows each file should hold" is not a useful thing
+            ;; to say to somebody who plainly has. A number too big to use is a
+            ;; different situation from an empty box, and deserves saying so.
+            (fmt/too-large? (if (= mode :rows) (:rows-text state) (:size-text state)))
+            :problem/number-too-large
+
+            (= mode :rows) :problem/rows-needed
+            :else          :problem/size-needed))
         (:problem (current-plan state)))))
 
 ;; ── Event handling ──────────────────────────────────────────────────────────

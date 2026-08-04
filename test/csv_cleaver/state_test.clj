@@ -440,3 +440,34 @@
           (is (= (state/split-value (assoc start :mode :bytes))
                  (state/split-value (assoc moved :mode :bytes)))
               (str "size: " from " → " to)))))))
+
+(deftest a-number-too-large-does-not-stop-the-language-changing
+  (testing "the report: with a thousand digits in the row box, choosing another
+            language did nothing at all — the switch threw, and the window kept
+            the language it had while the picker showed the new one."
+    (let [big     (apply str (repeat 1000 "1"))
+          started (assoc state/initial :rows-text big)]
+      (doseq [tag ["de" "fr" "es" "ja" "zh"]]
+        (let [changed (state/with-language started tag)]
+          (is (= tag (:language changed)) (str "must reach " tag))
+          (is (= big (:rows-text changed)) "and leave the unusable text alone")))
+      (testing "through the event the picker actually sends"
+        (let [changed (state/apply-event started
+                                         {:event/type ::state/language-changed
+                                          :language-name "Español"})]
+          (is (= "es" (:language changed))))))))
+
+(deftest a-number-too-large-says-so-rather-than-asking-for-one
+  (testing "the box was not empty. Telling someone to enter a number they have
+            already entered explains nothing about why Split is disabled."
+    (let [big (apply str (repeat 1000 "1"))]
+      (is (= :problem/number-too-large
+             (state/blocking-problem (assoc state/initial :phase :ready :rows-text big))))
+      (is (= :problem/number-too-large
+             (state/blocking-problem (assoc state/initial :phase :ready :mode :bytes
+                                            :size-text big))))
+      (is (= :problem/rows-needed
+             (state/blocking-problem (assoc state/initial :phase :ready :rows-text "")))
+          "an empty box is still an empty box")
+      (is (not (state/ready? (assoc state/initial :phase :ready :rows-text big)))
+          "and Split stays disabled either way"))))
