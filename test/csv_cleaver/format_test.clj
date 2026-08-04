@@ -145,3 +145,55 @@
   (testing "before the first file is open it still reads as file 1"
     (is (= "File 1 · 0 of 10 rows"
            (fmt/progress-sentence en {:rows-done 0 :files-done 0} 10)))))
+
+(deftest a-typed-number-can-be-rewritten-for-another-language
+  (testing "R80. The boxes hold text, and that text is read back in whatever
+            language the window is in. Leaving it alone across a language change is not a
+            cosmetic fault: English 65,000 read as German is sixty-five."
+    (is (= "65.000" (fmt/restate en de "65,000")))
+    ;; French groups with a narrow no-break space, U+202F, which is why this
+    ;; expectation is written as an escape rather than as something that looks
+    ;; like a space and is not one.
+    (is (= "65\u202f000" (fmt/restate en fr "65,000")))
+    (is (= "65,000" (fmt/restate de en "65.000")))
+    (is (= "65,000" (fmt/restate en en "65,000")) "no change is still correct")
+    (testing "a unit survives, and only the number is rewritten"
+      (is (= "1,5 GB" (fmt/restate en de "1.5 GB")))
+      (is (= "25 MB" (fmt/restate en de "25 MB")))
+      (is (= "1.5 GB" (fmt/restate de en "1,5 GB"))))
+    (testing "anything unreadable is left exactly as it is: half-typed input
+              belongs to the user, and guessing at it would be worse"
+      (doseq [text ["" "  " "65," "abc" "MB" "-"]]
+        (is (= text (fmt/restate en de text)) (pr-str text))))))
+
+(deftest rewriting-a-number-round-trips
+  (testing "changing language and changing back must not drift.
+
+            Each case starts from text this language would itself have written,
+            because that is the only text the property can hold for: \"1.5 GB\"
+            is not Spanish, where a full stop groups thousands, and reading it
+            as Spanish correctly yields fifteen."
+    (let [tags ["en" "de" "fr" "es" "zh" "ja"]]
+      (doseq [a tags
+              b tags
+              [render suffix] [[#(i18n/number % 65000) ""]
+                               [#(i18n/number % 1048576) ""]
+                               [#(i18n/decimal % 1.5 1) " GB"]
+                               [#(i18n/number % 25) " MB"]]]
+        (let [ca   (i18n/context a)
+              cb   (i18n/context b)
+              text (str (render ca) suffix)]
+          (is (= text (fmt/restate cb ca (fmt/restate ca cb text)))
+              (str (pr-str text) " through " a "→" b "→" a)))))))
+
+(deftest rewriting-a-number-preserves-what-it-means
+  (testing "the point of the exercise: the value the window reads back is the
+            same number before and after a language change"
+    (let [tags ["en" "de" "fr" "es" "zh" "ja"]]
+      (doseq [a tags b tags]
+        (let [ca   (i18n/context a)
+              cb   (i18n/context b)
+              text (i18n/number ca 65000)]
+          (is (= 65000 (fmt/parse-count ca text)) (str a " reads its own text"))
+          (is (= 65000 (fmt/parse-count cb (fmt/restate ca cb text)))
+              (str a "→" b " keeps the number")))))))

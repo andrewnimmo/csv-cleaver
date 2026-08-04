@@ -339,3 +339,37 @@
 
 (deftest the-default-template-is-usable
   (is (nil? (naming/template-problem (:template state/initial)))))
+
+(deftest changing-language-rewrites-the-numbers-the-user-typed
+  (testing "R80, reported against the built application: the text changed language
+            but the numbers did not. Worse than it looks — the row count is read
+            back in the window's current language, so an untouched English
+            65,000 in a German window means sixty-five, and the split would
+            produce a thousand times as many files as asked for."
+    (let [en state/initial
+          de (state/with-language en "de")
+          fr (state/with-language en "fr")]
+      (is (= "65,000" (:rows-text en)))
+      (is (= "65.000" (:rows-text de)) "written as German writes it")
+      (is (= 65000 (state/split-value en)))
+      (is (= 65000 (state/split-value de)) "and still means what it meant")
+      (is (= 65000 (state/split-value fr))))))
+
+(deftest changing-language-back-and-forth-does-not-drift
+  (let [wander (reduce state/with-language state/initial
+                       ["de" "fr" "ja" "zh" "es" "en"])]
+    (is (= "65,000" (:rows-text wander)))
+    (is (= "25 MB" (:size-text wander)))
+    (is (= 65000 (state/split-value wander)))))
+
+(deftest changing-language-leaves-half-typed-input-alone
+  (testing "someone mid-keystroke owns what is in the box"
+    (let [state (-> (assoc state/initial :rows-text "65,")
+                    (state/with-language "de"))]
+      (is (= "65," (:rows-text state))))))
+
+(deftest a-size-keeps-its-unit-across-a-language-change
+  (let [state (-> (assoc state/initial :mode :bytes :size-text "1.5 GB")
+                  (state/with-language "de"))]
+    (is (= "1,5 GB" (:size-text state)))
+    (is (= (long (* 1.5 1024 1024 1024)) (state/split-value state)))))

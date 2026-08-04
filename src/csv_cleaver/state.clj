@@ -90,10 +90,22 @@
 
 (defn with-language
   "Switch the window to `tag`, falling back to English for anything we have no
-   translation for."
+   translation for.
+
+   The two boxes the user types numbers into are rewritten as the new language
+   writes them. They hold text, and that text is read back in whatever language
+   the window is in — so leaving 65,000 alone when the window becomes German
+   would not merely look foreign, it would mean sixty-five, and the split would
+   silently produce a thousand times as many files as asked for."
   [state tag]
-  (let [tag (or (i18n/normalise-tag tag) i18n/fallback-tag)]
-    (assoc state :language tag :i18n (i18n/context tag))))
+  (let [tag  (or (i18n/normalise-tag tag) i18n/fallback-tag)
+        from (ctx state)
+        to   (i18n/context tag)]
+    (assoc state
+           :language  tag
+           :i18n      to
+           :rows-text (fmt/restate from to (:rows-text state))
+           :size-text (fmt/restate from to (:size-text state)))))
 
 (defn split-value
   "The row count or byte size the user has asked for, or nil when what they have

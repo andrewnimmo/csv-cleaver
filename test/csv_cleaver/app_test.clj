@@ -258,3 +258,36 @@
                         (constantly false) dispatch)
       (is (= [::state/split-failed] (types seen)))
       (is (= :problem/folder-create (:key (:message (last @seen))))))))
+
+;; ── Opening in one language with settings saved in another ──────────────────
+
+(deftest saved-numbers-are-read-in-the-language-they-were-saved-in
+  (testing "R81. The row count is stored as text. Restoring a German 65.000 into an
+            English window by reading it as English would give sixty-five, and
+            the user would never know why the split produced so many files."
+    (let [saved {:language "de" :rows-text "65.000" :size-text "1,5 GB"}
+          state (app/startup-state state/initial saved {:locale "en"})]
+      (is (= "en" (:language state)))
+      (is (= "65,000" (:rows-text state)))
+      (is (= "1.5 GB" (:size-text state)))
+      (is (= 65000 (state/split-value state)))))
+
+  (testing "and the other way round"
+    (let [saved {:language "en" :rows-text "100,000"}
+          state (app/startup-state state/initial saved {:locale "de"})]
+      (is (= "100.000" (:rows-text state)))
+      (is (= 100000 (state/split-value state)))))
+
+  ;; The expectations below carry U+202F, the narrow no-break space French
+  ;; groups thousands with. Written as an escape so that nobody has to wonder
+  ;; whether it is an ordinary space.
+  (testing "reopening in the same language changes nothing"
+    (let [saved {:language "fr" :rows-text "65\u202f000"}
+          state (app/startup-state state/initial saved {})]
+      (is (= "65\u202f000" (:rows-text state)))
+      (is (= 65000 (state/split-value state)))))
+
+  (testing "settings saved before languages were remembered still open"
+    (let [state (app/startup-state state/initial {:rows-text "65,000"}
+                                   {:locale "en"})]
+      (is (= 65000 (state/split-value state))))))

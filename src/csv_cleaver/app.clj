@@ -339,6 +339,12 @@
                       (str/join ", " (i18n/available-tags))
                       ". Starting in English."))))
     (-> base
+        ;; Into the saved language first. The row count and size were saved as
+        ;; text, typed in whatever language the window was in at the time, so
+        ;; they have to be read as that language before being rewritten as the
+        ;; one being opened in. Restoring German 65.000 straight into an English
+        ;; window would read as sixty-five.
+        (state/with-language (or (:language saved) (:language base)))
         (merge (dissoc saved :language :theme))
         (state/with-language language)
         (assoc :theme theme))))

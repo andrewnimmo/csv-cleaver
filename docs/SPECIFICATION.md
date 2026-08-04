@@ -223,6 +223,18 @@ means sixty-five thousand to a German user.
 **R32.** Plural wording follows each language's own rule. French treats zero as
 singular; Chinese and Japanese have no plural form.
 
+**R80.** Changing the interface language rewrites the numbers already typed into
+the row-count and size boxes as the new language writes them. Those boxes hold
+text and R31 reads that text back in the current language, so text left as it
+was would change meaning: `65,000` typed in English and read as German is
+sixty-five, and the split would produce a thousand times as many files as the
+user asked for. Text that is not a number the previous language could read is
+left exactly as it is.
+
+**R81.** The same applies to settings restored at startup. A row count saved in
+one language and reopened in another is read as the language it was saved in,
+then rewritten as the language being opened in.
+
 ### Translations supplied by the user
 
 **R44.** A language may be added without rebuilding, by placing an EDN file in a

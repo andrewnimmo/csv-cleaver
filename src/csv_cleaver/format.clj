@@ -96,6 +96,40 @@
           (when (pos? value)
             (long (* value factor))))))))
 
+(defn- places-in
+  "How many decimals a value needs to come back looking as it went in."
+  [^double value]
+  (let [s (str value)]
+    (if-let [point (str/index-of s ".")]
+      (min 3 (- (count s) (long point) 1))
+      0)))
+
+(defn restate
+  "A number typed in one language, written as another writes it: 65,000 becomes
+   65.000 when the window changes from English to German.
+
+   This exists because the text in the row-count box is text, not a number. It
+   is read back in whatever language the window is currently in, so leaving it
+   alone when the language changes does not merely look wrong — English 65,000
+   read as German is sixty-five, and the split would quietly produce a thousand
+   times too many files.
+
+   Only the leading number is touched, so a unit such as MB survives. Anything
+   this language cannot read as a number is returned exactly as it was: half
+   typed input belongs to the user, and guessing at it would be worse than
+   leaving it."
+  [from to s]
+  (let [text (str s)]
+    (if-let [[_ digits tail]
+             (re-matches (re-pattern "([\\d.,\\s\\u00a0\\u202f]*\\d)(.*)") text)]
+      (if-let [value (parse-number from (str/replace digits whitespace ""))]
+        (str (if (== value (Math/floor value))
+               (i18n/number to (long value))
+               (i18n/decimal to value (places-in value)))
+             tail)
+        text)
+      text)))
+
 ;; ── Sentences ───────────────────────────────────────────────────────────────
 
 (defn message
