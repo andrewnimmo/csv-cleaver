@@ -440,3 +440,14 @@
       (run dir s {:value 1})
       (is (= [] (split/collisions {:survey s :out-dir dir
                                    :template "part-{index}-of-{name}"}))))))
+
+(deftest a-header-without-a-terminator-would-still-be-terminated
+  (testing "defensive and believed unreachable: a header with no terminator
+            means it is the file's last line, which means no data rows, which
+            plan refuses. Unit-tested directly so a refactor that makes it
+            reachable finds it already working — see ASSUMPTIONS.md."
+    (let [terminated #'csv-cleaver.split/terminated]
+      (is (= "a,b\n" (terminated "a,b" "\n")))
+      (is (= "a,b\r\n" (terminated "a,b" "\r\n")))
+      (is (= "a,b\n" (terminated "a,b\n" "\r\n")) "already terminated is left alone")
+      (is (= "a,b\r" (terminated "a,b\r" "\n"))))))

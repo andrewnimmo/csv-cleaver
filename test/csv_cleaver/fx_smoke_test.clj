@@ -294,3 +294,18 @@
                   (doto ^javafx.scene.Parent (fx/instance updated) (.applyCss) (.layout))
                   (is (= before (choice-widths (fx/instance updated)))
                       (str "changing to " tag " changed a picker's width")))))))))))
+
+(deftest ^:fx the-window-geometry-is-read-from-the-real-stage
+  (testing "R55/R58: position and size are gathered at close from the live
+            Stage. Tested against a real one — never shown — because the getters
+            are exactly the kind of wiring a rename breaks silently."
+    (let [stage @(fx/on-fx-thread
+                  (doto (javafx.stage.Stage.)
+                    (.setX 40.0) (.setY 60.0)
+                    (.setWidth 800.0) (.setHeight 700.0)))
+          saved ((requiring-resolve 'csv-cleaver.app/session-settings)
+                 state/initial stage)]
+      (is (= {:x 40.0 :y 60.0 :width 800.0 :height 700.0} (:window saved)))
+      (testing "and what was saved is what the next window asks for"
+        (is (= {:x 40.0 :y 60.0 :width 800.0 :height 700.0}
+               (view/remembered-window (:window saved))))))))

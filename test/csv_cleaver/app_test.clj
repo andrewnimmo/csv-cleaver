@@ -1,10 +1,13 @@
 (ns csv-cleaver.app-test
   (:require
    [clojure.java.io :as io]
+   [clojure.string :as str]
    [clojure.test :refer [deftest is testing use-fixtures]]
    [csv-cleaver.app :as app]
+   [csv-cleaver.i18n :as i18n]
    [csv-cleaver.prefs :as prefs]
    [csv-cleaver.scan :as scan]
+   [csv-cleaver.split :as split]
    [csv-cleaver.state :as state]
    [csv-cleaver.test-util :as tu])
   (:import
@@ -303,3 +306,106 @@
           "the row count is the default, in Spanish, not a hundred")
       (is (= :dark (:theme state)) "everything unambiguous still comes back")
       (is (= "part-{index}" (:template state))))))
+
+;; ── Event routing that lives in app rather than state ───────────────────────
+;;
+;; A handful of view events are translated here — label back to value, or a
+;; timestamped folder invented — before reaching the pure handler. Untested,
+;; they were the only seam where a picker could silently stop working, which is
+;; exactly what happened to the encoding picker.
+
+(defn- routed
+  "Run one event through app/handle-event with the dispatch loop captured.
+   Returns the events it forwarded."
+  [start-state event]
+  (let [forwarded (atom [])]
+    (reset! app/*state start-state)
+    (with-redefs [app/dispatch! (fn [e] (swap! forwarded conj e))]
+      (app/handle-event event))
+    @forwarded))
+
+(deftest a-picked-delimiter-label-becomes-the-character-it-stands-for
+  (testing "in every language, because the labels differ in every language"
+    (doseq [tag ["en" "es" "fr" "de" "zh" "ja"]]
+      (let [st    (state/with-language state/initial tag)
+            ctx   (state/ctx st)
+            semi  (i18n/tr ctx :delimiter/semicolon)
+            [event] (routed st {:event/type :csv-cleaver.view/delimiter-picked
+                                :label semi})]
+        (is (= :csv-cleaver.state/delimiter-override-changed (:event/type event)) tag)
+        (is (= \; (:choice event)) tag)))))
+
+(deftest a-picked-charset-label-becomes-the-charset-it-stands-for
+  (doseq [tag ["en" "fr" "ja"]]
+    (let [st  (state/with-language state/initial tag)
+          ctx (state/ctx st)
+          [event] (routed st {:event/type :csv-cleaver.view/charset-picked
+                              :label (state/charset-label ctx "UTF-16LE")})]
+      (is (= "UTF-16LE" (:choice event)) tag))
+    (let [st  (state/with-language state/initial tag)
+          ctx (state/ctx st)
+          [event] (routed st {:event/type :csv-cleaver.view/charset-picked
+                              :label (state/charset-label ctx state/detected-charset)})]
+      (is (= state/detected-charset (:choice event))
+          (str tag ": the translated Detected entry maps back to the sentinel")))))
+
+(deftest declining-to-replace-goes-to-a-fresh-timestamped-folder
+  (tu/with-temp-dir [dir]
+    (let [f  (tu/write-file dir "orders.csv" "id\n1\n")
+          st (assoc state/initial
+                    :out-dir (io/file dir "out")
+                    :survey  {:file f})
+          [event] (routed st {:event/type :csv-cleaver.view/new-folder-requested})]
+      (is (= :csv-cleaver.state/collision-resolved (:event/type event)))
+      (is (= :new-dir (:choice event)))
+      (is (str/starts-with? (.getName ^File (:dir event)) "orders split ")
+          "named after the file, inside the folder the user chose")
+      (is (= (io/file dir "out") (.getParentFile ^File (:dir event)))))))
+
+(deftest ordinary-events-flow-through-the-pure-handler
+  (testing "everything that is not one of the special cases goes to
+            state/handle and its effects are performed"
+    (let [performed (atom [])]
+      (reset! app/*state state/initial)
+      (with-redefs [app/perform! (fn [e] (swap! performed conj e))]
+        (app/handle-event {:event/type :csv-cleaver.state/rows-changed
+                           :text "42"}))
+      (is (= "42" (:rows-text @app/*state)))
+      (is (= [] @performed) "rows-changed has no effects"))))
+
+;; ── The workers' callbacks ──────────────────────────────────────────────────
+
+(deftest a-long-scan-reports-progress-as-it-goes
+  (testing "the Checking… count on the file card comes from this callback, so a
+            file long enough to cross the check interval must produce at least
+            one progress event before the result"
+    (tu/with-temp-dir [dir]
+      (let [f (io/file dir "long.csv")]
+        (with-open [w (io/writer f)]
+          (.write w "id\n")
+          (dotimes [i 30000] (.write w (str i "\n"))))
+        (let [events (atom [])]
+          (app/scan-worker {:file f} #(swap! events conj %))
+          (let [kinds (map :event/type @events)]
+            (is (some #{:csv-cleaver.state/scan-progress} kinds)
+                "at least one progress report")
+            (is (= :csv-cleaver.state/scan-succeeded (last kinds)))
+            (is (= 30001 (get-in (last @events) [:survey :records])))))))))
+
+(deftest a-split-that-cannot-write-reports-failure-not-an-exception
+  (tu/with-temp-dir [dir]
+    (let [f      (tu/write-file dir "x.csv" "id\n1\n2\n3\n4\n")
+          survey (scan/survey f)
+          events (atom [])]
+      (app/split-worker {:survey survey
+                         ;; a folder that cannot be created: its parent is a file
+                         :out-dir (io/file f "impossible")
+                         :mode :rows :value 1
+                         :has-header? true :include-header? true
+                         :plan (split/plan {:survey survey :mode :rows :value 1
+                                            :has-header? true})}
+                        (constantly false)
+                        #(swap! events conj %))
+      (let [event (last @events)]
+        (is (= :csv-cleaver.state/split-failed (:event/type event)))
+        (is (some? (:message event)) "carrying something the window can say")))))

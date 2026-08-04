@@ -69,3 +69,21 @@
   (is (= 1 (files/byte-length "a" (Charset/forName "UTF-8"))))
   (is (= 2 (files/byte-length "é" (Charset/forName "UTF-8"))))
   (is (= 1 (files/byte-length "é" (Charset/forName "windows-1252")))))
+
+(deftest inspecting-a-folder-counts-only-what-could-be-confused-with-output
+  (testing "R20-adjacent: the collision warning is about CSV files, so the
+            count must ignore folders, other extensions, and case"
+    (tu/with-temp-dir [dir]
+      (tu/write-file dir "a.csv" "x\n")
+      (tu/write-file dir "B.CSV" "x\n")
+      (tu/write-file dir "notes.txt" "x\n")
+      (.mkdirs (io/file dir "sub.csv"))          ; a folder, whatever its name
+      (let [info (files/inspect-dir dir)]
+        (is (true? (:exists? info)))
+        (is (= 2 (:csv-count info)) "a.csv and B.CSV, nothing else"))))
+  (testing "a folder that does not exist yet"
+    (let [info (files/inspect-dir (io/file "/no/such/dir"))]
+      (is (false? (:exists? info)))
+      (is (zero? (:csv-count info)))))
+  (testing "nil is answered, not thrown at"
+    (is (= {:exists? false :csv-count 0} (files/inspect-dir nil)))))

@@ -2,6 +2,7 @@
   (:require
    [clojure.java.io :as io]
    [clojure.test :refer [deftest is testing]]
+   [csv-cleaver.i18n :as i18n]
    [csv-cleaver.naming :as naming]
    [csv-cleaver.prefs :as prefs]
    [csv-cleaver.scan :as scan]
@@ -471,3 +472,78 @@
           "an empty box is still an empty box")
       (is (not (state/ready? (assoc state/initial :phase :ready :rows-text big)))
           "and Split stays disabled either way"))))
+
+;; ── Handlers found uncovered by the audit ────────────────────────────────────
+;;
+;; Each of these existed with no test at all, which means each could have been
+;; broken by any refactor without a single failure. Found by reading the
+;; coverage report file by file rather than trusting the total.
+
+(deftest toggling-excel-safety-changes-exactly-that
+  (let [on  (state/apply-event state/initial
+                               {:event/type ::state/excel-safe-toggled :selected false})]
+    (is (false? (:excel-safe? on)))
+    (is (= (dissoc state/initial :excel-safe?) (dissoc on :excel-safe?))
+        "and nothing else")))
+
+(deftest answering-the-header-question-stops-it-being-asked-again
+  (testing "R33-adjacent: the question is asked once, and the answer is kept
+            apart from the detection so neither overwrites the other"
+    (let [asked (state/apply-event state/initial
+                                   {:event/type ::state/header-answered
+                                    :has-header? false})]
+      (is (false? (:has-header? asked)))
+      (is (true? (:header-answered? asked)))
+      (is (not (state/header-uncertain?
+                (assoc asked :survey {:header {:verdict :unsure}})))
+          "an answered question is never re-asked, whatever the evidence"))))
+
+(deftest choosing-a-delimiter-re-surveys-the-file
+  (testing "everything downstream of the delimiter — counts, fields, damage —
+            depends on it, so an override cannot patch the survey; it has to
+            re-read the file with the new delimiter"
+    (tu/with-temp-dir [dir]
+      (let [f (tu/write-file dir "x.csv" "a;b\n1;2\n")
+            {:keys [state effects]}
+            (state/handle (assoc state/initial :file f :phase :ready)
+                          {:event/type ::state/delimiter-override-changed
+                           :choice \;})]
+        (is (= \; (:delimiter-override state)))
+        (is (= :scanning (:phase state)))
+        (is (= [[:scan {:file f :delimiter \;}]] effects)
+            "as an effect, so tests and the window agree on what happens"))))
+  (testing "with no file chosen there is nothing to re-survey"
+    (let [{:keys [state effects]}
+          (state/handle state/initial
+                        {:event/type ::state/delimiter-override-changed :choice \,})]
+      (is (= \, (:delimiter-override state)))
+      (is (empty? effects)))))
+
+(deftest a-report-about-an-abandoned-folder-is-ignored
+  (testing "the inspection runs on another thread; by the time it answers, the
+            user may have chosen a different folder, and a stale answer must
+            not overwrite the current one"
+    (tu/with-temp-dir [dir]
+      (let [current (assoc state/initial :out-dir (io/file dir "chosen"))
+            stale   (state/apply-event current
+                                       {:event/type ::state/out-dir-inspected
+                                        :dir  (io/file dir "abandoned")
+                                        :info {:exists? true :csv-count 9}})
+            fresh   (state/apply-event current
+                                       {:event/type ::state/out-dir-inspected
+                                        :dir  (io/file dir "chosen")
+                                        :info {:exists? true :csv-count 2}})]
+        (is (nil? (:out-dir-info stale)) "the stale reply changed nothing")
+        (is (= 2 (:csv-count (:out-dir-info fresh))))))))
+
+(deftest an-unknown-charset-label-falls-back-to-detection
+  (testing "the safe answer, not nil: nil would become a charset lookup crash
+            later, and detection is what every other unrecognised state means"
+    (doseq [tag ["en" "es" "fr" "de" "zh" "ja"]]
+      (let [c (i18n/context tag)]
+        (is (= state/detected-charset (state/charset-for-label c "no such label")))
+        (testing "and every real label round-trips"
+          (doseq [charset state/selectable-charsets]
+            (is (= charset (state/charset-for-label
+                            c (state/charset-label c charset)))
+                (str tag " / " charset))))))))

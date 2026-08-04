@@ -4,6 +4,7 @@
    [clojure.java.io :as io]
    [clojure.string :as str]
    [clojure.test :refer [deftest is testing]]
+   [csv-cleaver.api.server]
    [csv-cleaver.main :as main]))
 
 (defn- load-time-dependencies
@@ -164,3 +165,19 @@
         (is (str/includes? (str errors) "Ignored"))
         (is (true? (:parked @record)) "and it carried on")
         (is (nil? (:exit @record)))))))
+
+(deftest a-service-that-cannot-start-explains-itself-and-stops
+  (testing "not just the port-in-use case: any failure. The user asked for a
+            service, and opening the window as though nothing had happened
+            would be a lie they might not notice until something depending on
+            it failed."
+    (let [exits  (atom [])
+          errors (java.io.StringWriter.)]
+      (with-redefs [main/exit! (fn [status] (swap! exits conj status))
+                    csv-cleaver.api.server/start!
+                    (fn [_] (throw (RuntimeException. "no threads left")))]
+        (binding [*err* errors *out* (java.io.StringWriter.)]
+          (main/start-api! {:api-port 0 :api-input :none})))
+      (is (= [1] @exits))
+      (is (str/includes? (str errors) "no threads left")
+          "the actual reason, not a generic sentence"))))

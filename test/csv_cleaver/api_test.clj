@@ -525,3 +525,59 @@
     (with-service :none
       (fn [{:keys [url]}]
         (is (str/starts-with? url "http://127.0.0.1:"))))))
+
+;; ── Paths the audit found untested ──────────────────────────────────────────
+
+(deftest a-job-whose-split-throws-is-reported-failed-not-lost
+  (testing "the thread dies either way; the difference is whether the caller
+            polling the job ever finds out. A survey whose file has vanished
+            between POST and execution is the realistic way this happens."
+    (tu/with-temp-dir [dir]
+      (let [registry (jobs/new-registry)
+            f        (tu/write-file dir "gone.csv" "id\n1\n2\n")
+            survey   (csv-cleaver.scan/survey f)
+            _        (.delete f)
+            job      (jobs/start! registry {:survey survey
+                                            :out-dir (io/file dir "out")
+                                            :mode :rows :value 1
+                                            :has-header? true :include-header? true})
+            settled  (loop [n 0]
+                       (let [j (jobs/fetch registry (:id job))]
+                         (if (and (= "running" (:state j)) (< n 200))
+                           (do (Thread/sleep 25) (recur (inc n)))
+                           j)))]
+        (is (= "failed" (:state settled)))
+        (is (string? (:error settled)) "carrying why")))))
+
+(deftest cancelling-a-running-job-asks-it-to-stop
+  (testing "the job's own thread does the stopping; cancel! only raises the
+            flag and reports the state as it stands"
+    (let [registry (jobs/new-registry)
+          flag     (atom false)]
+      (swap! registry assoc "busy" {:id "busy" :state :running
+                                    :started-at 0 :cancelled flag})
+      (let [view (jobs/cancel! registry "busy")]
+        (is (true? @flag) "the flag the split polls was raised")
+        (is (= "running" (:state view))
+            "still running until the thread itself notices"))
+      (is (nil? (jobs/cancel! registry "nope"))))))
+
+(deftest a-running-job-can-be-fetched-mid-flight
+  (let [registry (jobs/new-registry)]
+    (swap! registry assoc "busy" {:id "busy" :state :running :started-at 5
+                                  :progress {:rows-done 100 :files-done 1}})
+    (let [[app _] [(server/app {:registry registry :input-mode :path :token token}) nil]
+          body    (body-of (app (request :get "/api/splits/busy")))]
+      (is (= "running" (:state body)))
+      (is (= 100 (get-in body [:progress :rowsDone]))))))
+
+(deftest the-banner-warns-about-path-mode-in-plain-words
+  (testing "R64. The one sentence that must never be softened: with path mode,
+            holding the token means reading anything the user can read."
+    (let [warned #(server/banner {:url "http://127.0.0.1:1" :token "t"
+                                  :input-mode %})]
+      (is (str/includes? (warned :path) "any file you can read"))
+      (is (str/includes? (warned :both) "any file you can read")
+          "both allows paths, so both gets the warning")
+      (is (not (str/includes? (warned :upload) "any file you can read")))
+      (is (not (str/includes? (warned :none) "any file you can read"))))))

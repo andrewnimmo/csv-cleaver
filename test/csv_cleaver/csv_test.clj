@@ -94,3 +94,17 @@
   (testing "nothing separator-like falls back to a comma"
     (is (= \, (csv/detect-delimiter "single\ncolumn\n")))
     (is (= \, (csv/detect-delimiter "")))))
+
+(deftest a-closing-quote-followed-by-each-terminator
+  (testing "R1-R12: the :quote-seen exits were the least-covered lines in the
+            scanner — the one namespace where an untested branch is silent data
+            corruption rather than a crash. Each exit exercised explicitly:
+            delimiter, LF, CRLF, lone CR mid-file, and CR at end of file."
+    (let [records #(mapv :text (csv/records % \,))]
+      (is (= ["\"a\",\"b\"\n"] (records "\"a\",\"b\"\n"))
+          "delimiter directly after a closing quote")
+      (is (= ["\"a\"\r\n" "\"b\"\r\n"] (records "\"a\"\r\n\"b\"\r\n")))
+      (is (= ["\"a\"\r" "\"b\"\r"] (records "\"a\"\r\"b\"\r"))
+          "lone CR after a closing quote, twice — the second at end of file")
+      (is (= ["\"a\"\r" "b\n"] (records "\"a\"\rb\n"))
+          "the character after the lone CR starts the next record, not this one"))))

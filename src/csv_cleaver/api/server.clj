@@ -592,7 +592,12 @@
             ""
             "  Every /api call needs:  Authorization: Bearer <token>"
             "  Reachable from this machine only."]
-     (= :path input-mode)
-     (conj (str "\n  With --api-input path, anyone holding this token can ask "
-                "the application to\n  read any file you can read. Treat it as a "
-                "password. Use --api-input upload\n  or none to narrow that.")))))
+     ;; Whenever paths are allowed at all — which includes `both`. The first
+     ;; version tested `= :path` exactly, so the mode that grants everything
+     ;; path grants, plus uploads, came with no warning. Found by writing the
+     ;; test from R64's reasoning rather than from this code.
+     (#{:path :both} input-mode)
+     (conj (str "\n  With --api-input " (name input-mode)
+                ", anyone holding this token can ask the application to\n"
+                "  read any file you can read. Treat it as a password. "
+                "Use --api-input upload\n  or none to narrow that.")))))

@@ -55,3 +55,22 @@
       (is (every? #(or (str/starts-with? % "data:") (str/starts-with? % "file:")
                        (str/starts-with? % "jar:"))
                   sheets)))))
+
+(deftest a-branding-file-is-read-defensively
+  (testing "the file is data someone edits by hand; anything wrong with it
+            means the defaults, never a crash at startup"
+    (tu/with-temp-dir [dir]
+      (let [good (io/file dir "good.edn")
+            bad  (io/file dir "bad.edn")
+            vect (io/file dir "list.edn")]
+        (spit good "{:name \"Acme Splitter\"}")
+        (spit bad  "{:name")
+        (spit vect "[1 2 3]")
+        (is (= "Acme Splitter" (:name (branding/read-config (.toURL good))))
+            "a good file wins over the default")
+        (is (string? (:name (branding/read-config (.toURL bad))))
+            "an unfinished one falls back")
+        (is (string? (:name (branding/read-config (.toURL vect))))
+            "EDN that is not a map falls back")
+        (is (string? (:name (branding/read-config nil)))
+            "and no file at all is the plainest fallback")))))

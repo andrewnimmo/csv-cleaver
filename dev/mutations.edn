@@ -165,6 +165,42 @@
   :replace   "{:fx/type :label :style-class [\"section-label\"] :text \"Split into\"}"
   :namespace "csv-cleaver.fx-smoke-test"}
 
+ {:label     "the banner stops warning about both mode — the audit's find"
+  :file      "src/csv_cleaver/api/server.clj"
+  :find      "     (#{:path :both} input-mode)"
+  :replace   "     (= :path input-mode)"
+  :namespace "csv-cleaver.api-test"}
+
+ {:label     "a job that throws is lost instead of reported failed"
+  :file      "src/csv_cleaver/api/jobs.clj"
+  :find      "               (catch Throwable t\n                 (swap! registry update id merge\n                        {:state       :failed"
+  :replace   "               (catch Throwable t\n                 (swap! registry update id merge\n                        {:state       :finished"
+  :namespace "csv-cleaver.api-test"}
+
+ {:label     "a stale folder inspection overwrites the current folder's"
+  :file      "src/csv_cleaver/state.clj"
+  :find      "  (if (= (str dir) (str (:out-dir state)))\n    (with-effects (assoc state :out-dir-info info))\n    (with-effects state)))"
+  :replace   "  (with-effects (assoc state :out-dir-info info)))"
+  :namespace "csv-cleaver.state-test"}
+
+ {:label     "choosing a delimiter patches the survey instead of re-scanning"
+  :file      "src/csv_cleaver/state.clj"
+  :find      "    (if-let [file (:file state)]\n      (with-effects (assoc next-state :phase :scanning :scan-rows 0)\n                    [:scan {:file file :delimiter choice}])\n      (with-effects next-state))))"
+  :replace   "    (with-effects next-state)))"
+  :namespace "csv-cleaver.state-test"}
+
+ {:label     "a straddled character demotes UTF-8 to windows-1252"
+  :file      "src/csv_cleaver/encoding.clj"
+  :find      "        result  (.decode decoder (ByteBuffer/wrap data) chars\n                         (boolean end-of-input?))"
+  :replace   "        result  (.decode decoder (ByteBuffer/wrap data) chars\n                         true)"
+  :namespace "csv-cleaver.encoding-test"}
+
+ {:label     "the header question offers only one answer"
+  :file      "src/csv_cleaver/view.clj"
+  :find      "        {:fx/type   :button\n         :text      (i18n/tr ctx :header/this-is-data)\n         :on-action {:event/type ::state/header-answered :has-header? false}}]}]}))"
+  :replace   "]}]}))"
+  :namespace "csv-cleaver.view-test"}
+
  {:label     "the entry point requires cljfx, so --headless dies on a server"
   :file      "src/csv_cleaver/main.clj"
   :find      "   [csv-cleaver.api.server :as api]"

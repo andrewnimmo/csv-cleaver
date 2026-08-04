@@ -85,3 +85,14 @@
           (is (= :dark (:theme loaded)) "what is unambiguous still comes back")
           (is (= "es" (:language loaded)))
           (is (not-any? loaded prefs/abandoned)))))))
+
+(deftest the-default-location-is-the-platforms-own
+  (testing "the zero-argument arities go through desktop/prefs-file, so a test
+            can point them somewhere harmless and the application cannot write
+            into the real settings of whoever runs the suite"
+    (tu/with-temp-dir [dir]
+      (let [file (io/file dir "settings.edn")]
+        (with-redefs [csv-cleaver.desktop/prefs-file (fn [] file)]
+          (is (true? (prefs/save-prefs! {:theme :dark})))
+          (is (= :dark (:theme (prefs/load-prefs))))
+          (is (.isFile file) "and it really went where redirected"))))))

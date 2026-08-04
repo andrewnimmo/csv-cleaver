@@ -63,3 +63,24 @@
     (is (re-find #"CSV Cleaver"
                  (.getPath ^File (desktop/prefs-file :windows "C:\\Users\\x")))))
   (is (instance? File (desktop/prefs-file))))
+
+(deftest the-languages-folder-sits-beside-the-settings
+  (testing "one place to look, whatever the platform: it.edn goes next to
+            settings.edn, and the path derives from prefs-file rather than
+            being spelled out twice"
+    (doseq [os [:mac :windows :linux]]
+      (is (= (.getParentFile (desktop/prefs-file os "/home/x"))
+             (.getParentFile (desktop/languages-dir os "/home/x")))
+          (str os))
+      (is (= "languages" (.getName (desktop/languages-dir os "/home/x")))))))
+
+(deftest nothing-goes-to-the-trash-that-should-not
+  (testing "the guards short-circuit before java.awt.Desktop is ever asked, so
+            these are safe to run anywhere and the answer must be a plain false
+            — not nil, not an exception"
+    (is (false? (desktop/move-to-trash! nil)))
+    (is (false? (desktop/move-to-trash! (java.io.File. "/no/such/file/anywhere.csv"))))))
+
+(deftest trash-support-is-a-boolean-not-an-exception
+  (testing "some Linux desktops cannot trash at all; asking must never throw"
+    (is (contains? #{true false} (desktop/trash-supported?)))))

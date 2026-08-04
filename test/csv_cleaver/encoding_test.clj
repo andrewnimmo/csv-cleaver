@@ -1,5 +1,6 @@
 (ns csv-cleaver.encoding-test
   (:require
+   [clojure.java.io :as io]
    [clojure.test :refer [deftest is testing]]
    [csv-cleaver.encoding :as encoding]
    [csv-cleaver.test-util :as tu])
@@ -99,3 +100,16 @@
   (is (= "Text: UTF-8" (encoding/describe {:label "UTF-8" :basis :utf-8})))
   (is (= "Text: windows-1252 (Western European)"
          (encoding/describe {:label "windows-1252" :basis :fallback}))))
+
+(deftest a-character-straddling-the-sample-boundary-does-not-change-the-verdict
+  (testing "the sniff reads a fixed number of bytes, and nothing stops a
+            multi-byte character sitting across that edge. Cutting é in half
+            must read as truncation, not as malformed input — misreading it
+            would silently demote a UTF-8 file to windows-1252, and every
+            accent in the output would be mojibake."
+    (tu/with-temp-dir [dir]
+      (let [f (io/file dir "straddle.csv")]
+        (with-open [out (io/output-stream f)]
+          (.write out (.getBytes (apply str (repeat (dec encoding/sample-size) "a")) "UTF-8"))
+          (.write out (.getBytes "é,and,more,after,the,boundary\n" "UTF-8")))
+        (is (= "UTF-8" (:label (encoding/detect f))))))))

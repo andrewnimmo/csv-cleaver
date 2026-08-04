@@ -533,3 +533,63 @@
         (is (contains? (style-classes with-files) "caution"))
         (is (text-containing brand-new #"does not exist yet and will be created"))
         (is (not (text-containing brand-new #"already contains")))))))
+
+;; ── Screens the audit found never rendered ──────────────────────────────────
+
+(deftest the-header-question-is-asked-when-the-evidence-is-balanced
+  (testing "the three-valued header verdict exists so the user is asked rather
+            than guessed at — yet no test had ever rendered the question. Both
+            answers must be offered, and answering must be the event that stops
+            it being asked again."
+    (tu/with-temp-dir [dir]
+      (let [base (ready-state dir)
+            st   (assoc base
+                        :survey (assoc-in (:survey base) [:header :verdict] :unsure)
+                        :header-answered? false)
+            d    (view/content st)]
+        (is (text-containing d #".+") "the screen renders at all")
+        (let [buttons (filter #(= ::state/header-answered
+                                  (get-in % [:on-action :event/type]))
+                              (nodes d))]
+          (is (= #{true false} (set (map #(get-in % [:on-action :has-header?])
+                                         buttons)))
+              "one button for each answer, never a single default"))
+        (testing "and once answered, the question disappears"
+          (is (empty? (filter #(= ::state/header-answered
+                                  (get-in % [:on-action :event/type]))
+                              (nodes (view/content (assoc st :header-answered? true)))))))))))
+
+(deftest files-moved-aside-are-accounted-for-on-the-result-panel
+  (testing "the completion panel must say what happened to files that were in
+            the way — silently moving things to the Trash was rejected back in
+            the collision design, and this is where the accounting surfaces"
+    (tu/with-temp-dir [dir]
+      (let [base   (ready-state dir)
+            result {:files [(io/file "/tmp/out/x_0001.csv")]
+                    :rows 10 :elapsed-ms 50 :cancelled? false
+                    :written [{:file (io/file "/tmp/out/x_0001.csv") :rows 10}]
+                    :trashed     [(io/file "/tmp/out/old_0001.csv")
+                                  (io/file "/tmp/out/old_0002.csv")]
+                    :left-behind [(io/file "/tmp/out/stuck.csv")]}
+            d      (view/content (assoc base :result result))]
+        (is (text-containing d #"2") "the trashed count is shown")
+        (testing "in every language, since trn plural forms are involved"
+          (doseq [tag ["fr" "zh" "ja"]]
+            (is (some? (view/content (-> base
+                                         (state/with-language tag)
+                                         (assoc :result result))))
+                (str tag " renders the accounting without a missing plural"))))))))
+
+(deftest an-overridden-delimiter-and-encoding-say-what-was-chosen
+  (testing "once the user has overridden it, nothing was 'detected
+            automatically' and the standing hint would be a lie; the panel must
+            separate what they chose from what detection found"
+    (tu/with-temp-dir [dir]
+      (let [st (assoc (ready-state dir)
+                      :advanced-open? true
+                      :delimiter-override \;
+                      :charset-override "UTF-16LE")
+            d  (view/content st)]
+        (is (text-containing d #"UTF-16LE"))
+        (is (not (text-containing d #"Only change this"))
+            "the spent advice about changing the detected value is gone")))))
