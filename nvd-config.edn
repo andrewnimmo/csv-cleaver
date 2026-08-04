@@ -1,6 +1,7 @@
 ;; nvd-clojure configuration. Run with: bb audit
 ;;
-;; The NVD API is rate limited without a key; set NVD_API_KEY in the environment
-;; (and as a GitHub secret) to get a usable check in CI.
+;; An NVD API key is required, not optional. Put it in NVD_API_KEY or in a
+;; gitignored .nvd-api-key file; `bb audit` passes it on under the name
+;; nvd-clojure actually reads, which is NVD_API_TOKEN.
 {:delete-config? false
  :nvd {:fail-build-on-cvss-score 7.0}}

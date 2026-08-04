@@ -296,6 +296,23 @@ loses the theme's default text fill and resolves to black — invisible in dark
 mode. Either keep the control's own class in the list (`["label" "chip"]`) or
 set `-fx-text-fill` in the rule. Both are used here; the bold headings do both.
 
+**Tests here cover functions; the bugs that got out lived between them.** Every
+defect found by using the built application rather than by the suite has been
+the same shape: two functions, each correct and each tested, with an unstated
+assumption about the transition between them. R80 is the clearest case —
+numbers are written in the interface language and read back in the interface
+language, both tested, and nothing said what happens at the moment that language
+changes. The result was `65,000` becoming sixty-five in a German window, which
+no test asked about because no requirement mentioned it.
+
+When you add anything that holds a *derived* value rather than recomputing it —
+text formatted for a language, a path built from a setting, a label chosen by a
+mode — write the invariant, not another example: *whatever changes underneath
+it, this still means what it meant.* `state_test.clj` has two of these worth
+copying. `every-remembered-setting-is-classified` fails when a setting is added
+to `prefs/remembered` without anyone deciding whether a language change affects
+it, which is the decision that went unmade the first time.
+
 **The record scanner is the one place a bug corrupts data rather than throwing.**
 `csv.clj` is a hand-written RFC 4180 state machine — deliberately, for the
 reasons in [DECISIONS §17](DECISIONS.md#17-a-hand-written-csv-reader-not-clojuredatacsv),

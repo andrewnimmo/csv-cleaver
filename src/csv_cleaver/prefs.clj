@@ -14,8 +14,19 @@
 (def remembered
   "Settings restored at startup. Deliberately excludes anything about a
    particular file — the window always opens ready for a new one."
-  [:theme :language :template :mode :rows-text :size-text :advanced-open?
+  [:theme :language :template :mode :rows :size-bytes :advanced-open?
    :excel-safe? :output-base :window])
+
+(def abandoned
+  "Settings older versions wrote that are now deliberately ignored.
+
+   :rows-text and :size-text held a number formatted for whatever language the
+   window was in, and the file does not reliably say which. Reading 100,000 as
+   Spanish gives a hundred, and a settings file that silently divides someone's
+   row count by a thousand is worse than one that has forgotten it. They are
+   dropped rather than guessed at; the box goes back to its default once, and
+   from then on :rows and :size-bytes are numbers."
+  #{:rows-text :size-text})
 
 (defn load-prefs
   "Read remembered settings, or an empty map when there are none."

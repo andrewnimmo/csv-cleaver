@@ -79,22 +79,52 @@
                  (< value (double Long/MAX_VALUE)))
         (long value)))))
 
-(defn parse-size
-  "A file size — 25, 25MB, 1.5 GB, 1,5 GB — as bytes, or nil.
-   A bare number means megabytes, which is what someone typing into a box
-   labelled \"in each file\" intends."
+(defn unit-word
+  "This language's own word for a unit, taken from the phrase it uses to say a
+   size. French says \"25,0 Mo\", so a French user typing \"25 Mo\" is typing
+   what the application itself showed them, and being told nothing is wrong
+   with it would be indefensible."
+  [ctx size-key]
+  (-> (i18n/tr ctx size-key "") str/trim str/upper-case not-empty))
+
+(defn size-tokens
+  "Every unit this language could reasonably be handed, as [token key factor],
+   largest first so that GB is tried before B. The ASCII forms are accepted as
+   well as the translated ones: people type MB in every language, and a box that
+   refuses it would be worse than one that is a little liberal."
+  [ctx]
+  (->> [[(unit-word ctx :size/gb)    :size/gb    (* 1024 1024 1024)]
+        ["GB"                        :size/gb    (* 1024 1024 1024)]
+        [(unit-word ctx :size/mb)    :size/mb    (* 1024 1024)]
+        ["MB"                        :size/mb    (* 1024 1024)]
+        [(unit-word ctx :size/kb)    :size/kb    1024]
+        ["KB"                        :size/kb    1024]
+        [(unit-word ctx :size/bytes) :size/bytes 1]
+        ["B"                         :size/bytes 1]]
+       (filter first)
+       (distinct)))
+
+(defn size-parts
+  "A typed size split into the number and the unit it was written in, as
+   {:value :unit :factor}, or nil. A bare number means megabytes, which is what
+   someone typing into a box labelled \"in each file\" intends."
   [ctx s]
-  (let [text (-> (str s) str/trim str/upper-case)]
-    (when-let [[_ digits unit] (re-matches (re-pattern "([\\d.,\\s\\u00a0\\u202f]+?)\\s*(GB|MB|KB|B)?")
-                                           text)]
-      (when-let [value (parse-number ctx (str/replace digits whitespace ""))]
-        (let [factor (case unit
-                       "GB" (* 1024 1024 1024)
-                       "KB" 1024
-                       "B"  1
-                       (* 1024 1024))]
-          (when (pos? value)
-            (long (* value factor))))))))
+  (let [text (-> (str s) str/trim str/upper-case)
+        [digits unit factor]
+        (or (some (fn [[token key f]]
+                    (when (str/ends-with? text token)
+                      [(subs text 0 (- (count text) (count token))) key f]))
+                  (size-tokens ctx))
+            [text :size/mb (* 1024 1024)])]
+    (when-let [value (parse-number ctx (str/replace (str/trim digits) whitespace ""))]
+      (when (pos? value)
+        {:value value :unit unit :factor factor}))))
+
+(defn parse-size
+  "A file size — 25, 25MB, 1.5 GB, 1,5 GB, 25 Mo — as bytes, or nil."
+  [ctx s]
+  (when-let [{:keys [value factor]} (size-parts ctx s)]
+    (long (* value (long factor)))))
 
 (defn- places-in
   "How many decimals a value needs to come back looking as it went in."
@@ -129,6 +159,41 @@
              tail)
         text)
       text)))
+
+(defn size-box-text
+  "A byte count as something the size box can hold and this language can read
+   back: the largest unit it divides into evenly, in this language's own word
+   for that unit.
+
+   Exactness wins over prettiness. 1.5 GB comes back as 1,536 MB rather than as
+   a rounded 1.5 GB, because a size box that quietly changes the number in it is
+   worse than one that picks a smaller unit."
+  [ctx bytes]
+  (let [b (long bytes)
+        [key factor] (or (first (filter (fn [[_ f]]
+                                          (and (>= b (long f))
+                                               (zero? (rem b (long f)))))
+                                        size-units))
+                         [:size/bytes 1])]
+    (i18n/tr ctx key (i18n/number ctx (quot b (long factor))))))
+
+(defn restate-size
+  "A size typed in one language, written as another writes it — unit included,
+   so that 1.5 GB becomes 1,5 Go in a French window.
+
+   The unit the user chose is kept. Going through a byte count and picking a
+   unit afresh would turn their 1.5 GB into 1,536 MB, which is the same size and
+   not what they wrote.
+
+   Falls back to rewriting only the number when the text is not a size this
+   language can read, which is the same promise `restate` makes: what the user
+   typed is theirs."
+  [from to s]
+  (if-let [{:keys [value unit]} (size-parts from s)]
+    (i18n/tr to unit (if (== value (Math/floor value))
+                       (i18n/number to (long value))
+                       (i18n/decimal to value (places-in value))))
+    (restate from to s)))
 
 ;; ── Sentences ───────────────────────────────────────────────────────────────
 

@@ -137,7 +137,7 @@ Every push, via `.github/workflows/ci.yml`:
 | No code execution | `bb test` | Reader-tag payloads in translation files |
 | Service authorisation | `bb test` | A route answering without the token, or with a near-miss token |
 | Service input modes | `bb test` | A path accepted in `upload` mode, or an upload in `path` mode |
-| Known vulnerabilities | `bb audit` | CVEs in the resolved dependency tree — needs `NVD_API_KEY` in the environment, and fails loudly without one rather than reporting nothing |
+| Known vulnerabilities | `bb audit` | CVEs in the resolved dependency tree — needs `NVD_API_KEY` in the environment, fails loudly without one, and refuses to report a pass unless it actually scanned the dependencies |
 | Dependency drift | `bb outdated` | Libraries falling behind |
 
 `test/csv_cleaver/hostile_input_test.clj` is the concrete part: malformed CSV,
@@ -170,6 +170,24 @@ are covered:
    and with the refusals that matter. Nobody has thrown malformed multipart
    bodies, absurd header counts or slow-loris connections at it. If the service
    is to be used seriously, that gap should be closed first.
+
+---
+
+### What the audit has found
+
+Kept here rather than only in a commit message, because "the audit is clean" is
+worth nothing without a record of what it has caught.
+
+| When | Finding | Done |
+|---|---|---|
+| 2026-08-04 | `jackson-databind` 2.21.1, pulled in transitively by reitit, carried seven CVEs including two at CVSS 8.1 (polymorphic type validation) | Pinned to 2.21.5 in `deps.edn`. Remove the pin once reitit resolves it itself. |
+
+Two things about that entry are worth stating plainly. The dependency arrived
+with the HTTP service, so the service is what introduced the exposure. And the
+audit had never once run successfully before that day — it was failing on a
+missing argument, then on a missing key, and then silently scanning nothing at
+all while reporting a clean result. `bb audit` now counts what it scanned and
+fails if the answer is implausible.
 
 ---
 

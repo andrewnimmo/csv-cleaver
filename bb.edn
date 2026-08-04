@@ -5,6 +5,7 @@
 
  :tasks
  {:requires ([babashka.fs :as fs]
+             [cheshire.core :as json]
              [clojure.pprint :as pprint]
              [clojure.string :as str])
 
@@ -47,19 +48,47 @@
    ;; classpath — the audit tool's own, say — would report nothing and look
    ;; exactly like a clean result.
    :task (let [cp  (-> (shell {:out :string} "clojure -Spath") :out str/trim)
-               ;; The key may live in the environment or in a gitignored file
-               ;; beside the project, whichever suits. Without one nvd-clojure
+               ;; The key may live in the environment under either name, or in
+               ;; a gitignored file beside the project. Without one nvd-clojure
                ;; refuses to run, which is the right failure: an audit that
                ;; quietly checked nothing would be worse than none at all.
-               key (or (System/getenv "NVD_API_KEY")
+               ;;
+               ;; It is passed on as NVD_API_TOKEN because that, and only that,
+               ;; is what nvd-clojure 5.3 reads — see nvd.config/populate-settings!.
+               ;; NVD_API_KEY is the name everyone reaches for first, including
+               ;; NIST's own documentation, so it is accepted here and
+               ;; translated rather than left to fail with a message that names
+               ;; neither variable.
+               key (or (System/getenv "NVD_API_TOKEN")
+                       (System/getenv "NVD_API_KEY")
                        (let [f (fs/file ".nvd-api-key")]
                          (when (fs/exists? f) (str/trim (slurp f)))))]
            (when-not key
              (println "No NVD API key. Set NVD_API_KEY, or put the key in")
              (println ".nvd-api-key beside this file. Request one free at")
              (println "https://nvd.nist.gov/developers/request-an-api-key"))
-           (shell {:extra-env (when key {"NVD_API_KEY" key}) :continue true}
-                  (str "clojure -M:audit nvd-config.edn \"" cp "\"")))}
+           ;; Only the classpath. The :audit alias already passes the config
+           ;; file, and nvd's -main takes exactly two arguments — passing the
+           ;; config twice bound the classpath to "nvd-config.edn", which is a
+           ;; regular file, so it scanned that one file, found nothing wrong
+           ;; with it, and reported a clean audit.
+           (let [{:keys [exit]} (shell {:extra-env (when key {"NVD_API_TOKEN" key})
+                                        :continue  true}
+                                       (str "clojure -M:audit \"" cp "\""))
+                 report (fs/file "target/nvd/dependency-check-report.json")
+                 scanned (if (fs/exists? report)
+                           (count (get (json/parse-string (slurp (str report)) true)
+                                       :dependencies))
+                           0)]
+             ;; A clean result means nothing unless something was actually
+             ;; looked at. This is the check that would have caught the bug
+             ;; above, which reported "0 vulnerabilities" over an empty scan.
+             (println (str "\nScanned " scanned " dependencies."))
+             (when (< scanned 10)
+               (println "That is too few to be a real scan of this project.")
+               (System/exit 1))
+             (when-not (zero? exit)
+               (System/exit exit))))}
 
   outdated
   {:doc  "List dependencies that have newer versions."

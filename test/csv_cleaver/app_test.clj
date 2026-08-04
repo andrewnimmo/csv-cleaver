@@ -164,10 +164,14 @@
                        :template "part-{index}" :excel-safe? false
                        :advanced-open? true :theme :dark)
           kept  (app/session-settings state nil)]
-      (doseq [k [:mode :rows-text :size-text :template :excel-safe? :advanced-open? :theme]]
+      (doseq [k [:mode :rows :size-bytes :template :excel-safe? :advanced-open? :theme]]
         (is (contains? kept k) (str k " must survive a restart")))
       (is (= :bytes (:mode kept)))
-      (is (= "12,345" (:rows-text kept))))))
+      (testing "as numbers, not as the text in the boxes: a settings file saying
+                12,345 does not say which language wrote it"
+        (is (= 12345 (:rows kept)))
+        (is (= (* 9 1024 1024) (:size-bytes kept)))
+        (is (not-any? kept [:rows-text :size-text]))))))
 
 (deftest nothing-about-a-particular-file-is-kept
   (tu/with-temp-dir [dir]
@@ -261,33 +265,41 @@
 
 ;; ── Opening in one language with settings saved in another ──────────────────
 
-(deftest saved-numbers-are-read-in-the-language-they-were-saved-in
-  (testing "R81. The row count is stored as text. Restoring a German 65.000 into an
-            English window by reading it as English would give sixty-five, and
-            the user would never know why the split produced so many files."
-    (let [saved {:language "de" :rows-text "65.000" :size-text "1,5 GB"}
-          state (app/startup-state state/initial saved {:locale "en"})]
-      (is (= "en" (:language state)))
-      (is (= "65,000" (:rows-text state)))
-      (is (= "1.5 GB" (:size-text state)))
-      (is (= 65000 (state/split-value state)))))
+(deftest remembered-numbers-open-in-whatever-language-the-window-opens-in
+  (testing "R81. They are stored as numbers, so nothing here has to know which
+            language wrote them — which is the point, because a settings file
+            saying 100,000 does not say."
+    (doseq [[saved-lang opening] [["de" "en"] ["en" "de"] ["es" "fr"] ["ja" "es"]]]
+      (let [saved {:language saved-lang :rows 100000
+                   :size-bytes (* 25 1024 1024) :mode :bytes}
+            state (app/startup-state state/initial saved {:locale opening})]
+        (is (= opening (:language state)))
+        (is (= 100000 (state/split-value (assoc state :mode :rows)))
+            (str "rows saved in " saved-lang ", opened in " opening))
+        (is (= (* 25 1024 1024) (state/split-value state))
+            (str "size saved in " saved-lang ", opened in " opening))))))
 
-  (testing "and the other way round"
-    (let [saved {:language "en" :rows-text "100,000"}
-          state (app/startup-state state/initial saved {:locale "de"})]
-      (is (= "100.000" (:rows-text state)))
-      (is (= 100000 (state/split-value state)))))
+(deftest the-numbers-are-written-the-way-the-opening-language-writes-them
+  (let [saved {:language "en" :rows 100000 :size-bytes (* 25 1024 1024)}]
+    (is (= "100.000" (:rows-text (app/startup-state state/initial saved {:locale "de"}))))
+    (is (= "100\u202f000" (:rows-text (app/startup-state state/initial saved {:locale "fr"}))))
+    (is (= "25 Mo" (:size-text (app/startup-state state/initial saved {:locale "fr"})))
+        "including the unit, which French writes as Mo")))
 
-  ;; The expectations below carry U+202F, the narrow no-break space French
-  ;; groups thousands with. Written as an escape so that nobody has to wonder
-  ;; whether it is an ordinary space.
-  (testing "reopening in the same language changes nothing"
-    (let [saved {:language "fr" :rows-text "65\u202f000"}
-          state (app/startup-state state/initial saved {})]
-      (is (= "65\u202f000" (:rows-text state)))
-      (is (= 65000 (state/split-value state)))))
+(deftest a-settings-file-from-before-the-numbers-were-numbers-is-not-guessed-at
+  (testing "R81. Earlier versions stored the box contents as text, formatted for
+            whatever language the window was in — and the file does not reliably
+            say which, because the text was never converted when the language
+            changed. One real file said :language \"es\" with :rows-text
+            \"100,000\", which read as Spanish is a hundred.
 
-  (testing "settings saved before languages were remembered still open"
-    (let [state (app/startup-state state/initial {:rows-text "65,000"}
-                                   {:locale "en"})]
-      (is (= 65000 (state/split-value state))))))
+            So they are dropped. Forgetting a row count once is a far smaller
+            harm than silently dividing it by a thousand."
+    (let [legacy {:language "es" :rows-text "100,000" :size-text "100 MB"
+                  :theme :dark :template "part-{index}"}
+          state  (app/startup-state state/initial legacy {})]
+      (is (= "es" (:language state)))
+      (is (= 65000 (state/split-value state))
+          "the row count is the default, in Spanish, not a hundred")
+      (is (= :dark (:theme state)) "everything unambiguous still comes back")
+      (is (= "part-{index}" (:template state))))))

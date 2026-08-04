@@ -105,7 +105,32 @@
            :language  tag
            :i18n      to
            :rows-text (fmt/restate from to (:rows-text state))
-           :size-text (fmt/restate from to (:size-text state)))))
+           :size-text (fmt/restate-size from to (:size-text state)))))
+
+(defn remembered-values
+  "The two numbers worth keeping between sessions, as numbers.
+
+   Preferences must never hold text formatted for a language. A settings file
+   saying 100,000 does not say which language wrote it, and reading it as the
+   wrong one turns a hundred thousand into a hundred — which is exactly what a
+   file written by an earlier version of this application did."
+  [state]
+  (let [c (ctx state)]
+    (cond-> {}
+      (fmt/parse-count c (:rows-text state))
+      (assoc :rows (fmt/parse-count c (:rows-text state)))
+
+      (fmt/parse-size c (:size-text state))
+      (assoc :size-bytes (fmt/parse-size c (:size-text state))))))
+
+(defn with-values
+  "Put remembered numbers into the boxes, written as this window's language
+   writes them. The inverse of `remembered-values`."
+  [state {:keys [rows size-bytes]}]
+  (let [c (ctx state)]
+    (cond-> state
+      (number? rows)       (assoc :rows-text (i18n/number c rows))
+      (number? size-bytes) (assoc :size-text (fmt/size-box-text c size-bytes)))))
 
 (defn split-value
   "The row count or byte size the user has asked for, or nil when what they have

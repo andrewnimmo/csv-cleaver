@@ -157,7 +157,10 @@
    the settings file that often would be absurd."
   ([] (session-settings @*state (primary-stage)))
   ([state ^Stage stage]
-   (cond-> (select-keys state prefs/remembered)
+   (cond-> (merge (select-keys state prefs/remembered)
+                  ;; As numbers, never as the text in the boxes. See
+                  ;; state/remembered-values.
+                  (state/remembered-values state))
      stage (assoc :window {:x      (.getX stage)
                            :y      (.getY stage)
                            :width  (.getWidth stage)
@@ -339,14 +342,18 @@
                       (str/join ", " (i18n/available-tags))
                       ". Starting in English."))))
     (-> base
-        ;; Into the saved language first. The row count and size were saved as
-        ;; text, typed in whatever language the window was in at the time, so
-        ;; they have to be read as that language before being rewritten as the
-        ;; one being opened in. Restoring German 65.000 straight into an English
-        ;; window would read as sixty-five.
-        (state/with-language (or (:language saved) (:language base)))
-        (merge (dissoc saved :language :theme))
+        ;; select-keys, not the whole map: a settings file is a file, and an
+        ;; older one carries keys this version deliberately ignores. Filtering
+        ;; here as well as in prefs/load-prefs means neither has to be the only
+        ;; thing standing between a stale key and the window.
+        (merge (apply dissoc (select-keys saved prefs/remembered)
+                      [:language :theme :rows :size-bytes]))
         (state/with-language language)
+        ;; Numbers last, and only after the language is settled, so they are
+        ;; written into the boxes as the language being opened in writes them.
+        ;; Nothing here has to know what language wrote them, which is the whole
+        ;; reason they are stored as numbers.
+        (state/with-values saved)
         (assoc :theme theme))))
 
 (defn start-window!

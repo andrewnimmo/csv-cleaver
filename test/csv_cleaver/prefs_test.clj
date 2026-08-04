@@ -10,10 +10,10 @@
 (deftest saves-and-restores-settings
   (tu/with-temp-dir [dir]
     (let [file (io/file dir "settings.edn")]
-      (is (true? (prefs/save-prefs! file {:theme :dark :rows-text "100"})))
+      (is (true? (prefs/save-prefs! file {:theme :dark :rows 100})))
       (let [loaded (prefs/load-prefs file)]
         (is (= :dark (:theme loaded)))
-        (is (= "100" (:rows-text loaded)))))))
+        (is (= 100 (:rows loaded)))))))
 
 (deftest a-folder-comes-back-as-a-file-not-a-string
   (tu/with-temp-dir [dir]
@@ -27,10 +27,10 @@
   (tu/with-temp-dir [dir]
     (let [file (io/file dir "settings.edn")]
       (prefs/save-prefs! file {:theme :dark})
-      (prefs/save-prefs! file {:rows-text "7"})
+      (prefs/save-prefs! file {:rows 7})
       (let [loaded (prefs/load-prefs file)]
         (is (= :dark (:theme loaded)) "the earlier setting survives")
-        (is (= "7" (:rows-text loaded)))))))
+        (is (= 7 (:rows loaded)))))))
 
 (deftest only-remembered-keys-are-kept
   (testing "nothing about a particular file is stored, so the window always
@@ -70,3 +70,18 @@
     (let [file (io/file dir "nested" "deeper" "settings.edn")]
       (is (true? (prefs/save-prefs! file {:theme :dark})))
       (is (.isFile file)))))
+
+(deftest settings-from-an-older-version-are-dropped-not-guessed-at
+  (testing "R81. :rows-text and :size-text held a number formatted for whatever
+            language the window was in, and the file does not reliably say
+            which. They are ignored rather than read as the wrong language."
+    (is (empty? (filter prefs/abandoned prefs/remembered))
+        "a key cannot be both remembered and abandoned")
+    (tu/with-temp-dir [dir]
+      (let [file (io/file dir "settings.edn")]
+        (spit file (pr-str {:language "es" :rows-text "100,000"
+                            :size-text "100 MB" :theme :dark}))
+        (let [loaded (prefs/load-prefs file)]
+          (is (= :dark (:theme loaded)) "what is unambiguous still comes back")
+          (is (= "es" (:language loaded)))
+          (is (not-any? loaded prefs/abandoned)))))))

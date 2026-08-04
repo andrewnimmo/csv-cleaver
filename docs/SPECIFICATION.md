@@ -231,9 +231,18 @@ sixty-five, and the split would produce a thousand times as many files as the
 user asked for. Text that is not a number the previous language could read is
 left exactly as it is.
 
-**R81.** The same applies to settings restored at startup. A row count saved in
-one language and reopened in another is read as the language it was saved in,
-then rewritten as the language being opened in.
+**R81.** Settings kept between sessions never store a number as text formatted
+for a language. The row count and size are stored as numbers, and written into
+the boxes at startup as whatever language the window opens in writes them. A
+settings file saying `100,000` does not say which language wrote it, and reading
+it as the wrong one turns a hundred thousand into a hundred. Text stored by
+earlier versions is ignored rather than guessed at: forgetting a row count once
+is a smaller harm than silently dividing it by a thousand.
+
+**R82.** A size is read in each language's own words for its units as well as in
+the ASCII forms — a French user may type `25 Mo`, which is what the application
+itself shows them, as well as `25 MB`. Changing the language keeps the unit the
+user chose and translates it: `1.5 GB` becomes `1,5 Go`, not `1,536 Mo`.
 
 ### Translations supplied by the user
 

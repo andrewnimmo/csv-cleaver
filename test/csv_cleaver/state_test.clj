@@ -3,6 +3,7 @@
    [clojure.java.io :as io]
    [clojure.test :refer [deftest is testing]]
    [csv-cleaver.naming :as naming]
+   [csv-cleaver.prefs :as prefs]
    [csv-cleaver.scan :as scan]
    [csv-cleaver.state :as state]
    [csv-cleaver.test-util :as tu])
@@ -369,7 +370,73 @@
       (is (= "65," (:rows-text state))))))
 
 (deftest a-size-keeps-its-unit-across-a-language-change
-  (let [state (-> (assoc state/initial :mode :bytes :size-text "1.5 GB")
-                  (state/with-language "de"))]
-    (is (= "1,5 GB" (:size-text state)))
-    (is (= (long (* 1.5 1024 1024 1024)) (state/split-value state)))))
+  (testing "the unit the user chose is kept, and translated. Going through a
+            byte count and picking a unit afresh would turn their 1.5 GB into
+            1,536 MB — the same size, and not what they wrote."
+    (let [german (-> (assoc state/initial :mode :bytes :size-text "1.5 GB")
+                     (state/with-language "de"))
+          french (-> (assoc state/initial :mode :bytes :size-text "1.5 GB")
+                     (state/with-language "fr"))]
+      (is (= "1,5 GB" (:size-text german)))
+      (is (= "1,5 Go" (:size-text french)) "French writes gigabytes as Go")
+      (is (= (long (* 1.5 1024 1024 1024)) (state/split-value german)))
+      (is (= (long (* 1.5 1024 1024 1024)) (state/split-value french))))))
+
+;; ── The class of bug, not just the instance ─────────────────────────────────
+;;
+;; R80 was found by using the application rather than by a test, because every
+;; test here checked a function in isolation and each function was correct.
+;; What was missing was the invariant that connects two of them: numbers are
+;; written in the interface language (R29) and read back in the interface
+;; language (R31), so anything holding a number as text has to be rewritten when
+;; that language changes. The tests below are about the class — a setting that
+;; holds a formatted value — rather than about the two that were wrong.
+
+(def language-sensitive-settings
+  "Remembered settings that hold a number written the way some language writes
+   it. Empty, and it should stay that way: :rows and :size-bytes are numbers
+   precisely so that no stored setting has to remember which language wrote it."
+  #{})
+
+(def language-free-settings
+  "Remembered settings a language change must leave exactly alone. `:language`
+   is excluded below for the obvious reason."
+  #{:theme :template :mode :advanced-open? :excel-safe? :output-base :window
+    :rows :size-bytes})
+
+(deftest every-remembered-setting-is-classified
+  (testing "this test exists to fail when a setting is added without anyone
+            deciding whether a language change affects it. That decision going
+            unmade by default is how R80 happened."
+    (is (= (set prefs/remembered)
+           (conj (into language-sensitive-settings language-free-settings) :language))
+        (str "classify the new setting above as language-sensitive or not: "
+             (pr-str (remove (conj (into language-sensitive-settings
+                                         language-free-settings) :language)
+                             prefs/remembered))))))
+
+(deftest a-language-change-alters-nothing-it-should-not
+  (let [seeded (merge state/initial
+                      {:template       "{name}-{index}"
+                       :mode           :bytes
+                       :excel-safe?    false
+                       :advanced-open? true
+                       :output-base    (io/file "/tmp/wherever")
+                       :theme          :dark
+                       :window         {:x 10.0 :y 20.0 :width 900.0 :height 700.0}})
+        after  (state/with-language seeded "ja")]
+    (doseq [k language-free-settings]
+      (is (= (get seeded k) (get after k))
+          (str k " must not change when the language does")))))
+
+(deftest every-language-sensitive-setting-keeps-its-meaning
+  (testing "across every pair of languages, in both directions"
+    (let [tags ["en" "de" "fr" "es" "zh" "ja"]]
+      (doseq [from tags to tags]
+        (let [start (state/with-language state/initial from)
+              moved (state/with-language start to)]
+          (is (= (state/split-value start) (state/split-value moved))
+              (str "rows: " from " → " to))
+          (is (= (state/split-value (assoc start :mode :bytes))
+                 (state/split-value (assoc moved :mode :bytes)))
+              (str "size: " from " → " to)))))))
