@@ -41,6 +41,7 @@
   :advanced/pattern-label   "Patrón de nombre de archivo"
   :advanced/pattern-hint    "{name} es el nombre del archivo original, {index} es el número de archivo."
   :advanced/encoding-label  "Codificación de texto"
+  :advanced/encoding-detected    "Detectado"
   :advanced/encoding-hint   "Se ha detectado {0}. Cámbialo solo si los resultados se abren con los acentos equivocados."
   :advanced/detected        "Detectado"
   :advanced/excel-safe      "Mantener cada archivo dentro del límite de filas de Excel"

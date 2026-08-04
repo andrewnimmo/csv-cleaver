@@ -41,6 +41,7 @@
   :advanced/pattern-label   "ファイル名の書式"
   :advanced/pattern-hint    "{name} は元のファイル名、{index} は連番です。"
   :advanced/encoding-label  "文字コード"
+  :advanced/encoding-detected    "自動判別"
   :advanced/encoding-hint   "{0} を検出しました。結果を開いたときに文字化けする場合のみ変更してください。"
   :advanced/detected        "検出"
   :advanced/excel-safe      "各ファイルを Excel の行数上限内に収める"

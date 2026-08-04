@@ -41,6 +41,7 @@
   :advanced/pattern-label   "文件名格式"
   :advanced/pattern-hint    "{name} 是原文件名，{index} 是文件编号。"
   :advanced/encoding-label  "文本编码"
+  :advanced/encoding-detected    "自动检测"
   :advanced/encoding-hint   "检测到 {0}。仅当结果中的重音字符显示错误时才需更改。"
   :advanced/detected        "已检测"
   :advanced/excel-safe      "让每个文件都不超过 Excel 的行数上限"

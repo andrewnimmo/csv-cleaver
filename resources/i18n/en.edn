@@ -55,6 +55,7 @@
   :advanced/pattern-label  "File name pattern"
   :advanced/pattern-hint   "{name} is the original file's name, {index} is the file number."
   :advanced/encoding-label   "Text encoding"
+  :advanced/encoding-detected    "Detected"
   :advanced/encoding-hint    "Detected {0}. Only change this if the results open with the wrong accented characters."
   :advanced/detected         "Detected"
   :advanced/excel-safe       "Keep every file within Excel's row limit"

@@ -12,7 +12,9 @@
    [cljfx.api :as fx]
    [clojure.test :refer [deftest is testing]]
    [csv-cleaver.branding :as branding]
+   [clojure.string :as str]
    [csv-cleaver.i18n :as i18n]
+   [csv-cleaver.naming :as naming]
    [csv-cleaver.scan :as scan]
    [csv-cleaver.state :as state]
    [csv-cleaver.test-util :as tu]
@@ -111,3 +113,157 @@
             (is (instance? Node (materialise (view/content translated))))
             (is (instance? Node (materialise (view/content (assoc translated :dialog :about)))))
             (is (instance? Node (materialise (view/content (assoc translated :dialog :help)))))))))))
+
+;; ── Text that never made it into a translation ──────────────────────────────
+
+(defn laid-out
+  "A materialised screen, in a scene and through a layout pass, so that skins
+   exist and every control reports the size and text it really has."
+  ^javafx.scene.Parent [description]
+  (let [root (materialise description)]
+    @(fx/on-fx-thread
+      (javafx.scene.Scene. root 1100 950)
+      (doto ^javafx.scene.Parent root (.applyCss) (.layout)))
+    root))
+
+(defn every-string
+  "Every string the window shows, including the contents of pickers — which is
+   where the untranslated one was hiding, since a Labeled walk never sees the
+   items of a ChoiceBox."
+  [root]
+  (let [acc (atom [])]
+    (letfn [(visit [x]
+              (when (instance? javafx.scene.control.Labeled x)
+                (some->> (.getText ^javafx.scene.control.Labeled x) (swap! acc conj)))
+              (when (instance? javafx.scene.control.TextInputControl x)
+                (some->> (.getText ^javafx.scene.control.TextInputControl x)
+                         (swap! acc conj)))
+              (when (instance? javafx.scene.control.ChoiceBox x)
+                (swap! acc into (map str (.getItems ^javafx.scene.control.ChoiceBox x)))
+                (some->> (.getValue ^javafx.scene.control.ChoiceBox x) str (swap! acc conj)))
+              (when (instance? javafx.scene.control.ScrollPane x)
+                (some-> (.getContent ^javafx.scene.control.ScrollPane x) visit))
+              (when (instance? javafx.scene.Parent x)
+                (doseq [c (.getChildrenUnmodifiable ^javafx.scene.Parent x)] (visit c))))]
+      (visit root))
+    (distinct @acc)))
+
+(defn may-be-identical-to-english?
+  "Whether a string is allowed to read the same in every language.
+
+   Rules rather than a list of strings. A list is where the next untranslated
+   label would be quietly parked, which is the thing this test exists to find.
+   Each clause is a reason something genuinely has no translation: it is not
+   words, it is the name of a thing rather than a word, or it came out of the
+   user's own file."
+  [^File file content s]
+  (or (str/blank? s)
+      ;; Digits and punctuation, and the single-character icon buttons.
+      (not (re-find #"\p{L}" s))
+      (<= (count (str/trim s)) 1)
+      ;; "UTF-8" is not an English word, and translating it would name an
+      ;; encoding that does not exist.
+      (some #(= s %) (rest state/selectable-charsets))
+      ;; The file the user chose, and where it lives.
+      (str/includes? s (.getName file))
+      (str/includes? s (.getAbsolutePath (.getParentFile file)))
+      ;; The output name pattern is a pattern, not prose.
+      (str/includes? s naming/default-template)
+      ;; Anything whose every word came out of the file being split — the
+      ;; preview of the first rows is the user's data, not our wording.
+      (every? #(str/includes? content %) (re-seq #"\p{L}+" s))))
+
+(defn phrase-of?
+  "Whether `s` could have been produced by one of `tag`'s own translations.
+
+   This is the question that actually matters, and it took two wrong answers to
+   get to. Looking for text that matches English flags 25 bytes in Spanish and
+   Text: UTF-8 in German, both of which are exactly what those languages really
+   say. What distinguishes a leak is not that the words match English but that
+   they came from nowhere: no phrase in that language's own bundle can produce
+   them.
+
+   Placeholders are matched loosely, so a template ending in bytes accepts a
+   rendering ending in bytes."
+  [tag s]
+  (let [pattern-of (fn [template]
+                     (->> (str/split (str template) #"\{\d+\}" -1)
+                          (map #(java.util.regex.Pattern/quote %))
+                          (str/join ".*")
+                          (str "(?s)")
+                          (re-pattern)))]
+    (boolean (some #(re-matches (pattern-of %) s)
+                   (vals (:strings (i18n/context tag)))))))
+
+(deftest ^:fx no-english-survives-into-a-translated-window
+  (testing "the encoding picker offered \"Detected\" in every language, because
+            its items were a plain vector of strings while the separator picker
+            translated its own. A walk over labels never saw it: the text was in
+            the items of a ChoiceBox, not in any Labeled.
+
+            So this compares whole windows rather than checking a list of
+            controls somebody remembered to add."
+    (tu/with-temp-dir [dir]
+      ;; Advanced open: the pickers live behind it, and the untranslated string
+      ;; was inside one of them.
+      (let [content "id,name\n1,Ann\n2,Bob\n3,Cy\n"
+            state   (assoc (ready-state dir) :advanced-open? true)
+            ^File file (get-in state [:survey :file])
+            english (set (every-string (laid-out (view/content
+                                                  (state/with-language state "en")))))]
+        (doseq [tag (remove #{"en"} i18n/supported)]
+          (testing tag
+            (let [translated (state/with-language state tag)
+                  leaked     (->> (every-string (laid-out (view/content translated)))
+                                  (filter english)
+                                  (remove #(may-be-identical-to-english? file content %))
+                                  (remove #(phrase-of? tag %))
+                                  (distinct)
+                                  (sort))]
+              (is (empty? leaked)
+                  (str tag " shows English: " (pr-str leaked))))))))))
+
+(deftest ^:fx the-english-comparison-is-not-empty
+  (testing "a sweep that collects nothing finds nothing wrong with everything.
+            This nearly happened: an earlier version walked children only, never
+            reached inside the ScrollPane, and reported a perfectly clean window
+            with no text in it at all."
+    (tu/with-temp-dir [dir]
+      (let [strings (every-string
+                     (laid-out (view/content (assoc (ready-state dir)
+                                                    :advanced-open? true))))]
+        (is (< 20 (count strings))
+            "the whole ready screen is more than twenty strings")
+        (is (some #{"UTF-8"} strings)
+            "including the items inside a picker, which is where the
+             untranslated string was and where a Labeled-only walk stops")
+        (is (some #{naming/default-template} strings)
+            "and the name pattern, which lives behind Advanced")))))
+
+(deftest ^:fx a-picker-keeps-its-width-when-the-language-changes
+  (testing "left to size themselves, the Advanced pickers measured their widest
+            item when the skin was built and never again, so after a language
+            change the box kept a width computed for the previous language —
+            Spanish text in a box sized for German, or the arrow overlapping the
+            words. A fixed width cannot do that, and does not resize under the
+            pointer either."
+    (tu/with-temp-dir [dir]
+      (let [state  (assoc (ready-state dir) :advanced-open? true)
+            widths (fn [tag]
+                     (let [root (laid-out (view/content (state/with-language state tag)))
+                           acc  (atom [])]
+                       (letfn [(visit [x]
+                                 (when (instance? javafx.scene.control.ChoiceBox x)
+                                   (swap! acc conj (.getWidth ^javafx.scene.control.ChoiceBox x)))
+                                 (when (instance? javafx.scene.control.ScrollPane x)
+                                   (some-> (.getContent ^javafx.scene.control.ScrollPane x) visit))
+                                 (when (instance? javafx.scene.Parent x)
+                                   (doseq [c (.getChildrenUnmodifiable ^javafx.scene.Parent x)]
+                                     (visit c))))]
+                         (visit root))
+                       @acc))
+            english (widths "en")]
+        (is (seq english) "there are pickers to measure")
+        (doseq [tag (remove #{"en"} i18n/supported)]
+          (is (= english (widths tag))
+              (str tag " sizes its pickers differently from English")))))))

@@ -475,6 +475,18 @@
 
 ;; ── Advanced ────────────────────────────────────────────────────────────────
 
+(def picker-width
+  "A fixed width for the two Advanced pickers.
+
+   Left to size themselves they measured their widest item once, when the skin
+   was built, and did not measure again when the items were replaced — so after
+   a language change the box kept a width computed for the previous language.
+   Measured across all six languages, the widest item needs 145 points (German's
+   \"Senkrechter Strich\"); 160 leaves room without any of them jumping about
+   when the language changes, which is a better result than a box that resizes
+   under the pointer anyway."
+  160.0)
+
 (defn advanced-panel
   [{:keys [template survey charset-override excel-safe?] :as st}]
   (let [ctx (state/ctx st)]
@@ -515,6 +527,7 @@
         :children
         [{:fx/type :label :text (i18n/tr ctx :advanced/delimiter-label)}
          {:fx/type          :choice-box
+          :pref-width       picker-width
           :value            (i18n/tr ctx (:label-key (or (first (filter #(= (:delimiter-override st) (:value %))
                                                                         state/selectable-delimiters))
                                                          (first state/selectable-delimiters))))
@@ -538,10 +551,11 @@
         :children
         [{:fx/type :label :text (i18n/tr ctx :advanced/encoding-label)}
          {:fx/type          :choice-box
-          :value            (or charset-override state/detected-charset)
-          :items            state/selectable-charsets
-          :on-value-changed {:event/type ::state/charset-override-changed
-                             :event/value-key :choice}}
+          :pref-width       picker-width
+          :value            (state/charset-label
+                             ctx (or charset-override state/detected-charset))
+          :items            (state/charset-labels ctx)
+          :on-value-changed {:event/type ::charset-picked :event/value-key :label}}
          {:fx/type :label :style-class ["hint"] :wrap-text true
           :text    (let [detected (get-in survey [:encoding :label])]
                      (if (and charset-override

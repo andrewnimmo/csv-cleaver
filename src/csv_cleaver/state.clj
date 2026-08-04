@@ -38,7 +38,11 @@
    {:value "25 MB"  :label-key :preset/plain}
    {:value "100 MB" :label-key :preset/plain}])
 
-(def detected-charset "Detected")
+(def detected-charset
+  "The sentinel meaning \"whatever was detected\". Stored, never shown: what the
+   user sees comes from `charset-label`, which translates this one entry and
+   leaves the real encoding names alone."
+  "Detected")
 
 (def selectable-charsets
   "Offered behind Advanced. Deliberately short: these are the encodings CSV
@@ -131,6 +135,30 @@
     (cond-> state
       (number? rows)       (assoc :rows-text (i18n/number c rows))
       (number? size-bytes) (assoc :size-text (fmt/size-box-text c size-bytes)))))
+
+(defn charset-label
+  "How an encoding choice is shown.
+
+   Only the \"detected\" entry is translated. UTF-8 and windows-1252 are names,
+   not words: translating them would be inventing encodings that do not exist.
+   Getting this wrong the other way is what shipped — the sentinel went into the
+   picker untranslated, so a Chinese window offered a menu reading \"Detected\"."
+  [ctx charset]
+  (if (= charset detected-charset)
+    (i18n/tr ctx :advanced/encoding-detected)
+    charset))
+
+(defn charset-labels
+  "Every encoding choice as the user sees it, in order."
+  [ctx]
+  (mapv #(charset-label ctx %) selectable-charsets))
+
+(defn charset-for-label
+  "The choice a displayed label stands for. Falls back to the sentinel rather
+   than to nil: an unrecognised label means detection, which is the safe answer."
+  [ctx label]
+  (or (first (filter #(= label (charset-label ctx %)) selectable-charsets))
+      detected-charset))
 
 (defn split-value
   "The row count or byte size the user has asked for, or nil when what they have

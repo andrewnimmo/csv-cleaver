@@ -147,6 +147,24 @@
   :replace   ""
   :namespace "csv-cleaver.state-test"}
 
+ {:label     "the encoding picker shows its sentinel untranslated"
+  :file      "src/csv_cleaver/state.clj"
+  :find      "  (if (= charset detected-charset)\n    (i18n/tr ctx :advanced/encoding-detected)\n    charset))"
+  :replace   "  charset)"
+  :namespace "csv-cleaver.fx-smoke-test"}
+
+ {:label     "a picker sizes itself, so its width follows the language"
+  :file      "src/csv_cleaver/view.clj"
+  :find      "         {:fx/type          :choice-box\n          :pref-width       picker-width\n          :value            (state/charset-label"
+  :replace   "         {:fx/type          :choice-box\n          :value            (state/charset-label"
+  :namespace "csv-cleaver.fx-smoke-test"}
+
+ {:label     "a whole label goes back to English in every language"
+  :file      "src/csv_cleaver/view.clj"
+  :find      "{:fx/type :label :style-class [\"section-label\"] :text (i18n/tr ctx :options/split-into)}"
+  :replace   "{:fx/type :label :style-class [\"section-label\"] :text \"Split into\"}"
+  :namespace "csv-cleaver.fx-smoke-test"}
+
  {:label     "the entry point requires cljfx, so --headless dies on a server"
   :file      "src/csv_cleaver/main.clj"
   :find      "   [csv-cleaver.api.server :as api]"

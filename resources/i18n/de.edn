@@ -41,6 +41,7 @@
   :advanced/pattern-label   "Muster für Dateinamen"
   :advanced/pattern-hint    "{name} ist der Name der Ursprungsdatei, {index} ist die Dateinummer."
   :advanced/encoding-label  "Textkodierung"
+  :advanced/encoding-detected    "Erkannt"
   :advanced/encoding-hint   "{0} erkannt. Nur ändern, wenn die Ergebnisse mit falschen Umlauten geöffnet werden."
   :advanced/detected        "Erkannt"
   :advanced/excel-safe      "Jede Datei innerhalb der Zeilengrenze von Excel halten"

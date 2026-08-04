@@ -282,6 +282,13 @@
         (dispatch! {:event/type ::state/delimiter-override-changed
                     :choice     (:value match)}))
 
+      ;; Same for the encoding picker: only the "detected" entry is translated,
+      ;; but the picker still hands back whatever string it is showing.
+      ::view/charset-picked
+      (dispatch! {:event/type ::state/charset-override-changed
+                  :choice     (state/charset-for-label (state/ctx @*state)
+                                                       (:label event))})
+
       ::view/new-folder-requested
       (let [{:keys [out-dir survey]} @*state]
         (dispatch! {:event/type ::state/collision-resolved

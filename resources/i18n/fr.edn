@@ -41,6 +41,7 @@
   :advanced/pattern-label   "Modèle de nom de fichier"
   :advanced/pattern-hint    "{name} est le nom du fichier d'origine, {index} est le numéro du fichier."
   :advanced/encoding-label  "Encodage du texte"
+  :advanced/encoding-detected    "Détecté"
   :advanced/encoding-hint   "{0} détecté. Ne le changez que si les résultats s'ouvrent avec des accents incorrects."
   :advanced/detected        "Détecté"
   :advanced/excel-safe      "Garder chaque fichier sous la limite de lignes d'Excel"
