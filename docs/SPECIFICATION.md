@@ -368,12 +368,98 @@ apply, which is what happened the first time the application was ever run.
 
 ---
 
-## 8. What is deliberately not done
+## 8. The optional local service
+
+An HTTP interface to everything in sections 1 to 5, so that the application can
+be driven by a script. It is optional in the strongest sense: without a command
+line option, none of this exists at runtime.
+
+### Whether it runs at all
+
+**R60.** No socket is opened unless `--api` is given. The default is off.
+
+**R61.** The service binds `127.0.0.1` and only `127.0.0.1`. There is no option
+to bind anywhere else.
+
+**R62.** Every request under `/api/` requires a token supplied as
+`Authorization: Bearer <token>`. The two exceptions are the OpenAPI document and
+the page that renders it, which describe the service and disclose nothing from
+it.
+
+**R63.** A token not given with `--api-token` is generated with a
+cryptographically secure source, is at least 32 characters, and is printed once
+at startup. Tokens are compared without revealing where they first differ.
+
+**R64.** The startup banner states, in words, that with `--api-input path`
+anyone holding the token can have the application read any file the user can
+read.
+
+**R65.** `--headless` runs the service with no window. Given without `--api` it
+is refused, because it would start nothing at all. Loading the entry point must
+not require the interface toolkit, so that `--headless` works on a machine with
+no display.
+
+### What may be given to it
+
+**R66.** `--api-input` takes one of `none`, `path`, `upload` or `both`, and
+bounds what the file-taking endpoints accept. A path in a mode that does not
+allow paths, or an upload in a mode that does not allow uploads, is refused with
+a message naming the option responsible.
+
+**R67.** The mode in force is readable at `GET /api/capabilities`, so a caller
+can ask rather than discover it by being refused.
+
+**R68.** An upload is bounded in size, and the limit is reported through
+`GET /api/capabilities`.
+
+**R69.** In `upload` mode a caller may not name an output folder, that being a
+path on this machine. The results are fetched instead as one archive.
+
+### What it does
+
+**R70.** `POST /api/surveys` returns what section 1 and section 5 determine
+about a file, and writes nothing.
+
+**R71.** `POST /api/plans` returns what section 3 and the disk-space rules of
+section 4 determine, and touches no disk.
+
+**R72.** `POST /api/splits` starts the split of section 3 and answers
+immediately with a job identifier. A plan carrying a problem is refused before a
+job is created, rather than started and abandoned.
+
+**R73.** Every guarantee of section 4 applies identically to a split started
+through the service. In particular, nothing already on disk is replaced.
+
+**R74.** A job reports progress while running and, once finished, what was
+written. A finished job stays readable for a period long enough for a slow
+caller, then is forgotten.
+
+**R75.** `DELETE /api/splits/{id}` cancels a running split, leaving a whole
+number of complete output files as R30 requires.
+
+**R76.** `GET /api/splits/{id}/archive` returns the job's output files as a
+single archive.
+
+**R77.** Temporary files created for an uploaded request are removed when the
+job is forgotten or when the service stops.
+
+**R78.** Problems and warnings carry both a stable machine-readable code and a
+sentence. The service answers in English regardless of the interface language:
+its caller is a program, and a string that changes with the user's locale is not
+something to match on.
+
+**R79.** The service describes itself in OpenAPI, and serves a page from which
+every endpoint can be exercised.
+
+---
+
+## 9. What is deliberately not done
 
 - **No repair of malformed files.** Damage is reported and passed through
   untouched. A tool that silently corrects data is worse than one that does not,
   because the user cannot tell what changed.
 - **No re-serialisation.** See R12. Parsing and re-emitting would normalise
   quoting and whitespace, changing files the user never asked to change.
-- **No network access of any kind.**
+- **No outbound network access of any kind**, and no inbound access at all
+  unless `--api` is given.
 - **No telemetry.**

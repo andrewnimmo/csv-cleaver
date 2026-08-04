@@ -213,9 +213,19 @@ to files already in the folder.
 
 ---
 
+## Splitting files automatically
+
+If you find yourself doing the same split every week, the application can be
+driven by a program instead of by hand. This is a job for whoever looks after
+your computers rather than something to set up yourself — point them at
+[API.md](API.md). Nothing about it is switched on unless somebody deliberately
+switches it on, and it never reaches beyond your own machine.
+
+---
+
 ## What the application will never do
 
 - Change your original file in any way.
 - Overwrite anything without asking you first.
 - Repair, reformat or silently alter a single row of your data.
-- Connect to the internet.
+- Connect to the internet, or send your data anywhere.

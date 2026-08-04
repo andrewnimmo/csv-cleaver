@@ -41,7 +41,7 @@ jpackage ^
   --copyright "%COPYRIGHT%" ^
   --input "%STAGE_DIR%" ^
   --main-jar "%MAIN_JAR%" ^
-  --main-class csv_cleaver.app ^
+  --main-class csv_cleaver.main ^
   --dest "%DIST_DIR%" ^
   --win-dir-chooser ^
   --win-menu ^

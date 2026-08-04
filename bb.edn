@@ -20,6 +20,10 @@
    :override-builtin true
    :task             (apply clj "-M:run" *command-line-args*)}
 
+  api
+  {:doc  "Run the local HTTP service with no window, for trying the API. Prints a token and a link to the Swagger page. Extra arguments pass through: bb api --api-input both"
+   :task (apply clj "-M:run" "--api" "--headless" *command-line-args*)}
+
   test
   {:doc  "Run the whole test suite."
    :task (clj "-M:test")}
@@ -38,7 +42,12 @@
 
   audit
   {:doc  "Check dependencies against the NIST vulnerability database."
-   :task (clj "-M:audit")}
+   ;; nvd-clojure 5 wants the classpath to scan handed to it explicitly rather
+   ;; than working it out itself, so it is computed here. Scanning the wrong
+   ;; classpath — the audit tool's own, say — would report nothing and look
+   ;; exactly like a clean result.
+   :task (let [cp (-> (shell {:out :string} "clojure -Spath") :out str/trim)]
+           (clj "-M:audit" "nvd-config.edn" (str "\"" cp "\"")))}
 
   outdated
   {:doc  "List dependencies that have newer versions."

@@ -27,10 +27,13 @@ It matters that the surface is small:
 - Starts one external program — `open`, `explorer` or `xdg-open` — to show a
   folder.
 - Ships a bundled Java runtime inside each installer.
+- **Only if started with `--api`:** listens on `127.0.0.1`, behind a token.
+  Covered in its own section below.
 
-**It opens no network connections, listens on no port, has no update mechanism,
-runs no scripts, and evaluates no code from any file it reads.** A system
-takeover has to come from somewhere; these are the somewheres.
+**It makes no outbound network connections, has no update mechanism, runs no
+scripts, and evaluates no code from any file it reads. It listens on no port
+unless `--api` is given on the command line.** A system takeover has to come
+from somewhere; these are the somewheres.
 
 ---
 
@@ -45,6 +48,7 @@ takeover has to come from somewhere; these are the somewheres.
 | The settings file | Anyone who can write to it | Malformed data crashing startup | Parsed defensively; anything unreadable means defaults apply. |
 | `ProcessBuilder` for revealing a folder | The folder path | Command injection | No shell is involved. The program name is a constant and the path is a separate argument, so it is never parsed as a command. |
 | Bundled JRE and libraries | Upstream | Known CVEs accumulating | `bb audit` against the NVD; `bb outdated`; both in CI. |
+| The HTTP service, when `--api` is given | Any local process that can reach `127.0.0.1` | Reading arbitrary files; filling the disk; exhausting memory | Off unless asked for. Loopback binding only, not configurable. Token on every request. `--api-input` bounds what may be given to it. See below. |
 
 ### Deliberately out of scope
 
@@ -52,6 +56,72 @@ An attacker who can already write to the user's home directory or replace the
 application binary has won before any of this applies. Nothing here defends
 against a compromised machine, and pretending otherwise would be worse than
 saying so.
+
+---
+
+## The optional HTTP service
+
+Everything in this section applies **only** when the application is started with
+`--api`. Without it, no socket is opened and none of this is reachable. See
+[API.md](API.md) for what it does; this is what it costs.
+
+### Four things that are not configurable
+
+1. **Off by default.** A desktop application that quietly listens on a port is
+   not what anyone installed.
+2. **Loopback only.** It binds `127.0.0.1` and there is no option to change
+   that. Nothing outside this machine can reach it, whatever the firewall says.
+3. **A token on every request.** Generated with `SecureRandom` and printed once
+   at startup. Compared in constant time. The only two things readable without
+   it are the OpenAPI document and the Swagger page that renders it — neither
+   discloses anything about the machine.
+4. **No shell, ever.** The service starts no external program. Nothing a caller
+   sends is interpolated into a command.
+
+### The part to be clear-eyed about
+
+With `--api-input path` — the default — a caller holding the token can ask the
+application to **read any file the user running it can read**, by naming its
+path. That is the feature: it is how you split a 40 GB file without copying it.
+It also means:
+
+> **The token is the entire security boundary.** Treat it like a password. Any
+> process on the machine that can read it can read the user's files through this
+> service.
+
+The startup banner says so, in those words, whenever the mode is `path`.
+
+`--api-input` exists to narrow that:
+
+| Mode | A caller may | Worth choosing when |
+|---|---|---|
+| `none` | Neither name a path nor upload | You want the service for `/health` and `/capabilities` only |
+| `path` | Name a local path | The files are large and you trust every process on the machine |
+| `upload` | Send bytes; results come back as a zip | You would rather the service could not read paths at all |
+| `both` | Either | Convenience over caution |
+
+A caller can ask which is in force at `GET /api/capabilities` rather than
+discovering it by being refused.
+
+### Bounds
+
+| Concern | What bounds it |
+|---|---|
+| Memory from an upload | 256 MiB per request, enforced by the server before the body is accepted. An uploaded body is held in memory before it reaches disk, which is why the limit is modest. Large files belong in `path` mode, which copies nothing. |
+| Disk from a split | The same pre-flight the window uses: a split that would not fit is refused, not started and abandoned half-way. |
+| Temporary files | An upload and its results live in one folder under the system temporary directory, removed when the job is forgotten (30 minutes after it finishes) or when the service stops. |
+| Unbounded job accumulation | Finished jobs are dropped after 30 minutes. |
+| Overwriting | Exactly as in the window: nothing already on disk is replaced. A name that is already taken stops the job. |
+| Writing outside the chosen folder | The same `naming/template-problem` check the window uses. An uploaded file's name is passed through `File.getName`, so a part announcing itself as `../../.ssh/config` lands in the temporary folder like any other. |
+
+### What is not defended against
+
+- **A malicious process on the same machine that can read the token.** It has
+  the same access the user does. This is stated rather than mitigated.
+- **Denial of service by a local caller.** Starting a hundred splits will make
+  the machine unhappy. The service is for a script on the user's own desktop,
+  not a shared host.
+- **Anything at all if the machine is already compromised**, as above.
 
 ---
 
@@ -65,7 +135,9 @@ Every push, via `.github/workflows/ci.yml`:
 | Hostile input | `bb test` | Crashes and hangs on malformed, adversarial and random bytes |
 | Path traversal | `bb test` | Output names escaping the chosen folder |
 | No code execution | `bb test` | Reader-tag payloads in translation files |
-| Known vulnerabilities | `bb audit` | CVEs in the resolved dependency tree |
+| Service authorisation | `bb test` | A route answering without the token, or with a near-miss token |
+| Service input modes | `bb test` | A path accepted in `upload` mode, or an upload in `path` mode |
+| Known vulnerabilities | `bb audit` | CVEs in the resolved dependency tree — needs `NVD_API_KEY` in the environment, and fails loudly without one rather than reporting nothing |
 | Dependency drift | `bb outdated` | Libraries falling behind |
 
 `test/csv_cleaver/hostile_input_test.clj` is the concrete part: malformed CSV,
@@ -94,6 +166,10 @@ are covered:
    release means rebuilding and re-releasing; nothing prompts that automatically.
 6. **Independent review.** Everything above was written by the same party that
    wrote the code, which is the weakest form of assurance there is.
+7. **Fuzzing the HTTP surface.** The routes are tested with well-formed requests
+   and with the refusals that matter. Nobody has thrown malformed multipart
+   bodies, absurd header counts or slow-loris connections at it. If the service
+   is to be used seriously, that gap should be closed first.
 
 ---
 

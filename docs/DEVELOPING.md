@@ -32,11 +32,18 @@ one namespace touches live objects, threads and the clock.
 
 ```
                     ┌──────────────────────────────────┐
-                    │  app        wiring, threads,     │  ← the only namespace
-                    │             dialogs, -main       │    that touches JavaFX
-                    └───────────────┬──────────────────┘      objects and IO
-                       effects as data │ events as data
-                    ┌───────────────┴──────────────────┐
+                    │  main       -main, options,      │  ← loadable with no
+                    │             starts one or both   │    display
+                    └───────┬──────────────────┬───────┘
+                            │                  │
+        ┌───────────────────┴──────┐   ┌───────┴──────────────────────┐
+        │  app   wiring, threads,  │   │  api.server  routes, schemas │
+        │        dialogs           │   │  api.jobs    async jobs      │
+        │   ← the only namespace   │   │  api.zip     archives        │
+        │     touching JavaFX      │   └───────┬──────────────────────┘
+        └───────────────┬──────────┘           │
+           effects as data │ events as data    │
+                    ┌───────┴──────────────────┴───────┐
                     │  state      pure transitions     │
                     │  view       pure descriptions    │
                     └───────────────┬──────────────────┘
@@ -47,6 +54,11 @@ one namespace touches live objects, threads and the clock.
         └───────────┴───────────┴───────────┴───────────┴───────────┘
              supporting: files · format · i18n · branding · desktop · prefs · cli
 ```
+
+The window and the service are two front ends over the same engine. Neither
+knows about the other, and `split/execute!` cannot tell which one called it —
+which is what makes "nothing already on disk is replaced" one guarantee rather
+than two implementations of it.
 
 ### Namespace by namespace
 
@@ -63,7 +75,11 @@ one namespace touches live objects, threads and the clock.
 | `naming`, `branding`, `prefs`, `desktop`, `cli` | Supporting concerns, each small. |
 | `state` | Every state change as one pure function returning `{:state … :effects […]}`. |
 | `view` | Every screen as a pure function returning cljfx description maps. |
-| `app` | Performs effects, owns the atom, drives threads, starts the window. |
+| `app` | Performs effects, owns the atom, drives threads, opens the window. |
+| `main` | `-main`. Parses options, starts the service and/or the window. **Must never require cljfx** — see below. |
+| `api.server` | Routes, request schemas, the token check, the OpenAPI description. |
+| `api.jobs` | Splits in progress: start, poll, cancel, expire. |
+| `api.zip` | A finished job's output as one streamed archive. |
 
 ### Why state and effects are data
 
@@ -254,3 +270,12 @@ set `-fx-text-fill` in the rule. Both are used here; the bold headings do both.
 
 **JavaFX keeps the JVM alive.** Requiring `cljfx.api` starts the toolkit, and its
 thread is not a daemon. A script that loads it must call `System/exit`.
+
+**And that is why `main` may not require `app`.** Loading cljfx starts the
+toolkit *as a side effect of loading it*, so any namespace mentioning cljfx in
+its `:require` cannot be loaded on a machine with no display. `--headless` would
+fail during class loading, which is the hardest kind of failure to explain to
+someone. `main` therefore reaches the window through `requiring-resolve`, at the
+moment a window is going to open, and `main_test.clj` reads the source to check
+that this is still true. The same reasoning put the cljfx renderer behind a
+`delay` in `app`.

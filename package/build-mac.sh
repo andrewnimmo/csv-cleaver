@@ -48,7 +48,7 @@ jpackage \
   --mac-package-identifier "$BUNDLE_ID" \
   --input "$STAGE_DIR" \
   --main-jar "$MAIN_JAR" \
-  --main-class csv_cleaver.app \
+  --main-class csv_cleaver.main \
   --dest "$DIST_DIR" \
   --java-options "--enable-native-access=ALL-UNNAMED" \
   --java-options "-Dfile.encoding=UTF-8" \

@@ -40,6 +40,34 @@
     (str "Folder of extra translation files. Defaults to a languages folder "
          "beside your settings. Each file is checked before use.")]
 
+   ;; ── The optional local service ───────────────────────────────────────────
+   ;; Off unless asked for. Bound to the loopback interface, and every request
+   ;; needs a token printed at startup. See docs/API.md.
+
+   [nil "--api" "Start a local HTTP service. Off unless given."]
+
+   [nil "--api-port PORT" "Port for the service. Default 8377."
+    :default 8377
+    :parse-fn #(Integer/parseInt %)
+    :validate [#(< 1023 % 65536) "Must be a port between 1024 and 65535"]]
+
+   [nil "--api-input MODE"
+    (str "What the service may be given: none, path, upload or both. "
+         "\"path\" lets a caller name any file you can read, so the token is "
+         "the whole boundary. Default path.")
+    :default :path
+    ;; Without this the summary shows the keyword, :path, which is an
+    ;; implementation detail leaking into the one place it must not.
+    :default-desc "path"
+    :parse-fn #(keyword (str/lower-case %))
+    :validate [#{:none :path :upload :both}
+               "Choose one of: none, path, upload, both"]]
+
+   [nil "--api-token TOKEN"
+    "Token callers must present. One is generated and printed if omitted."]
+
+   [nil "--headless" "Run without opening a window. Only useful with --api."]
+
    ["-h" "--help" "Show this message and exit."]
    ["-V" "--version" "Show the version and exit."]])
 
@@ -78,4 +106,11 @@
       (:version options) {:action :exit :status 0 :message (version-text)}
       errors             {:action :exit :status 1
                           :message (str/join "\n" (concat errors ["" (usage summary)]))}
+
+      ;; --headless without --api would start nothing at all and sit there.
+      (and (:headless options) (not (:api options)))
+      {:action :exit :status 1
+       :message (str "--headless without --api would start nothing at all.\n"
+                     "Add --api, or drop --headless to open the window.")}
+
       :else              {:action :run :options options})))

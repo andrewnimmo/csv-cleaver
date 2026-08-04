@@ -64,6 +64,19 @@
   ^long [^String text ^Charset charset]
   (alength (.getBytes text charset)))
 
+(defn delete-tree!
+  "Remove `file` and, if it is a directory, everything below it.
+
+   Only ever pointed at a temporary folder this application created for an
+   uploaded file and its results. Nothing a user chose is removed this way — a
+   file in the way of a split goes to the Trash, where it can be got back."
+  [^File file]
+  (when (and file (.exists file))
+    (when (.isDirectory file)
+      (doseq [child (or (.listFiles file) (make-array File 0))]
+        (delete-tree! child)))
+    (.delete file)))
+
 (defn inspect-dir
   "What is already at the destination, so the window can say so before anything
    is written rather than at the moment something is about to be replaced.

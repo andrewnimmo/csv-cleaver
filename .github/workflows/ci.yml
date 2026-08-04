@@ -91,9 +91,10 @@ jobs:
           key: ${{ runner.os }}-deps-${{ hashFiles('deps.edn') }}
           restore-keys: ${{ runner.os }}-deps-
 
-      # Known vulnerabilities in anything that ships. The NVD API is rate
-      # limited without a key, so add NVD_API_KEY as a repository secret to
-      # make this reliable rather than intermittent.
+      # Known vulnerabilities in anything that ships. nvd-clojure requires an
+      # NVD API key: add NVD_API_KEY as a repository secret, or this step fails
+      # rather than passing quietly. Get one free from
+      # https://nvd.nist.gov/developers/request-an-api-key
       - name: Known vulnerabilities
         env:
           NVD_API_KEY: ${{ secrets.NVD_API_KEY }}

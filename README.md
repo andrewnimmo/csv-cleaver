@@ -17,6 +17,8 @@ Spanish, French, German, Chinese and Japanese.
 | A developer changing the code | **[docs/DEVELOPING.md](docs/DEVELOPING.md)** |
 | Deciding whether a behaviour is a bug | **[docs/SPECIFICATION.md](docs/SPECIFICATION.md)** |
 | Wondering why something was built this way | **[docs/DECISIONS.md](docs/DECISIONS.md)** |
+| Driving it from a script | **[docs/API.md](docs/API.md)** |
+| Assessing the security of any of it | **[docs/SECURITY.md](docs/SECURITY.md)** |
 
 ---
 
@@ -48,6 +50,9 @@ It also:
 - **Stays inside Excel's limits.** When splitting by size — where you choose
   megabytes and never a row count — files also stop at 1,048,576 rows, because
   a file Excel cannot open would defeat the point.
+- **Can be scripted.** An optional local HTTP service, with a Swagger page, puts
+  all of the above behind an API. Off unless you ask for it — see
+  [docs/API.md](docs/API.md).
 
 ---
 
@@ -89,6 +94,24 @@ bb run -- --locale ja --theme dark
 | `-t, --theme NAME` | `auto` (follows the system, the default), `light` or `dark`. |
 | `-h, --help` | Show all options. |
 | `-V, --version` | Show the version. |
+| `--api` | Start the local HTTP service. Off unless given — see [docs/API.md](docs/API.md). |
+| `--api-port PORT` | Port for it. Default `8377`. |
+| `--api-input MODE` | What it accepts: `none`, `path`, `upload` or `both`. Default `path`. |
+| `--api-token TOKEN` | Use a token you already have. One is generated and printed otherwise. |
+| `--headless` | No window. Only useful with `--api`. |
+
+### Scripting it
+
+```bash
+bb run -- --api --headless
+```
+
+prints a token and a link to a Swagger page at
+`http://127.0.0.1:8377/api-docs/index.html`, from which every endpoint can be
+tried. It listens on this machine only and answers nothing without the token.
+[docs/API.md](docs/API.md) has the endpoints;
+[docs/SECURITY.md](docs/SECURITY.md#the-optional-http-service) has what it
+costs — read the part about `--api-input path` before using it.
 
 ---
 

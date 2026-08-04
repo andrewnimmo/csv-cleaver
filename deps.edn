@@ -13,6 +13,12 @@
 
   org.clojure/tools.cli          {:mvn/version "1.1.230"}
 
+  ;; The optional local HTTP service. Off unless --api is given; see
+  ;; docs/API.md and the security note in docs/SECURITY.md.
+  metosin/reitit                 {:mvn/version "0.10.1"}
+  http-kit/http-kit              {:mvn/version "2.8.1"}
+  ring/ring-core                 {:mvn/version "1.15.5"}
+
   io.github.mkpaz/atlantafx-base {:mvn/version "2.1.0"}
 
   org.openjfx/javafx-base        {:mvn/version "25.0.4"}
@@ -21,7 +27,7 @@
 
  :aliases
  {:run
-  {:main-opts ["-m" "csv-cleaver.app"]
+  {:main-opts ["-m" "csv-cleaver.main"]
    :jvm-opts  ["--enable-native-access=ALL-UNNAMED"
                "-Dfile.encoding=UTF-8"]}
 

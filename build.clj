@@ -13,7 +13,7 @@
 
 (def lib 'dev.nimmo/csv-cleaver)
 (def version "2.0.0")
-(def main-ns 'csv-cleaver.app)
+(def main-ns 'csv-cleaver.main)
 
 (def class-dir "target/classes")
 (def uber-file (format "target/csv-cleaver-%s.jar" version))
@@ -48,7 +48,7 @@
   (println "Cleaned target/"))
 
 (defn uber
-  "Build a standalone uberjar with csv-cleaver.app as its entry point.
+  "Build a standalone uberjar with csv-cleaver.main as its entry point.
 
    Only the entry-point namespace is AOT compiled. Compiling everything would
    drag the JavaFX classes into the AOT step, which boots the toolkit at build

@@ -175,3 +175,76 @@ jpackage does not cross-compile. Hence four CI runners.
 **Why.** javafx-web alone carries a WebKit native of roughly 180 MB, which would
 land in every installer, for a window with no web view in it. Verified that
 cljfx loads and every screen renders without them.
+
+---
+
+## 13. The HTTP service is off, loopback-only, and behind a token
+
+**Decision.** Three properties of the service are not configurable: it does not
+start without `--api`, it binds `127.0.0.1` and nothing else, and every request
+under `/api/` needs a token.
+
+**Why.** Each of the three closes off a way this could become a liability by
+accident. A desktop application that quietly listens on a port is not what
+anyone installed. An option to bind `0.0.0.0` would eventually be set by someone
+who did not think it through, and the failure would be silent until it was not.
+And a service reachable without a token, on a machine with other users or other
+software, is a file-reading service for whatever else is running there.
+
+**Cost.** The service cannot be used from another machine. That is the intended
+cost: put something in front of it that you actually trust, rather than trusting
+this.
+
+---
+
+## 14. `--api-input`, and saying plainly what `path` allows
+
+**Decision.** What the service will accept is chosen at startup — `none`,
+`path`, `upload` or `both` — and the choice is readable through the API itself.
+
+**Why.** `path` mode is what the application is *for*: naming a file that
+already exists means a 40 GB split costs nothing extra. It also means a caller
+holding the token can have the application read anything the user can read. That
+is a real cost, and the honest response is neither to hide it nor to remove the
+feature, but to name it, offer alternatives, and print it in the startup banner
+in those words.
+
+`upload` exists for anyone who would rather the service could not name a path at
+all — which then forces the results to come back as an archive, since a caller
+that may not name a folder cannot be told where its files went.
+
+**Cost.** Four modes to document and test rather than one, and two ways for each
+file-taking endpoint to be called.
+
+---
+
+## 15. Splits over the API are jobs, not responses
+
+**Decision.** `POST /api/splits` answers `202` with a job identifier;
+`GET /api/splits/{id}` reports progress.
+
+**Why.** Splitting a file large enough to be worth splitting takes minutes.
+Holding an HTTP connection open for that invites every timeout between the
+caller and the server to fire, and gives the caller nothing to show anyone in
+the meantime. Jobs also make cancellation expressible, which a single blocking
+request does not.
+
+**Cost.** A caller has to poll, and the service has to remember finished jobs
+for a while — thirty minutes, then they are forgotten so a service left running
+for a month does not accumulate them.
+
+---
+
+## 16. The entry point may not require cljfx
+
+**Decision.** `-main` lives in `csv-cleaver.main`, which reaches the window
+namespace through `requiring-resolve`.
+
+**Why.** Loading `cljfx.api` starts the JavaFX toolkit as a side effect of
+loading it. A `-main` that required cljfx could not run `--headless` on a
+machine with no display: it would fail during class loading, before any of its
+own code ran, with an error about a toolkit the user never asked for.
+
+**Cost.** One indirection, and a rule that is easy to break by adding an
+innocent-looking `:require`. `main_test.clj` reads the namespace form and fails
+if it is broken.

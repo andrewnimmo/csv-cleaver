@@ -5,11 +5,13 @@
    csv-cleaver.state decides what should happen and returns effects as data;
    this namespace is the small, deliberately dull layer that carries them out.
    Everything genuinely interesting has been pushed out of here so that it can
-   be tested without a display."
+   be tested without a display.
+
+   Not the entry point — that is csv-cleaver.main, which can be loaded without
+   a display and only reaches this namespace when a window is going to open."
   (:require
    [cljfx.api :as fx]
    [clojure.string :as str]
-   [csv-cleaver.cli :as cli]
    [csv-cleaver.desktop :as desktop]
    [csv-cleaver.files :as files]
    [csv-cleaver.i18n :as i18n]
@@ -26,8 +28,7 @@
    (java.util Date)
    (javafx.application Application Platform)
    (javafx.scene.input DragEvent TransferMode)
-   (javafx.stage DirectoryChooser FileChooser FileChooser$ExtensionFilter Stage Window))
-  (:gen-class))
+   (javafx.stage DirectoryChooser FileChooser FileChooser$ExtensionFilter Stage Window)))
 
 (defonce *state (atom state/initial))
 
@@ -136,7 +137,10 @@
   "Ending the process, behind a var so that a test can watch the intent without
    the test run being ended along with it."
   (fn [status]
-    (Platform/exit)
+    ;; Headless, the toolkit was never started and there is nothing to shut
+    ;; down. Whatever it makes of being told to exit, it must not stop the
+    ;; process from ending.
+    (try (Platform/exit) (catch Throwable _ nil))
     (System/exit (int status))))
 
 (defn primary-stage
@@ -295,9 +299,14 @@
 ;; ── Entry point ─────────────────────────────────────────────────────────────
 
 (def renderer
-  (fx/create-renderer
-   :middleware (fx/wrap-map-desc view/root)
-   :opts {:fx.opt/map-event-handler handle-event}))
+  "Behind a delay, and it matters. Creating a cljfx renderer starts the JavaFX
+   toolkit, which under --headless is exactly what must not happen: a machine
+   running the service with no display would fail at load, before anything had a
+   chance to explain itself. Forced when a window is actually opened."
+  (delay
+    (fx/create-renderer
+     :middleware (fx/wrap-map-desc view/root)
+     :opts {:fx.opt/map-event-handler handle-event})))
 
 (defn watch-system-appearance!
   "Follow the operating system's light and dark setting while the window is
@@ -337,7 +346,7 @@
 (defn start-window!
   [options]
   (reset! *state (startup-state state/initial (prefs/load-prefs) options))
-  (fx/mount-renderer *state renderer)
+  (fx/mount-renderer *state @renderer)
   (perform! [:apply-theme (:theme @*state)])
   (watch-system-appearance!))
 
@@ -367,15 +376,3 @@
                             (start-window! (assoc options :locale "en")))
                         nil))}))
     (fx/mount-renderer *error @window)))
-
-(defn -main
-  [& args]
-  (let [{:keys [action status message options]} (cli/parse args)]
-    (if (= action :exit)
-      (do (println message)
-          (exit! status))
-      (let [dir      (or (:languages options) (desktop/languages-dir))
-            {:keys [problems]} (i18n/load-external! dir)]
-        (if (seq problems)
-          (show-language-problems! problems options)
-          (start-window! options))))))

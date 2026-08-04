@@ -42,7 +42,7 @@ COMMON=(
   --copyright "$COPYRIGHT"
   --input "$STAGE_DIR"
   --main-jar "$MAIN_JAR"
-  --main-class csv_cleaver.app
+  --main-class csv_cleaver.main
   --java-options "--enable-native-access=ALL-UNNAMED"
   --java-options "-Dfile.encoding=UTF-8"
 )
