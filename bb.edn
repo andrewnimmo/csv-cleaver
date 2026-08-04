@@ -46,8 +46,20 @@
    ;; than working it out itself, so it is computed here. Scanning the wrong
    ;; classpath — the audit tool's own, say — would report nothing and look
    ;; exactly like a clean result.
-   :task (let [cp (-> (shell {:out :string} "clojure -Spath") :out str/trim)]
-           (clj "-M:audit" "nvd-config.edn" (str "\"" cp "\"")))}
+   :task (let [cp  (-> (shell {:out :string} "clojure -Spath") :out str/trim)
+               ;; The key may live in the environment or in a gitignored file
+               ;; beside the project, whichever suits. Without one nvd-clojure
+               ;; refuses to run, which is the right failure: an audit that
+               ;; quietly checked nothing would be worse than none at all.
+               key (or (System/getenv "NVD_API_KEY")
+                       (let [f (fs/file ".nvd-api-key")]
+                         (when (fs/exists? f) (str/trim (slurp f)))))]
+           (when-not key
+             (println "No NVD API key. Set NVD_API_KEY, or put the key in")
+             (println ".nvd-api-key beside this file. Request one free at")
+             (println "https://nvd.nist.gov/developers/request-an-api-key"))
+           (shell {:extra-env (when key {"NVD_API_KEY" key}) :continue true}
+                  (str "clojure -M:audit nvd-config.edn \"" cp "\"")))}
 
   outdated
   {:doc  "List dependencies that have newer versions."

@@ -97,6 +97,34 @@ told.
 
 ---
 
+### The vulnerability audit needs a key
+
+`bb audit` will not run without an NVD API key — nvd-clojure requires one, and
+refusing is the right failure: an audit that quietly checked nothing would be
+worse than no audit. Request one free at
+[nvd.nist.gov](https://nvd.nist.gov/developers/request-an-api-key); it arrives
+by email in a minute or two.
+
+Then either put it in the environment:
+
+```bash
+echo 'export NVD_API_KEY=your-key-here' >> ~/.zshenv
+```
+
+or in a file beside this one, which `.gitignore` already covers:
+
+```bash
+echo your-key-here > .nvd-api-key
+```
+
+`~/.zshenv` rather than `~/.zshrc` because non-interactive shells — which is
+what tooling runs in — read the former and not the latter.
+
+For CI, add it as a repository secret named `NVD_API_KEY`;
+`.github/workflows/ci.yml` already passes it through.
+
+---
+
 ## Testing
 
 ```bash

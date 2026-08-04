@@ -19,3 +19,8 @@
 # OS
 .DS_Store
 Thumbs.db
+
+# Secrets. bb audit needs an NVD API key; keeping it in a file here rather than
+# in a shell profile is fine, so long as it can never be committed.
+/.env
+/.nvd-api-key
