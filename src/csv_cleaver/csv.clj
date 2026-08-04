@@ -16,7 +16,17 @@
    be written straight back out without being re-quoted or normalised. What goes
    in comes out, byte for byte, in the same encoding.
 
-   Nothing here holds more than one record in memory at a time."
+   Nothing here holds more than one record in memory at a time.
+
+   Hand-written rather than built on clojure.data.csv, for five reasons set out
+   in docs/DECISIONS.md §17: verbatim output cannot survive a re-serialisation,
+   malformed input has to be counted rather than thrown on, only record
+   boundaries are needed and parsing every field would be wasted work, streaming
+   here has to be cancellable and report progress, and no library sniffs the
+   delimiter. The cost is that this is a state machine over quote state, doubled
+   quotes, three terminators and end-of-file in every position — the one place
+   in this codebase where a bug corrupts data instead of throwing. Change
+   nothing here without reading csv_test.clj and hostile_input_test.clj first."
   (:import
    (java.io Reader StringReader)))
 

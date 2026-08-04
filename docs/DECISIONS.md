@@ -248,3 +248,73 @@ own code ran, with an error about a toolkit the user never asked for.
 **Cost.** One indirection, and a rule that is easy to break by adding an
 innocent-looking `:require`. `main_test.clj` reads the namespace form and fails
 if it is broken.
+
+---
+
+## 17. A hand-written CSV reader, not clojure.data.csv
+
+**Decision.** `csv-cleaver.csv` is a hand-written RFC 4180 record scanner rather
+than a use of `org.clojure/data.csv` or any other CSV library.
+
+**Why.** Not for want of looking. Five requirements each rule out a parser, and
+together they rule out wrapping one:
+
+1. **Output must be byte-faithful.** Records are copied out exactly as they came
+   in — quoting style, whitespace, line terminator and all. A library hands back
+   parsed values; writing those out again means re-serialising, which normalises
+   quoting, rewrites line endings and re-encodes the text. See decision 1: a
+   user who asked for a file to be divided did not ask for it to be rewritten.
+   Nothing built on a parser can make the byte-identical claim, and that claim is
+   the point of the application.
+
+2. **Malformed input must be counted, not thrown on.** `data.csv` raises on an
+   unterminated quoted field and on a stray quote — reasonable for a parser, and
+   exactly wrong here. These files are the normal case: the user has no control
+   over how the file was produced and cannot be asked to fix it. Damage has to
+   become a number on the file card, next to the rows that carry it, while the
+   file goes on being split. That means the scanner has to *decide* what a
+   malformed record's boundary is and carry on, which is a policy no library
+   exposes.
+
+3. **Only record boundaries are needed.** Splitting never looks inside a record.
+   Parsing every field of a 40 GB file to find where the records end would
+   allocate a vector of strings per row and throw all of them away. The scanner
+   tracks one boolean of quote state over a character buffer; fields are parsed
+   only for the twenty preview rows the window shows.
+
+4. **Streaming, cancellable, and able to report progress.** `reduce-records`
+   folds over a `Reader` in constant memory, checks a cancellation predicate
+   every few thousand records and reports the running count. A lazy sequence of
+   parsed rows gives none of that: cancellation becomes "stop consuming and hope
+   the reader is closed", and progress becomes a counter in the consumer that
+   knows nothing about how far through the file it is.
+
+5. **Delimiter detection.** No library offers it, because it is a guess rather
+   than a parse. Sniffing needs to try each candidate over the same sample and
+   compare how consistent the resulting field counts are — which needs a scanner
+   it can call repeatedly with different delimiters, cheaply.
+
+**Rejected.** Using `data.csv` for validation alongside verbatim copying. It
+would mean reading every large file twice, produce two opinions about where a
+malformed record ends, and still leave the delimiter to be worked out
+separately.
+
+**Cost.** This is the honest part: a hand-written state machine over quote
+state, doubled quotes, three line terminators and end-of-file in every position
+is a place to get things wrong, and the failures are silent — data corruption
+rather than an exception. It is the one piece of this codebase where a bug is
+worse than a crash.
+
+That is what the tests are for, and why there are so many of them for so little
+code. `test/csv_cleaver/csv_test.clj` covers each state transition by hand:
+quoted newlines, doubled quotes, delimiters inside quotes, stray and
+unterminated quotes, every terminator preserved exactly, a record spanning a
+buffer refill, and early termination.
+`test/csv_cleaver/hostile_input_test.clj` attacks it: five thousand columns, a
+two-hundred-thousand-character field, quotes in every wrong position, mixed
+terminators, and forty pseudo-random byte files from a fixed seed. The sample
+corpus then checks the property that matters most — that concatenating the
+output reproduces the input byte for byte.
+
+**When to revisit.** If a CSV library ever offers verbatim record text
+alongside its parse, most of this becomes unnecessary and should go.

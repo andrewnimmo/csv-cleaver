@@ -64,7 +64,7 @@ than two implementations of it.
 
 | Namespace | Responsibility |
 |---|---|
-| `csv` | Reads CSV as **records**, not lines. Quote-aware scanner over a hand-rolled character buffer. The heart of the correctness claim. |
+| `csv` | Reads CSV as **records**, not lines. Quote-aware scanner over a hand-rolled character buffer. The heart of the correctness claim, and hand-written rather than built on `clojure.data.csv` — [DECISIONS §17](DECISIONS.md#17-a-hand-written-csv-reader-not-clojuredatacsv) says why, and what it costs. |
 | `encoding` | Byte-order marks and charset detection. |
 | `files` | Opening readers and writers that preserve encoding and byte-order marks. |
 | `naming` | Output file names, index padding, and the pattern used to find collisions. |
@@ -267,6 +267,15 @@ explicitly, and a test asserts it in every state.
 loses the theme's default text fill and resolves to black — invisible in dark
 mode. Either keep the control's own class in the list (`["label" "chip"]`) or
 set `-fx-text-fill` in the rule. Both are used here; the bold headings do both.
+
+**The record scanner is the one place a bug corrupts data rather than throwing.**
+`csv.clj` is a hand-written RFC 4180 state machine — deliberately, for the
+reasons in [DECISIONS §17](DECISIONS.md#17-a-hand-written-csv-reader-not-clojuredatacsv),
+but a state machine over quote state, doubled quotes, three line terminators and
+end-of-file in every position is not a thing to adjust casually. Read
+`csv_test.clj` and `hostile_input_test.clj` before touching it, and add to them
+before changing it: a break there passes silently through every other layer and
+comes out as damaged output files.
 
 **JavaFX keeps the JVM alive.** Requiring `cljfx.api` starts the toolkit, and its
 thread is not a daemon. A script that loads it must call `System/exit`.
