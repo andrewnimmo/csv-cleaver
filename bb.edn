@@ -44,6 +44,20 @@
        (println "Commit or stash first — this edits source files in place.")
        (println dirty)
        (System/exit 1))
+     ;; One at a time. Two runs overlapping means one restores a file the other
+     ;; has already mutated, and the defect is left in the tree — which happened
+     ;; the first time this task was used, and was only noticed because the
+     ;; mutation was in a file being watched.
+     (let [lock (fs/file "target/mutate.lock")]
+       (when (fs/exists? lock)
+         (println "Another bb mutate is running (or died). Remove" (str lock)
+                  "if you are sure it is not.")
+         (System/exit 1))
+       (fs/create-dirs "target")
+       ;; No shutdown hook: bb.edn is EDN, where #(...) is not a reader macro
+       ;; at all. The lock is removed at the end of the run, and the message
+       ;; above says what to do if a run died without getting there.
+       (spit lock "running"))
      (let [results
            (doall
             (for [{:keys [label file find replace namespace]} mutations]
@@ -65,6 +79,7 @@
        (println (format "\n%d of %d mutations caught."
                         (count (filter (comp #{:caught} first) results))
                         (count results)))
+       (fs/delete-if-exists (fs/file "target/mutate.lock"))
        (when (seq bad)
          (println "\nThese changed the behaviour of the application and no test failed:")
          (doseq [[verdict label] bad] (println " " (name verdict) label))
