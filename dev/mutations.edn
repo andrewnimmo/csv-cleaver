@@ -185,7 +185,7 @@
 
  {:label     "choosing a delimiter patches the survey instead of re-scanning"
   :file      "src/csv_cleaver/state.clj"
-  :find      "    (if-let [file (:file state)]\n      (with-effects (assoc next-state :phase :scanning :scan-rows 0)\n                    [:scan {:file file :delimiter choice}])\n      (with-effects next-state))))"
+  :find      "    (if-let [file (:file state)]\n      (with-effects (assoc next-state :phase :scanning :scan-rows 0)\n        [:scan {:file file :delimiter choice}])\n      (with-effects next-state))))"
   :replace   "    (with-effects next-state)))"
   :namespace "csv-cleaver.state-test"}
 
