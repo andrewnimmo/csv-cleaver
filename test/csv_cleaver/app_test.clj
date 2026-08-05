@@ -321,11 +321,18 @@
 
 (defn- routed
   "Run one event through app/handle-event with the dispatch loop captured.
-   Returns the events it forwarded."
+   Returns the events it forwarded.
+
+   The state atom is REBOUND, not reset. Resetting the shared defonce left a
+   window in which worker threads from earlier tests — a scan still winding
+   down — could overwrite it between the reset and the read. Locally that was
+   a nameless once-in-five-runs flake; the slower Windows CI runner hit it
+   every time, with the file stem missing from the timestamped folder because
+   another thread had blanked the survey mid-test."
   [start-state event]
   (let [forwarded (atom [])]
-    (reset! app/*state start-state)
-    (with-redefs [app/dispatch! (fn [e] (swap! forwarded conj e))]
+    (with-redefs [app/*state  (atom start-state)
+                  app/dispatch! (fn [e] (swap! forwarded conj e))]
       (app/handle-event event))
     @forwarded))
 
@@ -375,12 +382,13 @@
 (deftest ordinary-events-flow-through-the-pure-handler
   (testing "everything that is not one of the special cases goes to
             state/handle and its effects are performed"
-    (let [performed (atom [])]
-      (reset! app/*state state/initial)
-      (with-redefs [app/perform! (fn [e] (swap! performed conj e))]
+    (let [performed (atom [])
+          *isolated (atom state/initial)]
+      (with-redefs [app/*state  *isolated
+                    app/perform! (fn [e] (swap! performed conj e))]
         (app/handle-event {:event/type :csv-cleaver.state/rows-changed
                            :text "42"}))
-      (is (= "42" (:rows-text @app/*state)))
+      (is (= "42" (:rows-text @*isolated)))
       (is (= [] @performed) "rows-changed has no effects"))))
 
 ;; ── The workers' callbacks ──────────────────────────────────────────────────

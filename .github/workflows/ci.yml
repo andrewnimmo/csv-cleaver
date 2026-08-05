@@ -95,10 +95,38 @@ jobs:
       # NVD API key: add NVD_API_KEY as a repository secret, or this step fails
       # rather than passing quietly. Get one free from
       # https://nvd.nist.gov/developers/request-an-api-key
+      # dependency-check's first run builds a local NVD mirror, which dies
+      # readily on runner networks — and the default cache saves only on job
+      # success, so a failed build could never seed its own cache: a permanent
+      # red loop. The database is therefore cached with an explicit always-save,
+      # and the audit retried once; a resumed build completes what the first
+      # attempt fetched.
+      - name: NVD cache key
+        id: nvd-week
+        run: echo "week=$(date +%G-%V)" >> "$GITHUB_OUTPUT"
+
+      - name: Restore NVD database
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            ~/.m2/repository/org/owasp/dependency-check-data
+            ~/.dependency-check
+          key: nvd-db-${{ runner.os }}-${{ steps.nvd-week.outputs.week }}
+          restore-keys: nvd-db-${{ runner.os }}-
+
       - name: Known vulnerabilities
         env:
           NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
-        run: bb audit
+        run: bb audit || (echo "retrying once — NVD mirror build is flaky" && bb audit)
+
+      - name: Save NVD database
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            ~/.m2/repository/org/owasp/dependency-check-data
+            ~/.dependency-check
+          key: nvd-db-${{ runner.os }}-${{ steps.nvd-week.outputs.week }}
 
       # Being behind is not itself a vulnerability, but it is how you come to
       # be running one. Reported, not enforced.
