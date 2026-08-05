@@ -82,6 +82,20 @@ jobs:
           chmod +x package/*.sh || true
           ${{ matrix.script }}
 
+      # Both macOS runners emit "CSV Cleaver-<version>.dmg". Left alone, the
+      # released files would collide when the artifacts are merged and one
+      # architecture would silently overwrite the other — an Intel user
+      # downloading an Apple Silicon binary. The architecture goes into the
+      # name here, where the ambiguity starts.
+      - name: Name the architecture (macOS)
+        if: runner.os == 'macOS'
+        shell: bash
+        run: |
+          for f in dist/*.dmg; do
+            arch=$(uname -m | sed 's/x86_64/intel/; s/arm64/apple-silicon/')
+            mv "$f" "${f%.dmg}-${arch}.dmg"
+          done
+
       # Signing. Skipped silently until the secrets are added.
       - name: Sign and notarize (macOS)
         if: runner.os == 'macOS' && env.MACOS_CERTIFICATE != ''
@@ -134,3 +148,16 @@ jobs:
             with `chmod +x` and run it directly.
 
             Every installer contains its own Java runtime. Nothing else is needed.
+
+            ## Provenance
+
+            This codebase was written predominantly by Claude (Anthropic,
+            model `claude-fable-5`, via Claude Code) under the direction of
+            **Andrew David Nimmo** as Technical Project Manager, who set the
+            requirements, made the decisions, and acceptance-tested every
+            build. [PROVENANCE.md](https://github.com/andrewnimmo/csv-cleaver/blob/main/docs/PROVENANCE.md)
+            states precisely what that means;
+            [VERIFICATION.md](https://github.com/andrewnimmo/csv-cleaver/blob/main/docs/VERIFICATION.md)
+            records what is verified and how.
+
+            Made with 🤖 in Barcelona.
