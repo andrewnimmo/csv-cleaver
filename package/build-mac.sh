@@ -74,7 +74,6 @@ jpackage \
   --mac-package-identifier "$BUNDLE_ID" \
   --input "$STAGE_DIR" \
   --main-jar "$MAIN_JAR" \
-  --license-file LICENSE \
   --add-modules "$MODULES" \
   --main-class csv_cleaver.main \
   --dest "$APP_IMAGE_DIR" \
@@ -110,11 +109,15 @@ fi
 echo "==> It starts: $("$APP/Contents/MacOS/$APP_NAME" --version)"
 
 echo "==> jpackage (dmg)"
+# --license-file here and not on the app image above: jpackage refuses the
+# option for type app-image, and it is the disk image that greets the user
+# with the licence anyway.
 jpackage \
   --type dmg \
   --name "$APP_NAME" \
   --app-version "$APP_VERSION" \
   --app-image "$APP" \
+  --license-file LICENSE \
   --mac-package-identifier "$BUNDLE_ID" \
   --dest "$DIST_DIR"
 

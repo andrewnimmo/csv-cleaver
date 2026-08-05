@@ -52,7 +52,6 @@ COMMON=(
   --copyright "$COPYRIGHT"
   --input "$STAGE_DIR"
   --main-jar "$MAIN_JAR"
-  --license-file LICENSE
   --add-modules "$MODULES"
   --main-class csv_cleaver.main
   --java-options "--enable-native-access=ALL-UNNAMED"
@@ -62,7 +61,10 @@ COMMON=(
 # The ${x[@]+...} form expands to nothing when the array is empty, rather than
 # failing under `set -u`.
 echo "==> jpackage (.deb)"
+# --license-file only here: jpackage refuses it for the app-image build that
+# feeds the AppImage below.
 jpackage --type deb --dest "$DIST_DIR" \
+  --license-file LICENSE \
   --linux-shortcut \
   --linux-menu-group Utility \
   "${COMMON[@]}" ${ICON_OPT[@]+"${ICON_OPT[@]}"}
