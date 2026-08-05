@@ -23,10 +23,15 @@
     (is (keyword? (desktop/reveal-label-key)))))
 
 (deftest builds-the-right-command-per-platform
-  (let [dir (File. "/tmp/x")]
-    (is (= ["open" "/tmp/x"] (desktop/reveal-command :mac dir)))
-    (is (= ["explorer" "/tmp/x"] (desktop/reveal-command :windows dir)))
-    (is (= ["xdg-open" "/tmp/x"] (desktop/reveal-command :linux dir)))
+  ;; The expected path is the File's own absolute form, not a POSIX literal:
+  ;; on Windows java.io.File renders "/tmp/x" as "D:\tmp\x", and the first
+  ;; CI run on a Windows machine failed exactly here. What matters is which
+  ;; program is named and that the path is passed through verbatim.
+  (let [dir  (File. "/tmp/x")
+        path (.getAbsolutePath dir)]
+    (is (= ["open" path] (desktop/reveal-command :mac dir)))
+    (is (= ["explorer" path] (desktop/reveal-command :windows dir)))
+    (is (= ["xdg-open" path] (desktop/reveal-command :linux dir)))
     (is (nil? (desktop/reveal-command :unknown dir)))))
 
 (deftest revealing-nothing-does-nothing
@@ -54,10 +59,12 @@
 
 (deftest settings-live-where-each-platform-expects
   (testing "macOS"
-    (is (= "/Users/x/Library/Application Support/CSV Cleaver/settings.edn"
-           (.getPath ^File (desktop/prefs-file :mac "/Users/x")))))
+    ;; File equality, not a string literal: both sides then wear whatever
+    ;; separators the host OS uses.
+    (is (= (java.io.File. "/Users/x/Library/Application Support/CSV Cleaver/settings.edn")
+           (desktop/prefs-file :mac "/Users/x"))))
   (testing "Linux honours XDG when set, and falls back to ~/.config"
-    (is (re-find #"csv-cleaver/settings\.edn"
+    (is (re-find #"csv-cleaver[/\\]settings\.edn"
                  (.getPath ^File (desktop/prefs-file :linux "/home/x")))))
   (testing "Windows"
     (is (re-find #"CSV Cleaver"

@@ -258,8 +258,13 @@
 (deftest splitting-somewhere-impossible-reports-a-plain-message
   (tu/with-temp-dir [dir]
     (let [[seen dispatch] (capture)]
+      ;; The impossible folder is a child of an existing regular file — the
+      ;; one impossibility every OS agrees on. "/proc/..." was not it: on the
+      ;; Windows CI runner that resolves to a perfectly creatable D:\proc\…,
+      ;; and the split cheerfully succeeded.
       (app/split-worker {:survey (survey-of dir "id\n1\n")
-                         :out-dir (File. "/proc/definitely/not/here")
+                         :out-dir (io/file (tu/write-file dir "wall.txt" "x")
+                                           "definitely" "not" "here")
                          :mode :rows :value 1 :has-header? true
                          :plan {:file-count 1}}
                         (constantly false) dispatch)

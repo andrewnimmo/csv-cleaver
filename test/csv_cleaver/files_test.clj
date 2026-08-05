@@ -21,7 +21,10 @@
     (is (= "csv" (files/extension (File. "noext"))))))
 
 (deftest finds-the-parent-directory
-  (is (= "/tmp" (.getAbsolutePath (files/parent-dir (File. "/tmp/a.csv")))))
+  ;; Compared as Files: "/tmp" is "D:\tmp" on a Windows runner, and the claim
+  ;; is about the relationship, not the spelling.
+  (is (= (File. (.getAbsolutePath (File. "/tmp")))
+         (files/parent-dir (File. "/tmp/a.csv"))))
   (testing "a bare relative name still has somewhere to go"
     (is (some? (files/parent-dir (File. "a.csv"))))))
 

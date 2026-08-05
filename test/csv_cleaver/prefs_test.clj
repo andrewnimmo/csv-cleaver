@@ -63,7 +63,13 @@
       (is (= {} (prefs/load-prefs file))))))
 
 (deftest saving-somewhere-impossible-fails-quietly
-  (is (false? (prefs/save-prefs! (File. "/proc/nope/settings.edn") {:theme :dark}))))
+  ;; A path under an existing regular file: impossible on every OS, unlike
+  ;; "/proc/…", which a Windows runner happily creates as D:\proc\….
+  (tu/with-temp-dir [dir]
+    (let [wall (io/file dir "wall.txt")]
+      (spit wall "x")
+      (is (false? (prefs/save-prefs! (io/file wall "nope" "settings.edn")
+                                     {:theme :dark}))))))
 
 (deftest creates-the-folder-it-needs
   (tu/with-temp-dir [dir]
