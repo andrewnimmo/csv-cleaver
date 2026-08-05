@@ -130,6 +130,7 @@ bb tasks
 | `bb format` | Reformat with cljfmt |
 | `bb check` | Everything CI runs |
 | `bb shots` | Render every screen to `target/shots` as PNG, both themes |
+| `bb icons` | Regenerate every platform icon from `dev/icons.clj` |
 | `bb uber` | Build the standalone jar |
 | `bb package` | Build a native installer for this machine |
 | `bb brand` | Change the name, colour or icons |

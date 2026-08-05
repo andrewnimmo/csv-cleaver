@@ -260,6 +260,19 @@ a bad file fatal would let one leave the application permanently unopenable.
 
 ---
 
+## The icon
+
+One geometry — [package/icon.svg](../package/icon.svg), "one file becomes two" —
+drawn twice: once in that SVG for humans, once in `dev/icons.clj` for the
+build. `bb icons` renders it with JavaFX (no external rasteriser to install)
+and writes `package/windows/icon.ico`, `package/linux/icon.png` and, on macOS,
+`package/macos/icon.icns` via `iconutil`. All three are committed; the
+packaging tests check their magic bytes, so a zero-byte or renamed icon fails a
+test run rather than shipping an installer with the default coffee cup. If you
+change the SVG, change the Clojure to match — they are the same drawing.
+
+---
+
 ## Rebranding
 
 Everything nameable lives in `resources/branding.edn` — name, tagline, version,

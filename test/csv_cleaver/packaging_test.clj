@@ -115,3 +115,23 @@
         (is (str/includes? text "--main-class csv_cleaver.main") path)
         (is (not (str/includes? text "--main-class csv_cleaver.app"))
             (str path " names a class that is no longer the entry point"))))))
+
+(deftest every-platform-has-its-icon-and-each-is-what-it-claims-to-be
+  (testing "the paths come from branding.edn, which is what the build scripts
+            read, so a renamed file fails here rather than producing an
+            installer with the default coffee-cup icon. Magic bytes rather than
+            existence: a zero-byte or misformatted file exists happily."
+    (let [icons (:icons (read-string (slurp "resources/branding.edn")))
+          magic (fn [path n]
+                  (let [f (io/file path)]
+                    (when (.isFile f)
+                      (with-open [in (io/input-stream f)]
+                        (let [buf (byte-array n)]
+                          (.read in buf)
+                          (mapv #(bit-and % 0xff) buf))))))]
+      (is (= [0x69 0x63 0x6e 0x73] (magic (:macos icons) 4))
+          "icns magic — the literal bytes of \"icns\"")
+      (is (= [0 0 1 0] (magic (:windows icons) 4))
+          "ico header: reserved 0, type 1")
+      (is (= [0x89 0x50 0x4e 0x47] (magic (:linux icons) 4))
+          "png signature"))))

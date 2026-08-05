@@ -63,6 +63,14 @@
                  "--output" "target/coverage"
                  "--text" "--html"]}
 
+  ;; Draws the application icon and writes every platform asset. See
+  ;; dev/icons.clj; run with `bb icons`.
+  :icons
+  {:extra-paths ["dev"]
+   :extra-deps  {org.openjfx/javafx-swing {:mvn/version "25.0.4"}}
+   :jvm-opts    ["--enable-native-access=ALL-UNNAMED" "-Dfile.encoding=UTF-8"]
+   :main-opts   ["-m" "icons"]}
+
   ;; Renders every screen to target/shots as PNG, in both themes. Design review
   ;; without a display; also runs on CI.
   :shots

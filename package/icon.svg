@@ -1,0 +1,25 @@
+<!-- CSV Cleaver icon, option B: one file becomes two.
+     Source of truth: dev/icons.clj draws exactly this geometry with JavaFX and
+     writes every platform asset from it. Edit here, mirror there, run
+     `bb icons`. -->
+<svg viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="tile" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#8fd41f"/><stop offset="1" stop-color="#65a30d"/>
+    </linearGradient>
+  </defs>
+  <rect width="128" height="128" rx="29" fill="url(#tile)"/>
+  <path d="M24 34 h34 v60 h-34 z" fill="#fff"/>
+  <rect x="24" y="34" width="34" height="7" fill="#1a2e05" opacity="0.9"/>
+  <g fill="#65a30d" opacity="0.85">
+    <rect x="30" y="48" width="22" height="5" rx="2"/>
+    <rect x="30" y="60" width="22" height="5" rx="2"/>
+    <rect x="30" y="72" width="22" height="5" rx="2"/>
+  </g>
+  <path d="M72 26 h32 v34 h-32 z" fill="#fff"/>
+  <rect x="72" y="26" width="32" height="6" fill="#1a2e05" opacity="0.9"/>
+  <rect x="78" y="38" width="20" height="5" rx="2" fill="#65a30d" opacity="0.85"/>
+  <path d="M72 68 h32 v34 h-32 z" fill="#fff"/>
+  <rect x="72" y="68" width="32" height="6" fill="#1a2e05" opacity="0.9"/>
+  <rect x="78" y="80" width="20" height="5" rx="2" fill="#65a30d" opacity="0.85"/>
+</svg>

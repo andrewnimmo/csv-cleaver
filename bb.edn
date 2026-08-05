@@ -172,6 +172,13 @@
   {:doc  "Fail if anything is not formatted as cljfmt would write it."
    :task (clj "-M:format" "check")}
 
+  icons
+  {:doc  "Regenerate every platform icon from the geometry in dev/icons.clj."
+   :task (do (clj "-M:icons")
+             (when (= "Mac OS X" (System/getProperty "os.name"))
+               (shell "iconutil -c icns target/icon.iconset -o package/macos/icon.icns")
+               (println "Wrote package/macos/icon.icns")))}
+
   shots
   {:doc  "Render every screen to target/shots as PNG, in both themes."
    :task (clj "-M:shots")}
