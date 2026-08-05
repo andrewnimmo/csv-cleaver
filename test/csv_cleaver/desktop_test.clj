@@ -84,3 +84,25 @@
 (deftest trash-support-is-a-boolean-not-an-exception
   (testing "some Linux desktops cannot trash at all; asking must never throw"
     (is (contains? #{true false} (desktop/trash-supported?)))))
+
+(deftest a-mail-uri-carries-the-address-and-an-encoded-subject
+  (testing "the subject includes the version, which is what a support message
+            needs and nobody types correctly. Expected form written from RFC
+            6068 — spaces and parentheses percent-encoded — not from running
+            the code."
+    (let [uri (desktop/mail-uri "contact+csv.cleaver@nimmo.dev"
+                                "CSV Cleaver 2.0.0 (a1b2c3d)")]
+      (is (= "mailto" (.getScheme uri)))
+      (is (= "mailto:contact+csv.cleaver@nimmo.dev?subject=CSV%20Cleaver%202.0.0%20(a1b2c3d)"
+             (.toASCIIString uri))))))
+
+(deftest composing-mail-is-injectable-and-gives-up-quietly
+  (let [sent (atom nil)]
+    (is (true? (desktop/compose-mail! (desktop/mail-uri "a@b.c" "s")
+                                      (fn [u] (reset! sent u)))))
+    (is (= "mailto" (.getScheme ^java.net.URI @sent)))
+    (is (false? (desktop/compose-mail! nil (fn [_] (throw (Exception. "no")))))
+        "nil goes nowhere")
+    (is (false? (desktop/compose-mail! (desktop/mail-uri "a@b.c" "s")
+                                       (fn [_] (throw (Exception. "no client")))))
+        "a mail client that will not open is not an error worth a dialog")))

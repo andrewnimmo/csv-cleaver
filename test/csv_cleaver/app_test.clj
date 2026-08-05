@@ -414,3 +414,30 @@
       (let [event (last @events)]
         (is (= :csv-cleaver.state/split-failed (:event/type event)))
         (is (some? (:message event)) "carrying something the window can say")))))
+
+;; ── One chooser at a time ───────────────────────────────────────────────────
+
+(deftest a-second-click-cannot-raise-a-second-dialog
+  (testing "reported against the built application: every click on Browse
+            stacked another native dialog on another nested event loop, each
+            answered dialog started its own scan, and quitting hung until every
+            dialog was dismissed in reverse. The claim is the testable half;
+            window-modality is the other and belongs to the platform."
+    (app/release-chooser!)
+    (is (true? (app/claim-chooser!)) "the first click gets the dialog")
+    (is (false? (app/claim-chooser!)) "the queued double-click gets nothing")
+    (is (false? (app/claim-chooser!)) "and neither does a third")
+    (app/release-chooser!)
+    (is (true? (app/claim-chooser!)) "after the dialog closes, Browse works again")
+    (app/release-chooser!)))
+
+(deftest the-workers-wear-the-scan-id-they-were-given
+  (testing "the stale-scan guard in state is only as good as the id the worker
+            carries: a worker that drops it produces trusted, unguarded events"
+    (tu/with-temp-dir [dir]
+      (let [f      (tu/write-file dir "x.csv" "id\n1\n")
+            events (atom [])]
+        (app/scan-worker {:file f :scan-id 7} #(swap! events conj %))
+        (is (seq @events))
+        (is (every? #(= 7 (:scan-id %)) @events)
+            "every event — progress, success, failure — carries the id")))))

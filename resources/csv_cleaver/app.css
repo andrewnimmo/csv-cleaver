@@ -257,3 +257,26 @@
 .caution {
     -fx-text-fill: -color-warning-fg;
 }
+
+/* The dictionary entry in the About box. Styled like an entry, not a joke:
+   bold headword, muted IPA and part of speech, numbered senses, and the
+   contranym note in the entry's own voice. */
+.dict-entry {
+    -fx-background-color: -color-bg-subtle;
+    -fx-background-radius: 8;
+    -fx-padding: 10 12 10 12;
+}
+.dict-word {
+    -fx-font-weight: bold;
+    -fx-font-size: 1.1em;
+}
+.dict-pron, .dict-pos {
+    -fx-text-fill: -color-fg-muted;
+}
+.dict-pos {
+    -fx-font-style: italic;
+}
+.dict-note {
+    -fx-font-style: italic;
+    -fx-text-fill: -color-fg-muted;
+}

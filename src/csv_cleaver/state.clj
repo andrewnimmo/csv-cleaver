@@ -59,6 +59,7 @@
    :phase           :empty
    :file            nil
    :survey          nil
+   :scan-id         0
    :scan-rows       0
    :out-dir         nil
    :out-dir-info    nil
@@ -259,40 +260,61 @@
 (defmethod handle ::file-chosen
   [state {:keys [^File file]}]
   (if (and file (.isFile file))
-    (with-effects (assoc state
-                         :phase :scanning
-                         :file file
-                         :survey nil
-                         :result nil
-                         :error nil
-                         :scan-rows 0
-                         :drag-over? false
-                         :out-dir (or (:out-dir state) nil))
-      [:scan {:file file :delimiter (:delimiter-override state)}])
+    ;; Every scan carries the id it was started with, and replies that arrive
+    ;; wearing an old id are ignored. Without this, two scans in flight — two
+    ;; file dialogs both answered, or a re-scan racing the original — resolve
+    ;; as "whichever finishes last wins the window", which is not necessarily
+    ;; the file the user chose last.
+    (let [scan-id (inc (long (:scan-id state 0)))]
+      (with-effects (assoc state
+                           :phase :scanning
+                           :file file
+                           :survey nil
+                           :result nil
+                           :error nil
+                           :scan-id scan-id
+                           :scan-rows 0
+                           :drag-over? false
+                           :out-dir (or (:out-dir state) nil))
+        [:scan {:file file :delimiter (:delimiter-override state)
+                :scan-id scan-id}]))
     (with-effects (assoc state
                          :error :problem/unreadable
                          :drag-over? false))))
 
+(defn- stale-scan?
+  "Whether a scan event belongs to a scan that has been superseded.
+
+   An event with no id at all is trusted — the guard exists for the workers,
+   which always carry one, not to make every test thread an id through."
+  [state event]
+  (and (:scan-id event)
+       (not= (:scan-id event) (:scan-id state))))
+
 (defmethod handle ::scan-progress
-  [state {:keys [rows]}]
-  (with-effects (assoc state :scan-rows rows)))
+  [state {:keys [rows] :as event}]
+  (if (stale-scan? state event)
+    (with-effects state)
+    (with-effects (assoc state :scan-rows rows))))
 
 (defmethod handle ::scan-succeeded
-  [state {:keys [survey]}]
-  (let [file (:file survey)]
-    (with-effects
-      (assoc state
-             :phase :ready
-             :survey survey
+  [state {:keys [survey] :as event}]
+  (if (stale-scan? state event)
+    (with-effects state)
+    (let [file (:file survey)]
+      (with-effects
+        (assoc state
+               :phase :ready
+               :survey survey
              ;; The checkbox follows what the file actually looks like. A user
              ;; who disagrees can still change it; most never have to.
-             :has-header? (:header-likely? survey)
-             :header-answered? false
-             :out-dir-info nil
-             :out-dir (default-out-dir state file))
+               :has-header? (:header-likely? survey)
+               :header-answered? false
+               :out-dir-info nil
+               :out-dir (default-out-dir state file))
       ;; What is already at the destination is worth knowing before pressing
       ;; Split, not at the moment something is about to be replaced.
-      [:inspect-out-dir (default-out-dir state file)])))
+        [:inspect-out-dir (default-out-dir state file)]))))
 
 (defmethod handle ::out-dir-inspected
   [state {:keys [dir info]}]
@@ -302,8 +324,10 @@
     (with-effects state)))
 
 (defmethod handle ::scan-failed
-  [state {:keys [message]}]
-  (with-effects (assoc state :phase :empty :file nil :survey nil :error message)))
+  [state {:keys [message] :as event}]
+  (if (stale-scan? state event)
+    (with-effects state)
+    (with-effects (assoc state :phase :empty :file nil :survey nil :error message))))
 
 (defmethod handle ::mode-changed
   [state {:keys [mode]}]
@@ -353,6 +377,10 @@
   (let [tag (or tag (i18n/tag-for-name language-name))]
     (with-effects (with-language state tag) [:save-prefs {:language tag}])))
 
+(defmethod handle ::contact-clicked
+  [state _]
+  (with-effects state [:compose-mail]))
+
 (defmethod handle ::about-toggled
   [state _]
   (with-effects (assoc state :dialog (when-not (= :about (:dialog state)) :about))))
@@ -380,8 +408,10 @@
   ;; file has to be read again rather than the numbers adjusted.
   (let [next-state (assoc state :delimiter-override choice)]
     (if-let [file (:file state)]
-      (with-effects (assoc next-state :phase :scanning :scan-rows 0)
-        [:scan {:file file :delimiter choice}])
+      (let [scan-id (inc (long (:scan-id state 0)))]
+        (with-effects (assoc next-state :phase :scanning :scan-rows 0
+                             :scan-id scan-id)
+          [:scan {:file file :delimiter choice :scan-id scan-id}]))
       (with-effects next-state))))
 
 (defmethod handle ::charset-override-changed

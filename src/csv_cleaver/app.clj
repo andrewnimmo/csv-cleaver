@@ -12,6 +12,7 @@
   (:require
    [cljfx.api :as fx]
    [clojure.string :as str]
+   [csv-cleaver.branding :as branding]
    [csv-cleaver.desktop :as desktop]
    [csv-cleaver.files :as files]
    [csv-cleaver.i18n :as i18n]
@@ -68,16 +69,18 @@
 ;; application would have been told — no threads, no display, no waiting.
 
 (defn scan-worker
-  [{:keys [^File file delimiter]} dispatch]
+  [{:keys [^File file delimiter scan-id]} dispatch]
   (try
     (let [survey (scan/survey file {:delimiter delimiter
                                     :on-progress
                                     (fn [rows]
                                       (dispatch {:event/type ::state/scan-progress
+                                                 :scan-id scan-id
                                                  :rows rows}))})]
-      (dispatch {:event/type ::state/scan-succeeded :survey survey}))
+      (dispatch {:event/type ::state/scan-succeeded :scan-id scan-id :survey survey}))
     (catch Exception e
-      (dispatch {:event/type ::state/scan-failed :message (friendly-message e)}))))
+      (dispatch {:event/type ::state/scan-failed :scan-id scan-id
+                 :message (friendly-message e)}))))
 
 (defn collision-worker
   [request dispatch]
@@ -175,6 +178,12 @@
   (save-session!)
   (exit! 0))
 
+(defmethod perform! :compose-mail
+  [_]
+  (desktop/compose-mail!
+   (desktop/mail-uri (branding/value :contact)
+                     (str (branding/app-name) " " (branding/build-label)))))
+
 (defmethod perform! :reveal
   [[_ dir]]
   (desktop/reveal! dir))
@@ -183,28 +192,70 @@
   [[_ settings]]
   (run-async! (fn [] (prefs/save-prefs! settings))))
 
+;; ── One chooser at a time ───────────────────────────────────────────────────
+;;
+;; showOpenDialog runs a nested event loop on the JavaFX thread. With a nil
+;; owner the button stayed clickable, so every click stacked another dialog on
+;; another nested loop — and the loops unwind strictly last-in-first-out, which
+;; is why quitting with several open appeared to hang: the application cannot
+;; leave until each dialog is dismissed in reverse order. Each dialog that WAS
+;; answered also started its own scan, and the surveys resolved as whichever
+;; scan finished last, not whichever file was chosen last.
+;;
+;; Two fences. Owning the dialog by the main window makes it window-modal, so
+;; the button cannot be clicked while it is open. The claim guard catches what
+;; modality cannot: a double-click's second press is already queued before the
+;; first has shown the dialog and disabled anything.
+
+(defonce chooser-open? (atom false))
+
+(defn claim-chooser!
+  "True exactly once until released. Both sides run on the FX thread, so this
+   is bookkeeping rather than synchronisation — but it still has to be a
+   compare-and-set, because the second click arrives before the first dialog's
+   nested event loop has returned."
+  []
+  (compare-and-set! chooser-open? false true))
+
+(defn release-chooser! []
+  (reset! chooser-open? false))
+
+(defn- with-sole-chooser!
+  "Run `show!` unless a chooser is already up, releasing the claim however the
+   dialog ends. A refused click is dropped silently: the existing dialog is
+   window-modal, so it is already the frontmost thing the user can touch."
+  [show!]
+  (when (claim-chooser!)
+    (try
+      (show!)
+      (finally (release-chooser!)))))
+
 (defmethod perform! :choose-file
   [[_ {:keys [^File initial-dir]}]]
-  (let [chooser (doto (FileChooser.)
-                  (.setTitle "Choose a CSV file")
-                  (-> .getExtensionFilters
-                      (.add (FileChooser$ExtensionFilter.
-                             "Comma separated values"
-                             ^"[Ljava.lang.String;"
-                             (into-array String ["*.csv" "*.CSV" "*.tsv" "*.txt"])))))]
-    (when (and initial-dir (.isDirectory initial-dir))
-      (.setInitialDirectory chooser initial-dir))
-    (when-let [file (.showOpenDialog chooser nil)]
-      (dispatch! {:event/type ::state/file-chosen :file file}))))
+  (with-sole-chooser!
+    (fn []
+      (let [chooser (doto (FileChooser.)
+                      (.setTitle "Choose a CSV file")
+                      (-> .getExtensionFilters
+                          (.add (FileChooser$ExtensionFilter.
+                                 "Comma separated values"
+                                 ^"[Ljava.lang.String;"
+                                 (into-array String ["*.csv" "*.CSV" "*.tsv" "*.txt"])))))]
+        (when (and initial-dir (.isDirectory initial-dir))
+          (.setInitialDirectory chooser initial-dir))
+        (when-let [file (.showOpenDialog chooser (primary-stage))]
+          (dispatch! {:event/type ::state/file-chosen :file file}))))))
 
 (defmethod perform! :choose-dir
   [[_ {:keys [^File initial-dir]}]]
-  (let [chooser (doto (DirectoryChooser.)
-                  (.setTitle "Choose where to save the files"))]
-    (when (and initial-dir (.isDirectory initial-dir))
-      (.setInitialDirectory chooser initial-dir))
-    (when-let [dir (.showDialog chooser nil)]
-      (dispatch! {:event/type ::state/out-dir-chosen :dir dir}))))
+  (with-sole-chooser!
+    (fn []
+      (let [chooser (doto (DirectoryChooser.)
+                      (.setTitle "Choose where to save the files"))]
+        (when (and initial-dir (.isDirectory initial-dir))
+          (.setInitialDirectory chooser initial-dir))
+        (when-let [dir (.showDialog chooser (primary-stage))]
+          (dispatch! {:event/type ::state/out-dir-chosen :dir dir}))))))
 
 (defn system-dark?
   "Whether the operating system is currently set to a dark appearance. Falls

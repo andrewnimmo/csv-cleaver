@@ -62,6 +62,38 @@
        (catch Exception _
          false)))))
 
+(defn mail-uri
+  "A mailto: URI for `address`, with `subject` already filled in.
+
+   Built with the multi-argument URI constructor, which percent-encodes what
+   the scheme cannot carry — the spaces and parentheses in a subject like
+   \"CSV Cleaver 2.0.0 (a1b2c3d)\"."
+  ^java.net.URI [address subject]
+  (java.net.URI. "mailto" (str address "?subject=" subject) nil))
+
+(defn compose-mail!
+  "Open the user's mail client addressed to `uri`. Same shape as reveal!: the
+   doing is injectable, so tests watch what would be sent without a mail
+   client opening on whoever runs the suite.
+
+   Desktop MAIL is missing on many Linux desktops; browsing the mailto: URI
+   hands it to whatever the system associates with mail, which is the next
+   best answer. Gives up quietly — a contact line that cannot open a composer
+   is an inconvenience, not an error worth a dialog."
+  ([^java.net.URI uri] (compose-mail! uri
+                                      (fn [^java.net.URI u]
+                                        (let [d (Desktop/getDesktop)]
+                                          (if (.isSupported d Desktop$Action/MAIL)
+                                            (.mail d u)
+                                            (.browse d u))))))
+  ([^java.net.URI uri send!]
+   (boolean
+    (try
+      (when (and uri (Desktop/isDesktopSupported))
+        (send! uri)
+        true)
+      (catch Throwable _ false)))))
+
 (defn prefs-file
   "Where remembered settings live, following each platform's convention."
   (^File [] (prefs-file (os) (System/getProperty "user.home")))

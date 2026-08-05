@@ -625,3 +625,32 @@
       (with-redefs [branding/value (fn [k] (when (= k :made-with) "Forged in Osaka"))]
         (is (text-containing (view/content (assoc state/initial :dialog :about))
                              #"Forged in Osaka"))))))
+
+(deftest the-name-is-explained-as-a-dictionary-entry
+  (testing "cleave is a contranym, and someone who does not know the word gets
+            the entry — headword and IPA constant, senses translated"
+    (doseq [tag ["en" "de"]]
+      (let [d (view/content (-> state/initial
+                                (state/with-language tag)
+                                (assoc :dialog :about)))]
+        (is (text-containing d #"cleave") tag)
+        (is (text-containing d #"/kliːv/") tag)))
+    (is (text-containing (view/content (-> state/initial
+                                           (state/with-language "de")
+                                           (assoc :dialog :about)))
+                         #"Januswort")
+        "the German entry speaks German")
+    (testing "and the help overlay answers it as a question"
+      (is (text-containing (view/content (assoc state/initial :dialog :help))
+                           #"Why is it called CSV Cleaver\?"))
+      (is (text-containing (view/content (assoc state/initial :dialog :help))
+                           #"contranym")))))
+
+(deftest the-contact-address-is-a-real-hyperlink
+  (let [d     (view/content (assoc state/initial :dialog :about))
+        links (filter #(= :hyperlink (:fx/type %)) (nodes d))]
+    (is (= 1 (count links)))
+    (is (= (branding/value :contact) (:text (first links)))
+        "the link text is the address itself")
+    (is (= ::state/contact-clicked (get-in (first links) [:on-action :event/type]))
+        "and clicking it goes through the effect system like everything else")))

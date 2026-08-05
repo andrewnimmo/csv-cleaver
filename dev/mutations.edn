@@ -207,6 +207,30 @@
   :replace   "       :text    \"Copyright 2026 Andrew Nimmo\"}"
   :namespace "csv-cleaver.view-test"}
 
+ {:label     "a stale scan installs its survey again — last finisher wins"
+  :file      "src/csv_cleaver/state.clj"
+  :find      "  (and (:scan-id event)\n       (not= (:scan-id event) (:scan-id state))))"
+  :replace   "  false)"
+  :namespace "csv-cleaver.state-test"}
+
+ {:label     "every click raises another file dialog again"
+  :file      "src/csv_cleaver/app.clj"
+  :find      "  (compare-and-set! chooser-open? false true))"
+  :replace   "  true)"
+  :namespace "csv-cleaver.app-test"}
+
+ {:label     "the scan worker forgets its id, making its events unguarded"
+  :file      "src/csv_cleaver/app.clj"
+  :find      "      (dispatch {:event/type ::state/scan-succeeded :scan-id scan-id :survey survey}))"
+  :replace   "      (dispatch {:event/type ::state/scan-succeeded :survey survey}))"
+  :namespace "csv-cleaver.app-test"}
+
+ {:label     "the contact address stops being clickable"
+  :file      "src/csv_cleaver/view.clj"
+  :find      "          {:fx/type     :hyperlink\n           :text        contact\n           :on-action   {:event/type ::state/contact-clicked}}"
+  :replace   "          {:fx/type :label :text contact}"
+  :namespace "csv-cleaver.view-test"}
+
  {:label     "the entry point requires cljfx, so --headless dies on a server"
   :file      "src/csv_cleaver/main.clj"
   :find      "   [csv-cleaver.api.server :as api]"

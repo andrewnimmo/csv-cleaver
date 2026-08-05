@@ -29,7 +29,7 @@
                                                 {:event/type ::state/file-chosen :file f})]
       (is (= :scanning (:phase state)))
       (is (= f (:file state)))
-      (is (= [[:scan {:file f :delimiter nil}]] effects)))))
+      (is (= [[:scan {:file f :delimiter nil :scan-id 1}]] effects)))))
 
 (deftest choosing-something-unreadable-explains-itself
   (let [{:keys [state effects]} (state/handle state/initial
@@ -510,8 +510,8 @@
                            :choice \;})]
         (is (= \; (:delimiter-override state)))
         (is (= :scanning (:phase state)))
-        (is (= [[:scan {:file f :delimiter \;}]] effects)
-            "as an effect, so tests and the window agree on what happens"))))
+        (is (= [[:scan {:file f :delimiter \; :scan-id 1}]] effects)
+            "as an effect carrying the scan's own id, so a stale reply can be told apart"))))
   (testing "with no file chosen there is nothing to re-survey"
     (let [{:keys [state effects]}
           (state/handle state/initial
@@ -547,3 +547,48 @@
             (is (= charset (state/charset-for-label
                             c (state/charset-label c charset)))
                 (str tag " / " charset))))))))
+
+(deftest a-superseded-scan-cannot-install-its-survey
+  (testing "two scans in flight — two file dialogs both answered, or a re-scan
+            racing the original — used to resolve as whichever finished last
+            wins the window, which is not necessarily the file the user chose
+            last. Every scan now carries the id it was started with."
+    (tu/with-temp-dir [dir]
+      (let [a       (tu/write-file dir "a.csv" "id\n1\n")
+            b       (tu/write-file dir "b.csv" "id\n1\n2\n")
+            ;; The user picks a, then picks b before a's scan finishes.
+            after-a (state/apply-event state/initial
+                                       {:event/type ::state/file-chosen :file a})
+            after-b (state/apply-event after-a
+                                       {:event/type ::state/file-chosen :file b})
+            ;; a's scan now finishes, wearing its stale id.
+            settled (state/apply-event after-b
+                                       {:event/type ::state/scan-succeeded
+                                        :scan-id    (:scan-id after-a)
+                                        :survey     {:file a :records 2}})]
+        (is (= 2 (:scan-id after-b)) "each choice takes a fresh id")
+        (is (= :scanning (:phase settled)) "still waiting for b")
+        (is (nil? (:survey settled)) "a's survey went nowhere")
+        (testing "and b's own reply is honoured"
+          (let [done (state/apply-event settled
+                                        {:event/type ::state/scan-succeeded
+                                         :scan-id    (:scan-id after-b)
+                                         :survey     {:file b :records 3}})]
+            (is (= :ready (:phase done)))
+            (is (= b (get-in done [:survey :file])))))
+        (testing "stale progress and stale failure are ignored the same way"
+          (is (= after-b (dissoc (state/apply-event after-b
+                                                    {:event/type ::state/scan-progress
+                                                     :scan-id 1 :rows 999})
+                                 :effects)))
+          (is (= :scanning (:phase (state/apply-event after-b
+                                                      {:event/type ::state/scan-failed
+                                                       :scan-id 1
+                                                       :message :problem/generic})))
+              "a stale failure does not blank the window either"))))))
+
+(deftest clicking-the-contact-address-asks-for-a-mail-composer
+  (let [{:keys [state effects]}
+        (state/handle state/initial {:event/type ::state/contact-clicked})]
+    (is (= [[:compose-mail]] effects))
+    (is (= state/initial state) "and changes nothing else")))

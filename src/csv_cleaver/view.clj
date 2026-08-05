@@ -776,6 +776,29 @@
            ;; their words. The default one is ours, so it is translated.
            {:fx/type :label :style-class ["hint"] :wrap-text true
             :text    (or (branding/value :tagline) (i18n/tr ctx :about/tagline))}]}])}
+      ;; The name explained, styled as the dictionary entry it is. The word
+      ;; and its IPA stay constant across languages — they are quoting English
+      ;; — while the senses and the contranym note are translated.
+      {:fx/type     :v-box
+       :style-class ["dict-entry"]
+       :spacing     2
+       :children
+       [{:fx/type   :h-box
+         :spacing   8
+         :alignment :baseline-left
+         :children
+         [{:fx/type :label :style-class ["label" "dict-word"]
+           :text (i18n/tr ctx :about/dict-word)}
+          {:fx/type :label :style-class ["label" "dict-pron"]
+           :text (i18n/tr ctx :about/dict-pron)}
+          {:fx/type :label :style-class ["label" "dict-pos"]
+           :text (i18n/tr ctx :about/dict-pos)}]}
+        {:fx/type :label :wrap-text true :style-class ["label" "dict-sense"]
+         :text (i18n/tr ctx :about/dict-sense-1)}
+        {:fx/type :label :wrap-text true :style-class ["label" "dict-sense"]
+         :text (i18n/tr ctx :about/dict-sense-2)}
+        {:fx/type :label :wrap-text true :style-class ["label" "dict-note"]
+         :text (i18n/tr ctx :about/dict-note)}]}
       {:fx/type :label :text (i18n/tr ctx :about/version (branding/build-label))}
       ;; The notice itself is a legal string, identical in every language and
       ;; identical to NOTICE and the installer metadata — one value in
@@ -786,8 +809,17 @@
       {:fx/type :label :style-class ["hint"] :wrap-text true :text (i18n/tr ctx :about/licence)}
       {:fx/type :label :style-class ["hint"] :wrap-text true :text (i18n/tr ctx :about/notices)}
       (when-let [contact (branding/value :contact)]
-        {:fx/type :label :style-class ["hint"] :wrap-text true
-         :text    (str (i18n/tr ctx :about/contact) ": " contact)})
+        {:fx/type   :h-box
+         :alignment :baseline-left
+         :children
+         [{:fx/type :label :style-class ["hint"]
+           :text    (str (i18n/tr ctx :about/contact) ": ")}
+          ;; A real hyperlink: clicking opens the user's mail client with the
+          ;; address and the application's version already filled in, which is
+          ;; exactly what a support message needs and nobody types correctly.
+          {:fx/type     :hyperlink
+           :text        contact
+           :on-action   {:event/type ::state/contact-clicked}}]})
       {:fx/type :label :style-class ["hint"] :wrap-text true
        :text    (or (branding/value :made-with) (i18n/tr ctx :about/made-with))}
       {:fx/type :separator}
@@ -906,7 +938,8 @@
    [:help/q-damaged :help/a-damaged]
    [:help/q-encoding :help/a-encoding]
    [:help/q-excel :help/a-excel]
-   [:help/q-replace :help/a-replace]])
+   [:help/q-replace :help/a-replace]
+   [:help/q-cleave :help/a-cleave]])
 
 (defn help-dialog
   [st]
