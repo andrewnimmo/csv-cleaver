@@ -36,18 +36,16 @@ the rest accordingly.
 | Session survives ⌘Q / Glass Quit / kill | TESTED for mechanism | geometry-tracking + shutdown-hook tests; the ⌘Q path itself on a live Mac is PENDING-USER |
 | macOS app menu carries Quit (Glass's own) | DERIVED + user-observed | `MacApplication.installDefaultMenus` read from bytecode; the user reports Quit present |
 | macOS app menu carries About, translated, opening the About overlay | OBSERVED + TESTED + **user-verified** | installed via the Objective-C runtime (JNA) after the public-API route was proven absent; the fx test reads the item's title back **from AppKit** and fires it through `performActionForItemAtIndex:` — AppKit's own click dispatch — asserting the overlay opens. Probe run on record: install → "About CSV Cleaver" → retitle "Acerca de CSV Cleaver" → perform → handler fired |
-| A selected mode/theme pill cannot be switched off | TESTED (armed) | the first guard consumed the press in a same-node handler, which cannot block a control's own behavior — its handler-level test passed while the running app still deselected. Now a capturing scene filter; the test fires the full press/release/click at the real pill and asserts both directions: no guard → deselects, guard → cannot. Live click PENDING-USER |
-| Option-reveal of hidden languages lasts exactly one About | TESTED | opening plainly or closing conceals; the command-line reveal is a separate session-long flag that concealing never touches; mutation caught |
+| A selected mode/theme pill cannot be switched off | TESTED (armed) + **user-verified** | the first guard consumed the press in a same-node handler, which cannot block a control's own behavior — its handler-level test passed while the running app still deselected. Now a capturing scene filter; the test fires the full press/release/click at the real pill and asserts both directions: no guard → deselects, guard → cannot. Live click PENDING-USER |
+| Option-reveal of hidden languages lasts exactly one About | TESTED + **user-verified** | opening plainly or closing conceals; the command-line reveal is a separate session-long flag that concealing never touches; mutation caught |
 | Eight visible languages complete; two hidden ones partial-by-design | TESTED | parity/plural/placeholder suites; egg-bundle contract test |
 
 ## To verify on the next build (PENDING-USER)
 
 1. ~~App menu ▸ About~~ — **verified by the project manager**.
-2. Click the already-selected "Equal row counts" pill: stays selected — the
-   fix is different this time (capturing scene filter), and the automated
-   test now fails without it, which the previous one did not.
-3. Open About with Option: eggs offered. Close it, reopen **without**
-   Option: eggs gone again.
+2. ~~Selected pill stays selected~~ — **verified by the project manager**.
+3. ~~Option-About reveals for one About only~~ — **verified by the project
+   manager**.
 4. Help and About titles intact at the right edge (Text nodes).
 5. One file dialog at a time; ⌘Q quits cleanly with one open; window
    position remembered across a ⌘Q.
