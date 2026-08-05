@@ -282,7 +282,7 @@
                                                :tag "de"})]
     (is (= "de" (:language state)))
     (is (= "de" (:tag (state/ctx state))))
-    (is (= [[:save-prefs {:language "de"}]] effects)))
+    (is (= [[:save-prefs {:language "de"}] [:sync-native-about]] effects)))
   (testing "the picker sends a language's own name, not its tag"
     (is (= "fr" (:language (state/apply-event state/initial
                                               {:event/type ::state/language-changed
@@ -607,3 +607,10 @@
       (is (empty? (:effects (state/handle (assoc alt-down :dialog :about)
                                           {:event/type ::state/about-toggled})))
           "closing About reveals nothing, whatever the keys are doing"))))
+
+(deftest changing-language-refreshes-the-native-about-title
+  (let [{:keys [effects]} (state/handle state/initial
+                                        {:event/type ::state/language-changed
+                                         :language-name "Español"})]
+    (is (some #{[:sync-native-about]} effects)
+        "the macOS application menu's About must follow the window's language")))

@@ -279,6 +279,24 @@
   :replace   "  (when false"
   :namespace "csv-cleaver.app-test"}
 
+ {:label     "the native About stops installing (macOS-only check)"
+  :file      "src/csv_cleaver/app.clj"
+  :find      "  (when (= :mac (desktop/os))\n    (let [ctx (state/ctx @*state)]"
+  :replace   "  (when false\n    (let [ctx (state/ctx @*state)]"
+  :namespace "csv-cleaver.fx-smoke-test"}
+
+ {:label     "a language change stops retitling the native About (macOS-only check)"
+  :file      "src/csv_cleaver/state.clj"
+  :find      "      ;; The macOS application menu's About carries a translated title; a\n      ;; no-op everywhere else.\n      [:sync-native-about])))"
+  :replace   "      )))"
+  :namespace "csv-cleaver.state-test"}
+
+ {:label     "a selected mode pill switches itself off again"
+  :file      "src/csv_cleaver/app.clj"
+  :find      "      ::view/guard-selected-toggle\n      (when (:selected? event)"
+  :replace   "      ::view/guard-selected-toggle\n      (when false"
+  :namespace "csv-cleaver.app-test"}
+
  {:label     "the entry point requires cljfx, so --headless dies on a server"
   :file      "src/csv_cleaver/main.clj"
   :find      "   [csv-cleaver.api.server :as api]"

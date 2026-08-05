@@ -376,19 +376,21 @@
         (is (some #(and (= :button (:fx/type %))
                         (= ::state/about-toggled (:event/type (:on-action %))))
                   (nodes d))))))
-  (testing "on macOS, About stays under Help. Its proper home would be the
-            application menu, but JavaFX's Glass toolkit builds that menu
-            natively with no public way to add an item — java.awt.Desktop's
-            AboutHandler only fires when AWT owns the menu, which under JavaFX
-            it never does. This was learned by shipping an About that nobody
-            could open; an entry in the second-best place beats that."
+  (testing "on macOS the JavaFX menus carry neither About nor Quit: the
+            application menu owns both — Quit from Glass itself, About
+            installed natively through csv-cleaver.macos and verified there by
+            reading it back from AppKit, after an earlier version claimed an
+            app-menu About that did not exist"
     (with-redefs [csv-cleaver.desktop/os (constantly :mac)]
       (let [d     (view/content state/initial)
             items (mapcat :items (of-type d :menu))]
-        (is (some #(= ::state/about-toggled (:event/type (:on-action %))) items))
+        (is (not-any? #(= ::state/about-toggled (:event/type (:on-action %))) items))
         (is (some #(= ::state/help-toggled (:event/type (:on-action %))) items))
-        (is (not-any? #(= ::state/quit-requested (:event/type (:on-action %))) items)
-            "Quit alone is the app menu's, because Glass really does provide it")))))
+        (is (not-any? #(= ::state/quit-requested (:event/type (:on-action %))) items))
+        (is (some #(and (= :button (:fx/type %))
+                        (= ::state/about-toggled (:event/type (:on-action %))))
+                  (nodes d))
+            "the info button remains the in-window route")))))
 
 (deftest the-menus-are-translated-like-everything-else
   (with-redefs [csv-cleaver.desktop/os (constantly :windows)]

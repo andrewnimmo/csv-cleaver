@@ -12,8 +12,11 @@
    [cljfx.api :as fx]
    [clojure.string :as str]
    [clojure.test :refer [deftest is testing]]
+   [csv-cleaver.app :as app]
    [csv-cleaver.branding :as branding]
+   [csv-cleaver.desktop]
    [csv-cleaver.i18n :as i18n]
+   [csv-cleaver.macos]
    [csv-cleaver.naming :as naming]
    [csv-cleaver.scan :as scan]
    [csv-cleaver.state :as state]
@@ -360,3 +363,28 @@
           "" "" javafx.scene.input.KeyCode/ALT false false true false)))
       (is (some #{:csv-cleaver.view/modifier-keys} @seen)
           "the scene handler fired for a key event"))))
+
+(deftest ^:fx the-about-item-really-sits-in-the-macos-application-menu
+  ;; The claim this test guards was once made falsely, so it holds the ground
+  ;; truth: the title is read back FROM AppKit, and the click is dispatched BY
+  ;; AppKit (performActionForItemAtIndex:), not by calling our handler.
+  (if-not (= :mac (csv-cleaver.desktop/os))
+    (println "skipped: the macOS application menu only exists on macOS")
+    (do
+      (reset! app/*state state/initial)
+      (testing "installed, and titled in the window's language"
+        (is (true? @(fx/on-fx-thread (app/install-native-about!))))
+        (is (= "About CSV Cleaver"
+               @(fx/on-fx-thread (csv-cleaver.macos/about-item-title)))
+            "AppKit's own answer, not our intention"))
+      (testing "a language change retitles the native item"
+        (reset! app/*state (state/with-language state/initial "es"))
+        @(fx/on-fx-thread (app/install-native-about!))
+        (is (= "Acerca de CSV Cleaver"
+               @(fx/on-fx-thread (csv-cleaver.macos/about-item-title)))))
+      (testing "AppKit's click dispatch opens the About overlay"
+        (reset! app/*state state/initial)
+        @(fx/on-fx-thread (app/install-native-about!))
+        (is (true? @(fx/on-fx-thread (csv-cleaver.macos/perform-about-item!))))
+        (is (= :about (:dialog @app/*state))
+            "the click travelled AppKit → ObjC target → JNA → dispatch")))))

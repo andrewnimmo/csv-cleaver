@@ -34,19 +34,23 @@ the rest accordingly.
 | Single-line dialog titles cannot clip ink | TESTED for shape, **PENDING-USER for the pixels** | titles are Text nodes, which do not clip by construction; the two prior padding fixes were falsified on a Retina display, so this one is not "done" until seen there |
 | Alt/Option + About reveals hidden languages | TESTED for wiring, **PENDING-USER for the keystroke** | real KeyEvent driven through the real scene; the focus path from a physical key press cannot be exercised headless |
 | Session survives ⌘Q / Glass Quit / kill | TESTED for mechanism | geometry-tracking + shutdown-hook tests; the ⌘Q path itself on a live Mac is PENDING-USER |
-| macOS app menu carries Quit (Glass's own) | DERIVED + user-observed | `MacApplication.installDefaultMenus` read from bytecode; the user reports Quit present. No About is possible there — the prior claim otherwise is withdrawn and recorded below |
+| macOS app menu carries Quit (Glass's own) | DERIVED + user-observed | `MacApplication.installDefaultMenus` read from bytecode; the user reports Quit present |
+| macOS app menu carries About, translated, opening the About overlay | OBSERVED + TESTED | installed via the Objective-C runtime (JNA) after the public-API route was proven absent; the fx test reads the item's title back **from AppKit** and fires it through `performActionForItemAtIndex:` — AppKit's own click dispatch — asserting the overlay opens. Probe run on record: install → "About CSV Cleaver" → retitle "Acerca de CSV Cleaver" → perform → handler fired |
+| A selected mode/theme pill cannot be switched off | TESTED | real MouseEvent and KeyEvents through the guard: press and Space consumed on a selected pill, Tab never trapped, unselected pills unaffected; mutation caught. The visual on a live click is PENDING-USER below |
 | Eight visible languages complete; two hidden ones partial-by-design | TESTED | parity/plural/placeholder suites; egg-bundle contract test |
 
-## To verify on build `e2047cb` (PENDING-USER)
+## To verify on the next build (PENDING-USER)
 
-1. Help and About: titles intact at the right edge — the fix is a different
-   mechanism this time (Text nodes), not more padding.
-2. Hold Option, click the ℹ️ button: the Language picker should now offer
-   tlhIngan Hol and Vuhlkansu.
-3. Open a file dialog, click Browse again: one dialog only; ⌘Q with a dialog
-   open: application quits cleanly.
-4. Move/resize the window, quit with ⌘Q (not File ▸ Quit — it is gone on
-   macOS): position should be remembered on next launch.
+1. **App menu ▸ About CSV Cleaver** exists, above Hide, and opens the About
+   overlay; switch language in About and the menu item's title follows.
+2. Help and About titles intact at the right edge — the mechanism is Text
+   nodes this time, not more padding.
+3. Hold Option, click the ℹ️ button: the Language picker offers tlhIngan Hol
+   and Vuhlkansu.
+4. Click the already-selected "Equal row counts" pill: it must stay selected —
+   never the both-off state.
+5. One file dialog at a time; ⌘Q quits cleanly with one open.
+6. Move/resize the window, quit with ⌘Q: position remembered on next launch.
 
 ## Falsification record
 
@@ -68,3 +72,9 @@ without verifying the path to it.
 Six falsified claims across roughly twenty substantive reports in the same
 period. The corrective in force: every claim now carries one of the four
 levels above, and "done" is reserved for OBSERVED or TESTED.
+
+Resolution note: the app-menu About found its real implementation afterwards —
+through the Objective-C runtime, verified by reading AppKit's own state — so
+the falsified entry above records the false *claim*, not a permanent
+impossibility. "Impossible via public API" had been the true part; treating it
+as the end of the road was the error the project manager corrected.

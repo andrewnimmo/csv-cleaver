@@ -28,6 +28,11 @@
 
   io.github.mkpaz/atlantafx-base {:mvn/version "2.1.0"}
 
+  ;; The Objective-C runtime, for the one thing JavaFX cannot do: put About
+  ;; into the macOS application menu, which Glass builds natively with no
+  ;; public hook. Used only on macOS, in csv-cleaver.macos; harmless elsewhere.
+  net.java.dev.jna/jna           {:mvn/version "5.17.0"}
+
   org.openjfx/javafx-base        {:mvn/version "25.0.4"}
   org.openjfx/javafx-graphics    {:mvn/version "25.0.4"}
   org.openjfx/javafx-controls    {:mvn/version "25.0.4"}}

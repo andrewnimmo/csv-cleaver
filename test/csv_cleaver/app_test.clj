@@ -479,3 +479,45 @@
       (is (= {:x 7.0 :y 8.0 :width 900.0 :height 600.0}
              (:window (app/session-settings moved nil)))
           "tracked geometry is what gets saved when no stage can be asked"))))
+
+(deftest clicking-the-selected-toggle-cannot-switch-it-off
+  (testing "reported against the built application: the selected mode pill
+            went grey when clicked, a control that looked switched off while
+            the application still split by rows. The press on a selected
+            toggle is consumed before the toggle can fire; on an unselected
+            one it passes through. Driven with a real MouseEvent, since a
+            consumed flag on a synthetic map would prove nothing."
+    (let [press (fn []
+                  (javafx.scene.input.MouseEvent.
+                   javafx.scene.input.MouseEvent/MOUSE_PRESSED
+                   0 0 0 0 javafx.scene.input.MouseButton/PRIMARY 1
+                   false false false false true false false false false false
+                   nil))]
+      (let [e (press)]
+        (app/handle-event {:event/type :csv-cleaver.view/guard-selected-toggle
+                           :selected?  true
+                           :fx/event   e})
+        (is (.isConsumed e) "a selected pill swallows the press"))
+      (let [e (press)]
+        (app/handle-event {:event/type :csv-cleaver.view/guard-selected-toggle
+                           :selected?  false
+                           :fx/event   e})
+        (is (not (.isConsumed e)) "an unselected pill still switches"))
+      (testing "the keyboard obeys the same rule: Space cannot switch the
+                selected pill off, and Tab must never be trapped by the guard"
+        (let [key (fn [code]
+                    (javafx.scene.input.KeyEvent.
+                     javafx.scene.input.KeyEvent/KEY_PRESSED
+                     "" "" code false false false false))]
+          (let [e (key javafx.scene.input.KeyCode/SPACE)]
+            (app/handle-event {:event/type :csv-cleaver.view/guard-selected-toggle
+                               :selected? true :fx/event e})
+            (is (.isConsumed e) "Space on a selected pill is swallowed"))
+          (let [e (key javafx.scene.input.KeyCode/TAB)]
+            (app/handle-event {:event/type :csv-cleaver.view/guard-selected-toggle
+                               :selected? true :fx/event e})
+            (is (not (.isConsumed e)) "Tab walks away freely"))
+          (let [e (key javafx.scene.input.KeyCode/SPACE)]
+            (app/handle-event {:event/type :csv-cleaver.view/guard-selected-toggle
+                               :selected? false :fx/event e})
+            (is (not (.isConsumed e)) "Space still selects an unselected pill")))))))

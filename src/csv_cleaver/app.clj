@@ -16,6 +16,7 @@
    [csv-cleaver.desktop :as desktop]
    [csv-cleaver.files :as files]
    [csv-cleaver.i18n :as i18n]
+   [csv-cleaver.macos :as macos]
    [csv-cleaver.prefs :as prefs]
    [csv-cleaver.scan :as scan]
    [csv-cleaver.split :as split]
@@ -330,6 +331,27 @@
       ::view/drag-dropped (complete-drop! (:fx/event event))
       ::view/close-requested (do (save-session!) (Platform/exit))
 
+      ;; A ToggleButton deselects when its selected self is clicked, and since
+      ;; no state changes, the identical re-rendered description never snaps
+      ;; the visual back. Consuming the press before the toggle can fire is
+      ;; what turns a pair of toggles into a radio choice.
+      ::view/guard-selected-toggle
+      (when (:selected? event)
+        (let [e (:fx/event event)]
+          (cond
+            ;; Any mouse press on the selected pill: swallowed before the
+            ;; toggle can fire and deselect itself.
+            (instance? javafx.scene.input.MouseEvent e)
+            (.consume ^javafx.scene.input.MouseEvent e)
+
+            ;; Space fires a focused toggle exactly like a click, so it gets
+            ;; the same guard — but only Space. Consuming every key here
+            ;; would trap Tab and leave the keyboard user stuck on the pill.
+            (and (instance? javafx.scene.input.KeyEvent e)
+                 (= javafx.scene.input.KeyCode/SPACE
+                    (.getCode ^javafx.scene.input.KeyEvent e)))
+            (.consume ^javafx.scene.input.KeyEvent e))))
+
       ;; Key transitions only matter for their modifier state; Alt is read here
       ;; because the pure layer cannot touch a KeyEvent.
       ::view/modifier-keys
@@ -467,13 +489,31 @@
                                "csv-cleaver-session-save"))
     true))
 
+(defn install-native-about!
+  "Put About into the macOS application menu, titled in the window's language,
+   opening the same About overlay as everywhere else. Idempotent — a language
+   change retitles the existing item. A no-op off macOS, and a quiet no-op on
+   a macOS whose menu furniture is not where the bridge expects it."
+  []
+  (when (= :mac (desktop/os))
+    (let [ctx (state/ctx @*state)]
+      (macos/install-about-item!
+       (i18n/tr ctx :about/title (branding/app-name))
+       (fn [] (dispatch! {:event/type ::state/about-toggled}))))))
+
+(defmethod perform! :sync-native-about
+  [_]
+  (install-native-about!))
+
 (defn start-window!
   [options]
   (reset! *state (startup-state state/initial (prefs/load-prefs) options))
   (install-shutdown-save!)
   (fx/mount-renderer *state @renderer)
   (perform! [:apply-theme (:theme @*state)])
-  (fx/on-fx-thread (some-> (primary-stage) track-window-geometry!))
+  (fx/on-fx-thread
+   (some-> (primary-stage) track-window-geometry!)
+   (install-native-about!))
   (watch-system-appearance!))
 
 (defn show-language-problems!

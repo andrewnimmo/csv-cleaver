@@ -375,7 +375,11 @@
 (defmethod handle ::language-changed
   [state {:keys [tag language-name]}]
   (let [tag (or tag (i18n/tag-for-name language-name))]
-    (with-effects (with-language state tag) [:save-prefs {:language tag}])))
+    (with-effects (with-language state tag)
+      [:save-prefs {:language tag}]
+      ;; The macOS application menu's About carries a translated title; a
+      ;; no-op everywhere else.
+      [:sync-native-about])))
 
 (defmethod handle ::contact-clicked
   [state _]
