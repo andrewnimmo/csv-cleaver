@@ -103,10 +103,9 @@
    :managed             (not system-menu?)
    :menus
    ;; Platform conventions differ, and duplicating an entry the platform
-   ;; already provides reads as a bug. On macOS the application menu carries
-   ;; Quit and About — installed through java.awt.Desktop in csv-cleaver.app —
-   ;; so File loses its only item and disappears, and Help keeps only Help.
-   ;; Windows and Linux have no application menu, so they keep both.
+   ;; already provides reads as a bug. On macOS, JavaFX's Glass toolkit builds
+   ;; the application menu natively and it carries Quit — so File, whose only
+   ;; item was a duplicate Quit, disappears there. Windows and Linux keep it.
    (compact
     [(when-not system-menu?
        {:fx/type :menu
@@ -115,19 +114,22 @@
                    :text        (i18n/tr ctx :action/quit)
                    :accelerator [:shortcut :q]
                    :on-action   {:event/type ::state/quit-requested}}]})
+     ;; About stays under Help on every platform, macOS included. The proper
+     ;; macOS home would be the application menu, but that menu is built
+     ;; natively by JavaFX's Glass toolkit (MacApplication.installDefaultMenus)
+     ;; with no public way to add an item — java.awt.Desktop's AboutHandler
+     ;; only fires if AWT owns the app menu, which under JavaFX it does not.
+     ;; An About nobody can reach is worse than one in the second-best place.
      {:fx/type :menu
       :text    (i18n/tr ctx :menu/help)
       :items
-      (compact
-       [{:fx/type   :menu-item
-         :text      (i18n/tr ctx :action/help)
-         :on-action {:event/type ::state/help-toggled}}
-        (when-not system-menu?
-          {:fx/type :separator-menu-item})
-        (when-not system-menu?
-          {:fx/type   :menu-item
-           :text      (i18n/tr ctx :action/about)
-           :on-action {:event/type ::state/about-toggled}})])}])})
+      [{:fx/type   :menu-item
+        :text      (i18n/tr ctx :action/help)
+        :on-action {:event/type ::state/help-toggled}}
+       {:fx/type :separator-menu-item}
+       {:fx/type   :menu-item
+        :text      (i18n/tr ctx :action/about)
+        :on-action {:event/type ::state/about-toggled}}]}])})
 
 (defn header-bar
   "The strip along the top holding the two overlay buttons — the quick route to
@@ -799,7 +801,13 @@
             :fit-width 56 :fit-height 56 :preserve-ratio true :smooth true})
          {:fx/type :v-box
           :children
-          [{:fx/type :label :style-class ["label" "title"]
+          [;; A Text node, not a Label. A Label allots its text exactly the
+           ;; width the font metrics report, and on Retina displays sub-pixel
+           ;; rounding clips the ink of a bold final letter at that knife-edge
+           ;; — padding cannot help, because padding widens the label and
+           ;; moves the text with it, leaving the same knife-edge. Text nodes
+           ;; do not clip at all: overhanging ink simply draws.
+           {:fx/type :text :style-class ["title-text"]
             :text    (i18n/tr ctx :about/title (branding/app-name))}
            ;; A rebranded application keeps whatever tagline its owner set, in
            ;; their words. The default one is ours, so it is translated.
@@ -907,7 +915,7 @@
      :style-class ["root" "window-body"]
      :spacing     10
      :children
-     [{:fx/type :label :style-class ["label" "title"]
+     [{:fx/type :text :style-class ["title-text"]
        :text    "A translation could not be used"}
       {:fx/type :label :wrap-text true
        :text    (str "One or more of the translation files in your languages "
@@ -977,7 +985,8 @@
      ;; No scroll-pane of its own: the overlay scrolls every dialog's middle,
      ;; and a scroll inside a scroll leaves the wheel fighting itself.
      (into
-      [{:fx/type :label :style-class ["label" "title"] :text (i18n/tr ctx :help/title)}]
+      [;; Text, not Label — see the About title.
+       {:fx/type :text :style-class ["title-text"] :text (i18n/tr ctx :help/title)}]
       (concat
        (for [[q a] help-topics]
          {:fx/type :v-box
@@ -1063,14 +1072,7 @@
    :on-drag-over    {:event/type ::drag-over}
    :on-drag-exited  {:event/type ::state/drag-exited}
    :on-drag-dropped {:event/type ::drag-dropped}
-   ;; Modifier keys are tracked here because ActionEvents carry none: by the
-   ;; time a button click arrives there is no way to ask whether Alt was down.
-   ;; The scene root sees every key transition, and the one consumer is the
-   ;; About dialog, which reveals the hidden languages when opened with
-   ;; Alt/Option held — the same convention macOS itself uses for
-   ;; option-changed menus.
-   :on-key-pressed  {:event/type ::modifier-keys}
-   :on-key-released {:event/type ::modifier-keys}
+
    :children
    (compact
     [{:fx/type :v-box
@@ -1117,6 +1119,14 @@
     :on-close-request {:event/type ::close-requested}}
    default-window
    (remembered-window (:window st))
-   {:scene {:fx/type     :scene
-            :stylesheets (branding/stylesheets)
-            :root        (content st)}}))
+   ;; Modifier keys are tracked on the scene, not on a node: ActionEvents
+   ;; carry no modifier state, and a node only sees key events while focused —
+   ;; which the root pane never is, so the first version of this tracked
+   ;; nothing at all. The scene receives what bubbles from whichever node has
+   ;; focus. The one consumer is the About dialog, which reveals the hidden
+   ;; languages when opened with Alt/Option held.
+   {:scene {:fx/type         :scene
+            :stylesheets     (branding/stylesheets)
+            :on-key-pressed  {:event/type ::modifier-keys}
+            :on-key-released {:event/type ::modifier-keys}
+            :root            (content st)}}))

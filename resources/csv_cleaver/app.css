@@ -189,6 +189,14 @@
     -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.35), 24, 0, 0, 6);
 }
 
+/* Single-line dialog titles are Text nodes, which cannot clip their ink the
+   way a Label does; Text uses -fx-fill rather than -fx-text-fill. */
+.title-text {
+    -fx-font-size: 15px;
+    -fx-font-weight: bold;
+    -fx-fill: -color-fg-default;
+}
+
 .dialog-card .title,
 .window-body > .title {
     -fx-font-size: 15px;
@@ -201,14 +209,14 @@
        "Help". JavaFX's own metrics show zero overhang at 1x, so this cannot be
        chased pixel by pixel; the padding is the slack that makes it impossible
        at any scale. */
-    -fx-padding: 1px 3px 3px 0;
+    -fx-padding: 1px 6px 3px 0;
 }
 
 /* The bold question lines in the Help overlay clip the same way at the same
    scales; same slack. Wrapping lines are unaffected either way — a wrapped
    label is wider than its last line by construction. */
 .dialog-card .headline {
-    -fx-padding: 0 3px 1px 0;
+    -fx-padding: 0 6px 1px 0;
 }
 
 .file-list {

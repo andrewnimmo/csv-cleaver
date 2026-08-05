@@ -231,11 +231,11 @@
   :replace   "          {:fx/type :label :text contact}"
   :namespace "csv-cleaver.view-test"}
 
- {:label     "the Retina slack is dropped and titles clip again"
-  :file      "resources/csv_cleaver/app.css"
-  :find      "    -fx-padding: 1px 3px 3px 0;"
-  :replace   "    -fx-padding: 1px 0 3px 0;"
-  :namespace "csv-cleaver.fx-smoke-test"}
+ {:label     "a dialog title becomes a clipping Label again"
+  :file      "src/csv_cleaver/view.clj"
+  :find      "       {:fx/type :text :style-class [\"title-text\"] :text (i18n/tr ctx :help/title)}"
+  :replace   "       {:fx/type :label :style-class [\"label\" \"title\"] :text (i18n/tr ctx :help/title)}"
+  :namespace "csv-cleaver.view-test"}
 
  {:label     "macOS grows a duplicate Quit in the File menu again"
   :file      "src/csv_cleaver/view.clj"
@@ -266,6 +266,18 @@
   :find      "      (\"fr\" \"pt\") (if (< n 2) :one :other)"
   :replace   "      \"fr\" (if (< n 2) :one :other)"
   :namespace "csv-cleaver.i18n-test"}
+
+ {:label     "modifier tracking moves back to the never-focused root pane"
+  :file      "src/csv_cleaver/view.clj"
+  :find      "            :on-key-pressed  {:event/type ::modifier-keys}\n            :on-key-released {:event/type ::modifier-keys}\n"
+  :replace   ""
+  :namespace "csv-cleaver.fx-smoke-test"}
+
+ {:label     "the shutdown save is dropped, losing sessions ended by Glass Quit"
+  :file      "src/csv_cleaver/app.clj"
+  :find      "  (when (compare-and-set! shutdown-save-installed? false true)"
+  :replace   "  (when false"
+  :namespace "csv-cleaver.app-test"}
 
  {:label     "the entry point requires cljfx, so --headless dies on a server"
   :file      "src/csv_cleaver/main.clj"

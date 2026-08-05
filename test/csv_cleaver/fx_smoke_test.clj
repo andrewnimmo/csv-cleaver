@@ -310,38 +310,6 @@
         (is (= {:x 40.0 :y 60.0 :width 800.0 :height 700.0}
                (view/remembered-window (:window saved))))))))
 
-(deftest ^:fx overlay-titles-carry-right-edge-slack
-  (testing "on Retina displays sub-pixel rounding clipped the last letter of a
-            bold title — the p of Help — exactly as it once shaved descenders
-            vertically. JavaFX reports zero overhang at 1x, so the guard is not
-            a pixel measurement: it is that the slack padding survives in the
-            computed style, for every title and headline, in every language."
-    (tu/with-temp-dir [dir]
-      (doseq [tag i18n/supported
-              dialog [:about :help]]
-        (let [st   (-> (ready-state dir) (state/with-language tag)
-                       (assoc :dialog dialog))
-              root (laid-out {:fx/type :stack-pane
-                              :stylesheets (branding/stylesheets)
-                              :children [(view/content st)]})
-              acc  (atom [])]
-          (letfn [(visit [x]
-                    (when (and (instance? javafx.scene.control.Labeled x)
-                               (some #{"title" "headline"}
-                                     (.getStyleClass ^javafx.scene.control.Labeled x)))
-                      (swap! acc conj x))
-                    (when (instance? javafx.scene.control.ScrollPane x)
-                      (some-> (.getContent ^javafx.scene.control.ScrollPane x) visit))
-                    (when (instance? javafx.scene.Parent x)
-                      (doseq [c (.getChildrenUnmodifiable ^javafx.scene.Parent x)]
-                        (visit c))))]
-            (visit root))
-          (is (seq @acc) (str tag " " (name dialog) ": there are titles to check"))
-          (doseq [^javafx.scene.control.Labeled l @acc]
-            (is (>= (.getRight (.getPadding l)) 2.0)
-                (str tag " " (name dialog) " " (pr-str (.getText l))
-                     " needs right-edge slack against Retina clipping"))))))))
-
 (deftest ^:fx a-dialog-never-outgrows-the-window
   (testing "a resized window could be made smaller than the About card, which
             then overflowed it on every side. The card now caps its width and
@@ -369,3 +337,26 @@
                 (str (name dialog) " card wider than a " w "px window allows"))
             (is (<= (.getHeight (.getLayoutBounds card)) (- h 16))
                 (str (name dialog) " card taller than a " h "px window allows"))))))))
+
+(deftest ^:fx the-scene-itself-listens-for-modifier-keys
+  (testing "key events only reach nodes that have focus, and the root pane
+            never does — tracking there was tracking nothing. The scene is
+            where events from any focused child bubble to, so the handlers
+            must sit on the scene. This drives a real KeyEvent through the
+            real scene built by view/root."
+    (let [seen  (atom [])
+          scene-desc (:scene (view/root state/initial))
+          scene @(fx/on-fx-thread
+                  (fx/instance
+                   (fx/create-component scene-desc
+                                        {:fx.opt/map-event-handler
+                                         (fn [e] (swap! seen conj (:event/type e)))})))]
+      (is (instance? javafx.scene.Scene scene))
+      @(fx/on-fx-thread
+        (javafx.event.Event/fireEvent
+         scene
+         (javafx.scene.input.KeyEvent.
+          javafx.scene.input.KeyEvent/KEY_PRESSED
+          "" "" javafx.scene.input.KeyCode/ALT false false true false)))
+      (is (some #{:csv-cleaver.view/modifier-keys} @seen)
+          "the scene handler fired for a key event"))))

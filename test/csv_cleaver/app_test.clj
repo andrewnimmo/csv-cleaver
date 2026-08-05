@@ -441,3 +441,41 @@
         (is (seq @events))
         (is (every? #(= 7 (:scan-id %)) @events)
             "every event — progress, success, failure — carries the id")))))
+
+(deftest the-alt-key-reaches-the-state-through-the-real-event
+  (testing "the first version tracked keys on the root pane, which is never
+            focused and so never sees a key event — the egg was unopenable and
+            nobody could know from the tests, which dispatched synthetic maps
+            rather than driving the real handler with a real KeyEvent. This
+            builds the actual JavaFX event, alt down and alt up."
+    (let [key-event (fn [alt?]
+                      (javafx.scene.input.KeyEvent.
+                       javafx.scene.input.KeyEvent/KEY_PRESSED
+                       "" "" javafx.scene.input.KeyCode/ALT
+                       false false alt? false))
+          forwarded (atom [])]
+      (reset! app/*state state/initial)
+      (with-redefs [app/dispatch! (fn [e] (swap! forwarded conj e))]
+        (app/handle-event {:event/type :csv-cleaver.view/modifier-keys
+                           :fx/event   (key-event true)})
+        (app/handle-event {:event/type :csv-cleaver.view/modifier-keys
+                           :fx/event   (key-event false)}))
+      (is (= [{:event/type :csv-cleaver.state/alt-changed :down? true}
+              {:event/type :csv-cleaver.state/alt-changed :down? false}]
+             @forwarded)))))
+
+(deftest the-session-survives-an-exit-that-skips-every-javafx-handler
+  (testing "the Glass-built macOS app menu's Quit, its Cmd-Q, and a plain kill
+            never touch our close handlers. The shutdown hook saves from
+            state, which the geometry tracker keeps current — so the hook must
+            be installed, and session-settings must prefer tracked geometry
+            when there is no stage left to ask."
+    (is (true? (app/install-shutdown-save!)) "the first install registers")
+    (is (nil? (app/install-shutdown-save!))
+        "idempotent: a second window must not mean a second save")
+    (let [moved (state/apply-event state/initial
+                                   {:event/type ::state/window-moved
+                                    :window {:x 7.0 :y 8.0 :width 900.0 :height 600.0}})]
+      (is (= {:x 7.0 :y 8.0 :width 900.0 :height 600.0}
+             (:window (app/session-settings moved nil)))
+          "tracked geometry is what gets saved when no stage can be asked"))))

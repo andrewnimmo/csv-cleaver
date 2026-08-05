@@ -376,18 +376,19 @@
         (is (some #(and (= :button (:fx/type %))
                         (= ::state/about-toggled (:event/type (:on-action %))))
                   (nodes d))))))
-  (testing "on macOS, About moves to the application menu and out of Help —
-            one entry per convention, no duplicates"
+  (testing "on macOS, About stays under Help. Its proper home would be the
+            application menu, but JavaFX's Glass toolkit builds that menu
+            natively with no public way to add an item — java.awt.Desktop's
+            AboutHandler only fires when AWT owns the menu, which under JavaFX
+            it never does. This was learned by shipping an About that nobody
+            could open; an entry in the second-best place beats that."
     (with-redefs [csv-cleaver.desktop/os (constantly :mac)]
       (let [d     (view/content state/initial)
             items (mapcat :items (of-type d :menu))]
-        (is (not-any? #(= ::state/about-toggled (:event/type (:on-action %))) items))
-        (is (some #(= ::state/help-toggled (:event/type (:on-action %))) items)
-            "Help itself stays")
-        (is (some #(and (= :button (:fx/type %))
-                        (= ::state/about-toggled (:event/type (:on-action %))))
-                  (nodes d))
-            "the info button still reaches About inside the window")))))
+        (is (some #(= ::state/about-toggled (:event/type (:on-action %))) items))
+        (is (some #(= ::state/help-toggled (:event/type (:on-action %))) items))
+        (is (not-any? #(= ::state/quit-requested (:event/type (:on-action %))) items)
+            "Quit alone is the app menu's, because Glass really does provide it")))))
 
 (deftest the-menus-are-translated-like-everything-else
   (with-redefs [csv-cleaver.desktop/os (constantly :windows)]
@@ -678,3 +679,20 @@
         "the link text is the address itself")
     (is (= ::state/contact-clicked (get-in (first links) [:on-action :event/type]))
         "and clicking it goes through the effect system like everything else")))
+
+(deftest single-line-dialog-titles-cannot-clip
+  (testing "a Label allots its text exactly the width the font reports, and on
+            Retina displays sub-pixel rounding clipped the ink of Help's bold
+            final p at that knife-edge. Padding cannot fix it — it widens the
+            label and moves the text with it, same edge. So single-line titles
+            are Text nodes, which do not clip ink at all, and this pins that
+            shape so nobody converts them back to labels for styling reasons."
+    (doseq [tag ["en" "es" "de"]]
+      (doseq [dialog [:about :help]]
+        (let [d      (view/content (-> state/initial
+                                       (state/with-language tag)
+                                       (assoc :dialog dialog)))
+              titles (filter #(= "title-text" (first (:style-class %))) (nodes d))]
+          (is (seq titles) (str tag " " (name dialog)))
+          (is (every? #(= :text (:fx/type %)) titles)
+              (str tag " " (name dialog) " title must be a Text node")))))))

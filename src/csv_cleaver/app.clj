@@ -164,10 +164,13 @@
                   ;; As numbers, never as the text in the boxes. See
                   ;; state/remembered-values.
                   (state/remembered-values state))
-     stage (assoc :window {:x      (.getX stage)
-                           :y      (.getY stage)
-                           :width  (.getWidth stage)
-                           :height (.getHeight stage)}))))
+     ;; The tracked geometry serves when there is no stage to ask — which is
+     ;; every path that ends the process without passing through our own Quit.
+     (:window state) (assoc :window (:window state))
+     stage           (assoc :window {:x      (.getX stage)
+                                     :y      (.getY stage)
+                                     :width  (.getWidth stage)
+                                     :height (.getHeight stage)}))))
 
 (defn save-session!
   []
@@ -424,36 +427,53 @@
         (state/with-values saved)
         (assoc :theme theme))))
 
-(defn install-mac-app-menu!
-  "Wire the macOS application menu's own About and Quit to this application.
+(defn track-window-geometry!
+  "Keep the stage's position and size in the state, so the session can be
+   saved without asking the stage.
 
-   java.awt.Desktop reaches the real app menu, which JavaFX cannot; AWT is
-   already running here for the Trash and the mail composer. Quit must save
-   the session before agreeing, or quitting from the app menu would silently
-   lose the window position and settings that quitting from File keeps.
+   This exists because of the ways the application can end that never pass
+   through our own Quit: the Glass-built macOS application menu's Quit and its
+   Cmd-Q, or a plain kill. Those bypass every JavaFX close handler, so the
+   only reliable save is a JVM shutdown hook — and a shutdown hook cannot
+   safely interrogate a dying JavaFX stage. State it can read."
+  [^Stage stage]
+  (let [push! (fn []
+                (dispatch! {:event/type ::state/window-moved
+                            :window {:x      (.getX stage)
+                                     :y      (.getY stage)
+                                     :width  (.getWidth stage)
+                                     :height (.getHeight stage)}}))
+        l     (reify ChangeListener (changed [_ _ _ _] (push!)))]
+    (doseq [p [(.xProperty stage) (.yProperty stage)
+               (.widthProperty stage) (.heightProperty stage)]]
+      (.addListener ^javafx.beans.value.ObservableValue p l))
+    (push!)))
 
-   A no-op wherever the actions are unsupported, which is every platform but
-   macOS — so this can be called unconditionally."
+(defonce ^:private shutdown-save-installed? (atom false))
+
+(defn install-shutdown-save!
+  "Save the session however the process ends — our Quit, the window's close
+   button, the Glass application menu's Quit that never touches JavaFX
+   handlers, or a plain kill. Idempotent: hooks accumulate, and a second
+   window in one JVM must not mean a second save."
   []
-  (try
-    (let [d (java.awt.Desktop/getDesktop)]
-      (when (.isSupported d java.awt.Desktop$Action/APP_ABOUT)
-        (.setAboutHandler d (reify java.awt.desktop.AboutHandler
-                              (handleAbout [_ _]
-                                (dispatch! {:event/type ::state/about-toggled})))))
-      (when (.isSupported d java.awt.Desktop$Action/APP_QUIT_HANDLER)
-        (.setQuitHandler d (reify java.awt.desktop.QuitHandler
-                             (handleQuitRequestWith [_ _ response]
-                               (save-session!)
-                               (.performQuit response))))))
-    (catch Throwable _ nil)))
+  (when (compare-and-set! shutdown-save-installed? false true)
+    (.addShutdownHook (Runtime/getRuntime)
+                      (Thread. ^Runnable
+                       (fn []
+                         (try
+                           (prefs/save-prefs! (session-settings @*state nil))
+                           (catch Throwable _ nil)))
+                               "csv-cleaver-session-save"))
+    true))
 
 (defn start-window!
   [options]
   (reset! *state (startup-state state/initial (prefs/load-prefs) options))
-  (install-mac-app-menu!)
+  (install-shutdown-save!)
   (fx/mount-renderer *state @renderer)
   (perform! [:apply-theme (:theme @*state)])
+  (fx/on-fx-thread (some-> (primary-stage) track-window-geometry!))
   (watch-system-appearance!))
 
 (defn show-language-problems!

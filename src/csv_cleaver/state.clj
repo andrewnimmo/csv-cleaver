@@ -381,6 +381,10 @@
   [state _]
   (with-effects state [:compose-mail]))
 
+(defmethod handle ::window-moved
+  [state {:keys [window]}]
+  (with-effects (assoc state :window window)))
+
 (defmethod handle ::alt-changed
   [state {:keys [down?]}]
   (with-effects (assoc state :alt-down? (boolean down?))))

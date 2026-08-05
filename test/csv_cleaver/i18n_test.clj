@@ -239,7 +239,10 @@
                 (is (= "Qapla'! 3 teywI' chenmoHlu' — 2s."
                        (i18n/tr (i18n/context "tlh") :done/created 3 "2s"))
                     "the famous word, with the count interpolated")
-                (is (string? (i18n/tr ctx :help/a-header))
+                (is (string? (i18n/tr ctx :problem/disk-full))
                     "an untranslated phrase arrives in English, not as a marker")
-                (is (not (str/starts-with? (i18n/tr ctx :help/a-header) "⟦"))))
+                (is (not (str/starts-with? (i18n/tr ctx :problem/disk-full) "⟦")))
+                (is (str/starts-with? (i18n/tr ctx :help/q-cleave)
+                                      (if (= tag "tlh") "qatlh" "Poprah"))
+                    "and the Help questions speak the egg's own language"))
               (finally (i18n/conceal-hidden!)))))))))
