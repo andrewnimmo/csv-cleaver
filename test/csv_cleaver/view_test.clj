@@ -5,6 +5,7 @@
    [clojure.java.io :as io]
    [clojure.string :as str]
    [clojure.test :refer [deftest is testing]]
+   [csv-cleaver.branding :as branding]
    [csv-cleaver.format :as fmt]
    [csv-cleaver.scan :as scan]
    [csv-cleaver.state :as state]
@@ -593,3 +594,20 @@
         (is (text-containing d #"UTF-16LE"))
         (is (not (text-containing d #"Only change this"))
             "the spent advice about changing the detected value is gone")))))
+
+(deftest the-about-box-carries-the-canonical-notice-icon-and-contact
+  (testing "R84. Shown verbatim from branding.edn — the copyright is a legal
+            string, identical in every language — with the icon beside the
+            title and the contact address labelled in the window's language"
+    (doseq [tag ["en" "ja"]]
+      (let [d (view/content (-> state/initial
+                                (state/with-language tag)
+                                (assoc :dialog :about)))]
+        (is (text-containing d (re-pattern (java.util.regex.Pattern/quote
+                                            (branding/value :copyright))))
+            (str tag ": the exact notice, not a variant"))
+        (is (text-containing d (re-pattern (java.util.regex.Pattern/quote
+                                            (branding/value :contact))))
+            (str tag ": the contact address"))
+        (is (some #(= :image-view (:fx/type %)) (nodes d))
+            (str tag ": the icon is in the box"))))))

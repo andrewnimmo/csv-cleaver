@@ -17,8 +17,19 @@
  :tagline   nil
  :version   "2.0.0"
  :bundle-id "dev.nimmo.csvcleaver"
- :vendor    "Andrew Nimmo"
- :copyright "Copyright 2026 Andrew Nimmo"
+ :vendor    "Andrew David Nimmo"
+
+ ;; The one copyright notice. Everything that shows one — the About dialog,
+ ;; NOTICE, the installer metadata that macOS Get Info and Windows file
+ ;; properties display — reads this value, so it can never drift. The © symbol
+ ;; is the Berne-recognised form; the Windows build script sets its console to
+ ;; UTF-8 so it survives the trip into MSI metadata.
+ :copyright "Copyright © 2026 Andrew David Nimmo"
+ :contact   "contact+csv.cleaver@nimmo.dev"
+
+ ;; Shown in the About dialog and the README, verbatim. Provenance in five
+ ;; words; docs/PROVENANCE.md is the long form.
+ :made-with "Made with 🤖 in Barcelona"
  :homepage  "https://github.com/andrewnimmo/csv-cleaver"
 
  ;; Leave as nil to use the theme's own accent colour.

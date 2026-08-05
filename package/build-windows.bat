@@ -6,6 +6,9 @@ REM WiX Toolset 3.x for .msi output. Change --type msi to --type exe below to
 REM produce a plain installer without WiX.
 
 setlocal enabledelayedexpansion
+REM UTF-8, so the (c) symbol in the copyright notice survives the trip from
+REM branding.edn through this console into the MSI metadata.
+chcp 65001 >nul
 cd /d "%~dp0.."
 
 for /f "usebackq delims=" %%i in (`bb -e "(:name (read-string (slurp \"resources/branding.edn\")))"`) do set APP_NAME=%%~i

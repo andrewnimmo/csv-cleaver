@@ -19,6 +19,7 @@ Spanish, French, German, Chinese and Japanese.
 | Wondering why something was built this way | **[docs/DECISIONS.md](docs/DECISIONS.md)** |
 | Driving it from a script | **[docs/API.md](docs/API.md)** |
 | Assessing the security of any of it | **[docs/SECURITY.md](docs/SECURITY.md)** |
+| Asking who — and what — wrote this | **[docs/PROVENANCE.md](docs/PROVENANCE.md)** |
 
 ---
 
@@ -138,7 +139,21 @@ bb tasks
 
 ---
 
+## Provenance
+
+This codebase was written predominantly by Claude (Anthropic) under the
+direction of Andrew David Nimmo as Technical Project Manager — who set the
+requirements, made the decisions, and acceptance-tested every build.
+[docs/PROVENANCE.md](docs/PROVENANCE.md) says precisely what that means,
+including the copyright position for AI-generated code.
+
+Made with 🤖 in Barcelona.
+
+---
+
 ## Licence
+
+Copyright © 2026 Andrew David Nimmo.
 
 Apache License 2.0 — see [LICENSE](LICENSE).
 

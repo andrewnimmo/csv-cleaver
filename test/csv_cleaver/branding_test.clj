@@ -74,3 +74,36 @@
             "EDN that is not a map falls back")
         (is (string? (:name (branding/read-config nil)))
             "and no file at all is the plainest fallback")))))
+
+;; ── One copyright notice, everywhere ────────────────────────────────────────
+
+(deftest there-is-exactly-one-copyright-notice
+  (testing "R84. The notice is defined once in branding.edn and every place
+            that shows one reads it from there: the About dialog, NOTICE, and —
+            through the build scripts' --copyright — what macOS Get Info and
+            Windows file properties display. This test pins the shape and every
+            consumer, so the strings cannot drift apart the way 'Andrew Nimmo'
+            and 'Andrew David Nimmo' already had."
+    (let [notice (branding/value :copyright)]
+      (is (re-matches #"Copyright © \d{4}(–\d{4})? .+" notice)
+          "the Berne-recognised form: Copyright © year name")
+      (testing "NOTICE opens with the identical string"
+        (is (str/includes? (slurp "NOTICE") notice)))
+      (testing "every build script passes branding's copyright to jpackage"
+        (doseq [[script pattern] {"package/build-mac.sh"      #"--copyright \"\$COPYRIGHT\""
+                                  "package/build-linux.sh"    #"--copyright \"\$COPYRIGHT\""
+                                  "package/build-windows.bat" #"--copyright \"%COPYRIGHT%\""}]
+          (is (re-find pattern (slurp script)) script)
+          (is (str/includes? (slurp script) "copyright")
+              (str script " reads it from branding.edn"))))
+      (testing "no source or documentation file carries its own variant"
+        (doseq [f ["README.md" "docs/USER-GUIDE.md" "docs/DEVELOPING.md"]]
+          (let [text (slurp f)]
+            (doseq [line (str/split-lines text)
+                    :when (re-find #"Copyright (©|\(c\))" line)]
+              (is (str/includes? line notice)
+                  (str f " has a divergent notice: " (str/trim line))))))))))
+
+(deftest the-contact-address-is-defined-once
+  (testing "same rule as the copyright: branding.edn owns it"
+    (is (re-matches #"[^@\s]+@[^@\s]+\.[^@\s]+" (branding/value :contact)))))

@@ -125,6 +125,7 @@
   :about/title        "Über {0}"
   :about/version      "Version {0}"
   :about/licence      "Lizenziert unter der Apache-Lizenz 2.0."
+  :about/contact         "Kontakt"
   :about/notices      "Enthält eine Java-Laufzeitumgebung unter GPL v2 mit Classpath-Ausnahme. Siehe THIRD-PARTY.md."
   :about/language     "Sprache"
   :about/theme        "Erscheinungsbild"

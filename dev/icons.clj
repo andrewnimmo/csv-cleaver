@@ -52,7 +52,14 @@
   "Icon B in a 128-unit space, optionally inset for the macOS grid.
 
    `inset` is the fraction of the canvas the tile occupies — 1.0 full bleed,
-   0.805 for macOS. The drawing itself never changes; it is scaled and centred."
+   0.805 for macOS. The drawing itself never changes; it is scaled and centred.
+
+   The transparent backing rectangle is not decoration. snapshot renders a
+   node's *bounds*, translating their origin to zero — so without a backing
+   that pins the bounds to the full canvas, the centring translate is silently
+   cancelled and the scaled tile lands in the top-left corner. That shipped:
+   the first icns had all of its margin on the right and bottom, which in the
+   Dock read as an icon sitting high and left of every neighbour."
   [inset]
   (let [tile-fill (LinearGradient. 0.0 0.0 0.0 1.0 true CycleMethod/NO_CYCLE
                                    (into-array Stop [(Stop. 0.0 lime-top)
@@ -78,7 +85,12 @@
             off (/ (* 128.0 (- 1.0 s)) 2.0)]
         (.add (.getTransforms g) (Transform/translate off off))
         (.add (.getTransforms g) (Transform/scale s s))))
-    g))
+    (let [backing (doto (Rectangle. 0 0 128 128)
+                    (.setFill Color/TRANSPARENT))
+          outer   (Group.)]
+      (.add (.getChildren outer) backing)
+      (.add (.getChildren outer) g)
+      outer)))
 
 (defn render
   "The icon at `size` pixels as a BufferedImage with alpha."
@@ -92,6 +104,30 @@
         img    (WritableImage. (int size) (int size))]
     (.snapshot node params img)
     (SwingFXUtils/fromFXImage img nil)))
+
+(defn alpha-margins
+  "How much fully transparent border surrounds the visible content, in pixels,
+   as [left right top bottom]. The check the first icns would have failed."
+  [^BufferedImage img]
+  (let [w (.getWidth img) h (.getHeight img)
+        opaque? (fn [x y] (> (bit-and (bit-shift-right (.getRGB img x y) 24) 0xff) 8))
+        xs (for [y (range h) x (range w) :when (opaque? x y)] x)
+        ys (for [y (range h) x (range w) :when (opaque? x y)] y)]
+    (if (empty? xs)
+      [w w h h]
+      [(apply min xs) (- w 1 (apply max xs))
+       (apply min ys) (- h 1 (apply max ys))])))
+
+(defn assert-margins!
+  "Refuse to write an icon whose content is not where it claims to be.
+   `expected` is the margin each side should have; a tolerance of two pixels
+   absorbs antialiasing at the tile's rounded corners."
+  [^BufferedImage img expected what]
+  (let [[l r t b] (alpha-margins img)]
+    (when-not (every? #(<= (Math/abs (- (long %) (long expected))) 2) [l r t b])
+      (throw (ex-info (str what ": margins L" l " R" r " T" t " B" b
+                           ", expected ~" expected " on every side")
+                      {})))))
 
 (defn write-png! [^BufferedImage img ^File out]
   (io/make-parents out)
@@ -148,7 +184,9 @@
 (defn write-iconset!
   ^File [dir]
   (doseq [[name size] iconset-entries]
-    (write-png! (render size 0.805) (io/file dir name)))
+    (let [img (render size 0.805)]
+      (assert-margins! img (Math/round (* size 0.0975)) name)
+      (write-png! img (io/file dir name))))
   (io/file dir))
 
 (defn contact-sheet!
@@ -175,7 +213,12 @@
     (Platform/runLater
      (fn []
        (try
-         (write-png! (render 512 1.0) (io/file "package/linux/icon.png"))
+         (let [full (render 512 1.0)]
+           (assert-margins! full 0 "linux 512")
+           (write-png! full (io/file "package/linux/icon.png")))
+         ;; The About dialog shows the icon too, from the classpath. Full
+         ;; bleed: inside a window it is artwork, not a Dock resident.
+         (write-png! (render 256 1.0) (io/file "resources/icon.png"))
          (write-ico! (map #(render % 1.0) ico-sizes)
                      (io/file "package/windows/icon.ico"))
          (write-iconset! (io/file "target/icon.iconset"))

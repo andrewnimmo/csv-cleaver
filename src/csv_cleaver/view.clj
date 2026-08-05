@@ -9,6 +9,7 @@
    No English appears below either. Every phrase is looked up by key from
    resources/i18n, so translating the application never means editing this file."
   (:require
+   [clojure.java.io :as io]
    [clojure.string :as str]
    [csv-cleaver.branding :as branding]
    [csv-cleaver.desktop :as desktop]
@@ -755,15 +756,40 @@
   (let [ctx       (state/ctx st)
         languages (i18n/languages)]
     (overlay
-     [{:fx/type :label :style-class ["label" "title"]
-       :text    (i18n/tr ctx :about/title (branding/app-name))}
-      ;; A rebranded application keeps whatever tagline its owner set, in their
-      ;; words. The default one is ours, so it is translated like the rest.
-      {:fx/type :label :style-class ["hint"] :wrap-text true
-       :text    (or (branding/value :tagline) (i18n/tr ctx :about/tagline))}
+     [{:fx/type   :h-box
+       :spacing   14
+       :alignment :center-left
+       :children
+       (compact
+        [;; The icon, from the classpath, where bb icons puts it. Absent — a
+         ;; rebrand that removed it without a replacement — the About box
+         ;; simply has no picture, which beats a broken-image placeholder.
+         (when-let [icon (io/resource "icon.png")]
+           {:fx/type :image-view
+            :image {:url (str icon)}
+            :fit-width 56 :fit-height 56 :preserve-ratio true :smooth true})
+         {:fx/type :v-box
+          :children
+          [{:fx/type :label :style-class ["label" "title"]
+            :text    (i18n/tr ctx :about/title (branding/app-name))}
+           ;; A rebranded application keeps whatever tagline its owner set, in
+           ;; their words. The default one is ours, so it is translated.
+           {:fx/type :label :style-class ["hint"] :wrap-text true
+            :text    (or (branding/value :tagline) (i18n/tr ctx :about/tagline))}]}])}
       {:fx/type :label :text (i18n/tr ctx :about/version (branding/build-label))}
+      ;; The notice itself is a legal string, identical in every language and
+      ;; identical to NOTICE and the installer metadata — one value in
+      ;; branding.edn, shown verbatim. Only the label beside the address is
+      ;; translated.
+      {:fx/type :label :style-class ["hint"] :wrap-text true
+       :text    (branding/value :copyright)}
       {:fx/type :label :style-class ["hint"] :wrap-text true :text (i18n/tr ctx :about/licence)}
       {:fx/type :label :style-class ["hint"] :wrap-text true :text (i18n/tr ctx :about/notices)}
+      (when-let [contact (branding/value :contact)]
+        {:fx/type :label :style-class ["hint"] :wrap-text true
+         :text    (str (i18n/tr ctx :about/contact) ": " contact)})
+      (when-let [made (branding/value :made-with)]
+        {:fx/type :label :style-class ["hint"] :wrap-text true :text made})
       {:fx/type :separator}
 
       {:fx/type :label :text (i18n/tr ctx :about/language)}

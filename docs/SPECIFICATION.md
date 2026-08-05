@@ -239,6 +239,12 @@ it as the wrong one turns a hundred thousand into a hundred. Text stored by
 earlier versions is ignored rather than guessed at: forgetting a row count once
 is a smaller harm than silently dividing it by a thousand.
 
+**R84.** There is exactly one copyright notice, defined in `branding.edn` in
+the form `Copyright © <year> <name>`. The About dialog, the NOTICE file and the
+installer metadata (what macOS Get Info and Windows file properties show) all
+read that single value; none carries its own wording. The About dialog also
+shows the application icon and a contact address, both likewise defined once.
+
 **R83.** The bundled runtime in every installer contains locale data for every
 language the application offers. Number formatting comes from the Java runtime,
 not from the translation files, so a runtime without it renders every language's

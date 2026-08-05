@@ -152,6 +152,7 @@
   :about/title      "About {0}"
   :about/version    "Version {0}"
   :about/licence    "Licensed under the Apache License 2.0."
+  :about/contact         "Contact"
   :about/notices    "Bundles a Java runtime under the GPL v2 with Classpath Exception. See THIRD-PARTY.md."
   :about/language   "Language"
   :about/theme      "Appearance"

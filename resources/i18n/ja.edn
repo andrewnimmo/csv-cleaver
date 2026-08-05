@@ -120,6 +120,7 @@
   :about/title        "{0} について"
   :about/version      "バージョン {0}"
   :about/licence      "Apache License 2.0 のもとで配布されています。"
+  :about/contact         "連絡先"
   :about/notices      "同梱の Java ランタイムは GPL v2（Classpath 例外付き）です。THIRD-PARTY.md をご覧ください。"
   :about/language     "言語"
   :about/theme        "外観"

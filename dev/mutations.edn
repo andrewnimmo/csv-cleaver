@@ -201,6 +201,12 @@
   :replace   "]}]}))"
   :namespace "csv-cleaver.view-test"}
 
+ {:label     "the About box grows its own copyright wording again"
+  :file      "src/csv_cleaver/view.clj"
+  :find      "       :text    (branding/value :copyright)}"
+  :replace   "       :text    \"Copyright 2026 Andrew Nimmo\"}"
+  :namespace "csv-cleaver.view-test"}
+
  {:label     "the entry point requires cljfx, so --headless dies on a server"
   :file      "src/csv_cleaver/main.clj"
   :find      "   [csv-cleaver.api.server :as api]"
