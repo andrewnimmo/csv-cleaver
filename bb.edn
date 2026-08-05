@@ -54,10 +54,20 @@
                   "if you are sure it is not.")
          (System/exit 1))
        (fs/create-dirs "target")
-       ;; No shutdown hook: bb.edn is EDN, where #(...) is not a reader macro
-       ;; at all. The lock is removed at the end of the run, and the message
-       ;; above says what to do if a run died without getting there.
        (spit lock "running"))
+     ;; A killed run — Ctrl-C, a closed terminal — must not leave a deliberate
+     ;; defect sitting in the tree. It has, twice: once committed by a sweep of
+     ;; git add -A, once found only because the file happened to be under
+     ;; review. Every original is remembered before it is touched, and this
+     ;; hook puts them all back however the process ends. (fn [], not #(...):
+     ;; bb.edn is EDN,
+     ;; which has no dispatch macro — and no @ deref macro, hence (deref).)
+     (def mutate-originals (atom {}))
+     (.addShutdownHook (Runtime/getRuntime)
+                       (Thread. (fn []
+                                  (doseq [[file text] (deref mutate-originals)]
+                                    (try (spit file text) (catch Exception _ nil)))
+                                  (fs/delete-if-exists (fs/file "target/mutate.lock")))))
      (let [results
            (doall
             (for [{:keys [label file find replace namespace]} mutations]
@@ -65,6 +75,7 @@
                 (if-not (str/includes? original find)
                   (do (println "STALE   " label) [:stale label])
                   (try
+                    (swap! mutate-originals assoc file original)
                     (spit file (str/replace-first original find replace))
                     (let [{:keys [out err exit]}
                           (shell {:out :string :err :string :continue true}
@@ -74,7 +85,9 @@
                                                           "0 failures, 0 errors")))]
                       (println (if noticed "caught  " "MISSED  ") label)
                       [(if noticed :caught :missed) label])
-                    (finally (spit file original)))))))
+                    (finally
+                      (spit file original)
+                      (swap! mutate-originals dissoc file)))))))
            bad (remove (comp #{:caught} first) results)]
        (println (format "\n%d of %d mutations caught."
                         (count (filter (comp #{:caught} first) results))
