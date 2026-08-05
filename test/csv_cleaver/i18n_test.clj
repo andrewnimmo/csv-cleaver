@@ -1,6 +1,7 @@
 (ns csv-cleaver.i18n-test
   (:require
    [clojure.set :as set]
+   [clojure.string :as str]
    [clojure.test :refer [deftest is testing]]
    [csv-cleaver.i18n :as i18n])
   (:import
@@ -124,10 +125,17 @@
     (is (= :one (i18n/plural-category "en" 1)))
     (is (= :other (i18n/plural-category "en" 0)))
     (is (= :other (i18n/plural-category "de" 2))))
-  (testing "French counts zero as singular"
+  (testing "French and Portuguese count zero as singular — CLDR puts pt's
+            0 and 1 both under :one"
     (is (= :one (i18n/plural-category "fr" 0)))
     (is (= :one (i18n/plural-category "fr" 1)))
-    (is (= :other (i18n/plural-category "fr" 2))))
+    (is (= :other (i18n/plural-category "fr" 2)))
+    (is (= :one (i18n/plural-category "pt" 0)))
+    (is (= :one (i18n/plural-category "pt" 1)))
+    (is (= :other (i18n/plural-category "pt" 2))))
+  (testing "Italian follows the exactly-one rule"
+    (is (= :one (i18n/plural-category "it" 1)))
+    (is (= :other (i18n/plural-category "it" 0))))
   (testing "Chinese and Japanese have no plural at all"
     (is (= :other (i18n/plural-category "zh" 1)))
     (is (= :other (i18n/plural-category "ja" 1)))))
@@ -164,6 +172,8 @@
    "de" ["1.204.338" "6,4"]
    "fr" ["1\u202f204\u202f338" "6,4"]
    "es" ["1.204.338" "6,4"]
+   "it" ["1.204.338" "6,4"]
+   "pt" ["1.204.338" "6,4"]
    "zh" ["1,204,338" "6.4"]
    "ja" ["1,204,338" "6.4"]})
 
@@ -194,3 +204,42 @@
     (is (every? :tag ls))
     (is (= "fr" (i18n/tag-for-name "Français")))
     (is (nil? (i18n/tag-for-name "Klingon")))))
+
+;; ── The Easter eggs ─────────────────────────────────────────────────────────
+
+(deftest hidden-languages-stay-hidden-until-revealed
+  (i18n/conceal-hidden!)
+  (try
+    (is (not-any? #{"tlh" "vuh"} (i18n/available-tags))
+        "not on offer by default")
+    (is (nil? (i18n/normalise-tag "tlh"))
+        "--locale tlh alone does nothing; the flag is the key")
+    (i18n/reveal-hidden!)
+    (is (every? (set (i18n/available-tags)) ["tlh" "vuh"]))
+    (is (= "tlh" (i18n/normalise-tag "tlh")))
+    (is (some #(= "tlhIngan Hol" (:name %)) (i18n/languages))
+        "the picker offers Klingon by its own name")
+    (is (some #(= "Vuhlkansu" (:name %)) (i18n/languages)))
+    (finally (i18n/conceal-hidden!))))
+
+(deftest a-hidden-bundle-may-be-partial-but-not-broken
+  (testing "English shows through for anything untranslated — the same
+            arrangement as every other missing phrase — but what IS there must
+            interpolate and carry no invented keys"
+    (let [en-keys (set (keys (:strings (#'i18n/read-bundle "en"))))]
+      (doseq [tag i18n/hidden-tags]
+        (let [bundle (#'i18n/read-bundle tag)]
+          (is (seq (:strings bundle)) (str tag " has something to say"))
+          (is (empty? (remove en-keys (keys (:strings bundle))))
+              (str tag " must not invent keys English does not have"))
+          (testing (str tag " falls back to English for the rest")
+            (i18n/reveal-hidden!)
+            (try
+              (let [ctx (i18n/context tag)]
+                (is (= "Qapla'! 3 teywI' chenmoHlu' — 2s."
+                       (i18n/tr (i18n/context "tlh") :done/created 3 "2s"))
+                    "the famous word, with the count interpolated")
+                (is (string? (i18n/tr ctx :help/a-header))
+                    "an untranslated phrase arrives in English, not as a marker")
+                (is (not (str/starts-with? (i18n/tr ctx :help/a-header) "⟦"))))
+              (finally (i18n/conceal-hidden!)))))))))

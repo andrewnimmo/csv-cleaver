@@ -1,0 +1,50 @@
+;; Vuhlkansu — Golic Vulcan. An Easter egg, and deliberately partial: English
+;; shows through for anything not translated. Vulcan has no ISO 639 code, so
+;; vuh follows the fan convention.
+;;
+;; Hidden unless the application is started with --hidden-languages, or About
+;; is opened with Alt/Option held down.
+
+{:meta
+ {:locale    "vuh"
+  :name      "Vuhlkansu"
+  :reviewed? false}
+
+ :strings
+ {:empty/headline        "Sarlah CSV-suk na'wilat"
+  :empty/headline-active "Dungau-tor — pehkau ish-veh"
+  :empty/subhead         "il ma-tor wuhkuh s'du computer"
+  :empty/hint            "Kupi ki'pehkau-vellar nam-tor pa'kwul-tor du suk'."
+
+  :options/split-into    "Pehkau na'"
+  :options/by-rows       "Ka-mahr t'zul-mIr"
+  :options/by-size       "Ka-suk' t'suk"
+  :options/has-header    "Ma suk t'nash-veh wuh ulidar-zul"
+  :options/repeat-header "Nam-tor ulidar-zul svi'kanok suk"
+
+  :action/browse      "Glakuv-tor…"
+  :action/change      "Vath-tor…"
+  :action/split       "Pehkau suk"
+  :action/cancel      "Stau"
+  :action/split-again "Pehkau vath suk"
+  :action/close       "Krup-tor"
+  :action/about       "Pa'"
+  :action/help        "Bolau-kastik"
+  :action/quit        "Halovau"
+
+  :menu/file "Suk"
+  :menu/help "Bolau-kastik"
+
+  :scanning/checking "Glantokau suk…"
+
+  :done/created {:one   "Rom-halan. Wuh suk ki'tor-yehat svi'{1}."
+                 :other "Rom-halan. {0} suklar ki'tor-yehat svi'{1}."}
+  :done/where   "Nam-tor suklar wilat:"
+
+  :help/title    "Bolau-kastik"
+  :about/title   "Pa'{0}"
+  :about/tagline "Pehkau suk'CSV-suklar na'pi'suklar — kup-pehkau Excel au. Rihagik nam-tor logical."
+  :about/language "Zhit-bal"
+  :about/theme    "Guv"
+  :about/made-with "Tor-yehat k'🤖 svi'Barcelona. Dif-tor heh smusma. 🖖"
+  :about/unreviewed "Rai Vuhlkansu-su ki'glantau nash-zhitanlar. Nam-tor logical na'vokau rihagik."}}

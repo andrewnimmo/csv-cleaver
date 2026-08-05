@@ -178,6 +178,10 @@
   (save-session!)
   (exit! 0))
 
+(defmethod perform! :reveal-hidden
+  [_]
+  (i18n/reveal-hidden!))
+
 (defmethod perform! :compose-mail
   [_]
   (desktop/compose-mail!
@@ -323,6 +327,12 @@
       ::view/drag-dropped (complete-drop! (:fx/event event))
       ::view/close-requested (do (save-session!) (Platform/exit))
 
+      ;; Key transitions only matter for their modifier state; Alt is read here
+      ;; because the pure layer cannot touch a KeyEvent.
+      ::view/modifier-keys
+      (let [e ^javafx.scene.input.KeyEvent (:fx/event event)]
+        (dispatch! {:event/type ::state/alt-changed :down? (.isAltDown e)}))
+
       ;; The picker shows translated labels, so the label has to be mapped back
       ;; to the character it stands for.
       ::view/delimiter-picked
@@ -414,9 +424,34 @@
         (state/with-values saved)
         (assoc :theme theme))))
 
+(defn install-mac-app-menu!
+  "Wire the macOS application menu's own About and Quit to this application.
+
+   java.awt.Desktop reaches the real app menu, which JavaFX cannot; AWT is
+   already running here for the Trash and the mail composer. Quit must save
+   the session before agreeing, or quitting from the app menu would silently
+   lose the window position and settings that quitting from File keeps.
+
+   A no-op wherever the actions are unsupported, which is every platform but
+   macOS — so this can be called unconditionally."
+  []
+  (try
+    (let [d (java.awt.Desktop/getDesktop)]
+      (when (.isSupported d java.awt.Desktop$Action/APP_ABOUT)
+        (.setAboutHandler d (reify java.awt.desktop.AboutHandler
+                              (handleAbout [_ _]
+                                (dispatch! {:event/type ::state/about-toggled})))))
+      (when (.isSupported d java.awt.Desktop$Action/APP_QUIT_HANDLER)
+        (.setQuitHandler d (reify java.awt.desktop.QuitHandler
+                             (handleQuitRequestWith [_ _ response]
+                               (save-session!)
+                               (.performQuit response))))))
+    (catch Throwable _ nil)))
+
 (defn start-window!
   [options]
   (reset! *state (startup-state state/initial (prefs/load-prefs) options))
+  (install-mac-app-menu!)
   (fx/mount-renderer *state @renderer)
   (perform! [:apply-theme (:theme @*state)])
   (watch-system-appearance!))

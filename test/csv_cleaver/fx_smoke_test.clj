@@ -309,3 +309,63 @@
       (testing "and what was saved is what the next window asks for"
         (is (= {:x 40.0 :y 60.0 :width 800.0 :height 700.0}
                (view/remembered-window (:window saved))))))))
+
+(deftest ^:fx overlay-titles-carry-right-edge-slack
+  (testing "on Retina displays sub-pixel rounding clipped the last letter of a
+            bold title — the p of Help — exactly as it once shaved descenders
+            vertically. JavaFX reports zero overhang at 1x, so the guard is not
+            a pixel measurement: it is that the slack padding survives in the
+            computed style, for every title and headline, in every language."
+    (tu/with-temp-dir [dir]
+      (doseq [tag i18n/supported
+              dialog [:about :help]]
+        (let [st   (-> (ready-state dir) (state/with-language tag)
+                       (assoc :dialog dialog))
+              root (laid-out {:fx/type :stack-pane
+                              :stylesheets (branding/stylesheets)
+                              :children [(view/content st)]})
+              acc  (atom [])]
+          (letfn [(visit [x]
+                    (when (and (instance? javafx.scene.control.Labeled x)
+                               (some #{"title" "headline"}
+                                     (.getStyleClass ^javafx.scene.control.Labeled x)))
+                      (swap! acc conj x))
+                    (when (instance? javafx.scene.control.ScrollPane x)
+                      (some-> (.getContent ^javafx.scene.control.ScrollPane x) visit))
+                    (when (instance? javafx.scene.Parent x)
+                      (doseq [c (.getChildrenUnmodifiable ^javafx.scene.Parent x)]
+                        (visit c))))]
+            (visit root))
+          (is (seq @acc) (str tag " " (name dialog) ": there are titles to check"))
+          (doseq [^javafx.scene.control.Labeled l @acc]
+            (is (>= (.getRight (.getPadding l)) 2.0)
+                (str tag " " (name dialog) " " (pr-str (.getText l))
+                     " needs right-edge slack against Retina clipping"))))))))
+
+(deftest ^:fx a-dialog-never-outgrows-the-window
+  (testing "a resized window could be made smaller than the About card, which
+            then overflowed it on every side. The card now caps its width and
+            scrolls its middle, so however small the window, the card fits and
+            Close stays reachable."
+    (tu/with-temp-dir [dir]
+      (doseq [dialog [:about :help]
+              [w h]  [[420 320] [1000 900]]]
+        (let [st   (assoc (ready-state dir) :dialog dialog)
+              root (fx/instance (fx/create-component
+                                 {:fx/type :stack-pane
+                                  :stylesheets (branding/stylesheets)
+                                  :children [(view/content st)]}
+                                 {:fx.opt/map-event-handler (fn [_])}))]
+          @(fx/on-fx-thread
+            (javafx.scene.Scene. ^javafx.scene.Parent root (double w) (double h))
+            (doto ^javafx.scene.Parent root (.applyCss) (.layout)))
+          ;; layoutBounds, not boundsInLocal: the latter includes the card's
+          ;; drop shadow, which is meant to bleed past the card. The first
+          ;; version of this test measured the shadow and failed a fix that
+          ;; was working.
+          (let [card (.lookup ^javafx.scene.Parent root ".dialog-card")]
+            (is (some? card) (str (name dialog) " " w "x" h))
+            (is (<= (.getWidth (.getLayoutBounds card)) (- w 16))
+                (str (name dialog) " card wider than a " w "px window allows"))
+            (is (<= (.getHeight (.getLayoutBounds card)) (- h 16))
+                (str (name dialog) " card taller than a " h "px window allows"))))))))

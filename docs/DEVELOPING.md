@@ -273,6 +273,24 @@ change the SVG, change the Clojure to match — they are the same drawing.
 
 ---
 
+## The Easter eggs
+
+Two more languages ship hidden: Klingon (`tlh`, its real ISO 639-3 code) and
+Golic Vulcan (`vuh`, the fan convention — Vulcan has no ISO code). They join
+the picker only when revealed:
+
+```bash
+csv-cleaver --hidden-languages --locale tlh
+```
+
+or hold **Alt/Option while opening the About dialog** — the same convention
+macOS uses for Option-changed menus. Both bundles are deliberately partial;
+English shows through underneath, so they are exempt from the completeness
+tests every visible language must pass, and `a-hidden-bundle-may-be-partial-
+but-not-broken` guards what they may and may not do instead.
+
+---
+
 ## Rebranding
 
 Everything nameable lives in `resources/branding.edn` — name, tagline, version,

@@ -381,9 +381,20 @@
   [state _]
   (with-effects state [:compose-mail]))
 
+(defmethod handle ::alt-changed
+  [state {:keys [down?]}]
+  (with-effects (assoc state :alt-down? (boolean down?))))
+
 (defmethod handle ::about-toggled
   [state _]
-  (with-effects (assoc state :dialog (when-not (= :about (:dialog state)) :about))))
+  (let [opening? (not= :about (:dialog state))]
+    (apply with-effects
+           (assoc state :dialog (when opening? :about))
+           ;; Alt held while opening About reveals the hidden languages — the
+           ;; same convention macOS uses for Option-changed menus. An effect,
+           ;; not a direct call: state stays pure and the tests stay honest.
+           (when (and opening? (:alt-down? state))
+             [[:reveal-hidden]]))))
 
 (defmethod handle ::quit-requested
   [state _]

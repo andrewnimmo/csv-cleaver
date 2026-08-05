@@ -194,10 +194,21 @@
     -fx-font-size: 15px;
     -fx-font-weight: bold;
     -fx-text-fill: -color-fg-default;
-    /* A label is allotted exactly the height its text reports, with nothing to
-       spare, so sub-pixel rounding shaves the descender off a "p". Measured:
-       label height 19.00, text height 19.00. The padding is the slack. */
-    -fx-padding: 1px 0 3px 0;
+    /* A label is allotted exactly the size its text reports, with nothing to
+       spare, so sub-pixel rounding shaves ink at the edges — the descender of
+       a "p" below (measured: label height 19.00, text height 19.00), and on
+       Retina displays the same again at the right, clipping the last letter of
+       "Help". JavaFX's own metrics show zero overhang at 1x, so this cannot be
+       chased pixel by pixel; the padding is the slack that makes it impossible
+       at any scale. */
+    -fx-padding: 1px 3px 3px 0;
+}
+
+/* The bold question lines in the Help overlay clip the same way at the same
+   scales; same slack. Wrapping lines are unaffected either way — a wrapped
+   label is wider than its last line by construction. */
+.dialog-card .headline {
+    -fx-padding: 0 3px 1px 0;
 }
 
 .file-list {

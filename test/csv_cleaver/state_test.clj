@@ -592,3 +592,18 @@
         (state/handle state/initial {:event/type ::state/contact-clicked})]
     (is (= [[:compose-mail]] effects))
     (is (= state/initial state) "and changes nothing else")))
+
+(deftest alt-and-about-open-the-hidden-languages
+  (testing "an effect, not a direct call, so the pure layer stays pure"
+    (let [alt-down (state/apply-event state/initial
+                                      {:event/type ::state/alt-changed :down? true})]
+      (is (true? (:alt-down? alt-down)))
+      (is (= [[:reveal-hidden]]
+             (:effects (state/handle alt-down {:event/type ::state/about-toggled})))
+          "Alt held while opening About reveals them")
+      (is (empty? (:effects (state/handle state/initial
+                                          {:event/type ::state/about-toggled})))
+          "without Alt, About is just About")
+      (is (empty? (:effects (state/handle (assoc alt-down :dialog :about)
+                                          {:event/type ::state/about-toggled})))
+          "closing About reveals nothing, whatever the keys are doing"))))

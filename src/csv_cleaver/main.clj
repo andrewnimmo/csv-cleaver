@@ -86,6 +86,10 @@
             {:keys [problems]} (i18n/load-external! dir)
             headless (boolean (:headless options))]
 
+        ;; The Easter egg, half of it: the other half is holding Alt while
+        ;; opening About. Either way, tlh and vuh join the language picker.
+        (when (:hidden-languages options) (i18n/reveal-hidden!))
+
         ;; Headless there is no window to explain a rejected translation in, and
         ;; the service answers in English whatever the window would have done.
         ;; Say what was ignored and carry on.

@@ -102,21 +102,32 @@
    ;; what populates the system bar — while taking no room.
    :managed             (not system-menu?)
    :menus
-   [{:fx/type :menu
-     :text    (i18n/tr ctx :menu/file)
-     :items   [{:fx/type     :menu-item
-                :text        (i18n/tr ctx :action/quit)
-                :accelerator [:shortcut :q]
-                :on-action   {:event/type ::state/quit-requested}}]}
-    {:fx/type :menu
-     :text    (i18n/tr ctx :menu/help)
-     :items   [{:fx/type   :menu-item
-                :text      (i18n/tr ctx :action/help)
-                :on-action {:event/type ::state/help-toggled}}
-               {:fx/type :separator-menu-item}
-               {:fx/type   :menu-item
-                :text      (i18n/tr ctx :action/about)
-                :on-action {:event/type ::state/about-toggled}}]}]})
+   ;; Platform conventions differ, and duplicating an entry the platform
+   ;; already provides reads as a bug. On macOS the application menu carries
+   ;; Quit and About — installed through java.awt.Desktop in csv-cleaver.app —
+   ;; so File loses its only item and disappears, and Help keeps only Help.
+   ;; Windows and Linux have no application menu, so they keep both.
+   (compact
+    [(when-not system-menu?
+       {:fx/type :menu
+        :text    (i18n/tr ctx :menu/file)
+        :items   [{:fx/type     :menu-item
+                   :text        (i18n/tr ctx :action/quit)
+                   :accelerator [:shortcut :q]
+                   :on-action   {:event/type ::state/quit-requested}}]})
+     {:fx/type :menu
+      :text    (i18n/tr ctx :menu/help)
+      :items
+      (compact
+       [{:fx/type   :menu-item
+         :text      (i18n/tr ctx :action/help)
+         :on-action {:event/type ::state/help-toggled}}
+        (when-not system-menu?
+          {:fx/type :separator-menu-item})
+        (when-not system-menu?
+          {:fx/type   :menu-item
+           :text      (i18n/tr ctx :action/about)
+           :on-action {:event/type ::state/about-toggled}})])}])})
 
 (defn header-bar
   "The strip along the top holding the two overlay buttons — the quick route to
@@ -697,16 +708,34 @@
 ;; ── Overlays ────────────────────────────────────────────────────────────────
 
 (defn overlay
-  "The dim backdrop and centred card shared by every dialog."
+  "The dim backdrop and centred card shared by every dialog.
+
+   The card is capped at a width, and its middle scrolls: a card taller or
+   wider than the window used to simply overflow it, which a resized window
+   made easy to arrange and unpleasant to look at. The buttons row — assumed
+   to be the last child — stays outside the scrolling region, so Close is
+   reachable however small the window gets. The padding on the backdrop is
+   what guarantees the card never touches the window edge."
   [children]
-  {:fx/type     :stack-pane
-   :style-class ["overlay"]
-   :children
-   [{:fx/type              :v-box
-     :style-class          ["dialog-card"]
-     :max-height           Double/NEGATIVE_INFINITY
-     :stack-pane/alignment :center
-     :children             (compact children)}]})
+  (let [children (compact children)]
+    {:fx/type     :stack-pane
+     :style-class ["overlay"]
+     :padding     16
+     :children
+     [{:fx/type              :v-box
+       :style-class          ["dialog-card"]
+       :max-height           Double/NEGATIVE_INFINITY
+       :max-width            640
+       :stack-pane/alignment :center
+       :children
+       [{:fx/type      :scroll-pane
+         :v-box/vgrow  :always
+         :fit-to-width true
+         :style-class  ["scroll-pane" "edge-to-edge"]
+         :content      {:fx/type  :v-box
+                        :spacing  10
+                        :children (vec (butlast children))}}
+        (last children)]}]}))
 
 (defn collision-dialog
   [{:keys [collisions out-dir] :as st}]
@@ -945,27 +974,25 @@
   [st]
   (let [ctx (state/ctx st)]
     (overlay
-     [{:fx/type :label :style-class ["label" "title"] :text (i18n/tr ctx :help/title)}
-      {:fx/type        :scroll-pane
-       :fit-to-width   true
-       :pref-height    360
-       :style-class    ["scroll-pane" "edge-to-edge"]
-       :content        {:fx/type  :v-box
-                        :spacing  14
-                        :children (vec (for [[q a] help-topics]
-                                         {:fx/type :v-box
-                                          :spacing 3
-                                          :children
-                                          [{:fx/type :label :style-class ["label" "headline"]
-                                            :wrap-text true :text (i18n/tr ctx q)}
-                                           {:fx/type :label :style-class ["hint"]
-                                            :wrap-text true :text (i18n/tr ctx a)}]}))}}
-      {:fx/type   :h-box
-       :alignment :center-right
-       :children  [{:fx/type     :button
-                    :style-class ["button" "accent"]
-                    :text        (i18n/tr ctx :action/close)
-                    :on-action   {:event/type ::state/dialog-closed}}]}])))
+     ;; No scroll-pane of its own: the overlay scrolls every dialog's middle,
+     ;; and a scroll inside a scroll leaves the wheel fighting itself.
+     (into
+      [{:fx/type :label :style-class ["label" "title"] :text (i18n/tr ctx :help/title)}]
+      (concat
+       (for [[q a] help-topics]
+         {:fx/type :v-box
+          :spacing 3
+          :children
+          [{:fx/type :label :style-class ["label" "headline"]
+            :wrap-text true :text (i18n/tr ctx q)}
+           {:fx/type :label :style-class ["hint"]
+            :wrap-text true :text (i18n/tr ctx a)}]})
+       [{:fx/type   :h-box
+         :alignment :center-right
+         :children  [{:fx/type     :button
+                      :style-class ["button" "accent"]
+                      :text        (i18n/tr ctx :action/close)
+                      :on-action   {:event/type ::state/dialog-closed}}]}])))))
 
 ;; ── Footer ──────────────────────────────────────────────────────────────────
 
@@ -1036,6 +1063,14 @@
    :on-drag-over    {:event/type ::drag-over}
    :on-drag-exited  {:event/type ::state/drag-exited}
    :on-drag-dropped {:event/type ::drag-dropped}
+   ;; Modifier keys are tracked here because ActionEvents carry none: by the
+   ;; time a button click arrives there is no way to ask whether Alt was down.
+   ;; The scene root sees every key transition, and the one consumer is the
+   ;; About dialog, which reveals the hidden languages when opened with
+   ;; Alt/Option held — the same convention macOS itself uses for
+   ;; option-changed menus.
+   :on-key-pressed  {:event/type ::modifier-keys}
+   :on-key-released {:event/type ::modifier-keys}
    :children
    (compact
     [{:fx/type :v-box

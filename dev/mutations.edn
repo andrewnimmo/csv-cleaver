@@ -231,6 +231,42 @@
   :replace   "          {:fx/type :label :text contact}"
   :namespace "csv-cleaver.view-test"}
 
+ {:label     "the Retina slack is dropped and titles clip again"
+  :file      "resources/csv_cleaver/app.css"
+  :find      "    -fx-padding: 1px 3px 3px 0;"
+  :replace   "    -fx-padding: 1px 0 3px 0;"
+  :namespace "csv-cleaver.fx-smoke-test"}
+
+ {:label     "macOS grows a duplicate Quit in the File menu again"
+  :file      "src/csv_cleaver/view.clj"
+  :find      "    [(when-not system-menu?\n       {:fx/type :menu\n        :text    (i18n/tr ctx :menu/file)"
+  :replace   "    [(when true\n       {:fx/type :menu\n        :text    (i18n/tr ctx :menu/file)"
+  :namespace "csv-cleaver.view-test"}
+
+ {:label     "the hidden languages leak into the default picker"
+  :file      "src/csv_cleaver/i18n.clj"
+  :find      "                         (when @revealed hidden-tags)"
+  :replace   "                         hidden-tags"
+  :namespace "csv-cleaver.i18n-test"}
+
+ {:label     "Alt plus About stops revealing the eggs"
+  :file      "src/csv_cleaver/state.clj"
+  :find      "           (when (and opening? (:alt-down? state))\n             [[:reveal-hidden]])"
+  :replace   "           nil"
+  :namespace "csv-cleaver.state-test"}
+
+ {:label     "the dialog card stops fitting small windows"
+  :file      "src/csv_cleaver/view.clj"
+  :find      "       :max-height           Double/NEGATIVE_INFINITY\n       :max-width            640"
+  :replace   "       :min-width            700\n       :max-width            640"
+  :namespace "csv-cleaver.fx-smoke-test"}
+
+ {:label     "Portuguese loses its zero-is-singular plural rule"
+  :file      "src/csv_cleaver/i18n.clj"
+  :find      "      (\"fr\" \"pt\") (if (< n 2) :one :other)"
+  :replace   "      \"fr\" (if (< n 2) :one :other)"
+  :namespace "csv-cleaver.i18n-test"}
+
  {:label     "the entry point requires cljfx, so --headless dies on a server"
   :file      "src/csv_cleaver/main.clj"
   :find      "   [csv-cleaver.api.server :as api]"

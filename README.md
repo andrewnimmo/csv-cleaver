@@ -4,8 +4,8 @@ Splits large CSV files into smaller ones that Excel can open, without damaging
 them on the way through.
 
 A desktop application for macOS, Windows and Linux, written in Clojure with a
-[cljfx](https://github.com/cljfx/cljfx) interface. Available in English,
-Spanish, French, German, Chinese and Japanese.
+[cljfx](https://github.com/cljfx/cljfx) interface. Available in English, Spanish,
+French, German, Italian, Portuguese, Chinese and Japanese.
 
 ---
 
@@ -91,7 +91,7 @@ bb run -- --locale ja --theme dark
 
 | Option | Meaning |
 |---|---|
-| `-l, --locale TAG` | Interface language: `en`, `es`, `fr`, `de`, `zh`, `ja`. Defaults to the system language, then English. |
+| `-l, --locale TAG` | Interface language: `en`, `es`, `fr`, `de`, `it`, `pt`, `zh`, `ja`. Defaults to the system language, then English. |
 | `-t, --theme NAME` | `auto` (follows the system, the default), `light` or `dark`. |
 | `-h, --help` | Show all options. |
 | `-V, --version` | Show the version. |

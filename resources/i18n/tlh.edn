@@ -1,0 +1,51 @@
+;; tlhIngan Hol — Klingon. An Easter egg, and deliberately partial: English
+;; shows through for anything not translated, exactly as it does for any other
+;; missing phrase. tlh is Klingon's real ISO 639-3 code.
+;;
+;; Hidden unless the application is started with --hidden-languages, or About
+;; is opened with Alt/Option held down.
+
+{:meta
+ {:locale    "tlh"
+  :name      "tlhIngan Hol"
+  :reviewed? false}
+
+ :strings
+ {:empty/headline        "naDev CSV teywI' yIqem"
+  :empty/headline-active "yIbaH — poSmoHlu'"
+  :empty/subhead         "pagh De'wI'vo' wa' yIwIv"
+  :empty/hint            "teywI' DawIvpu'DI' pe'meH SeHlaw narghqu'."
+
+  :options/split-into    "yIpe':"
+  :options/by-rows       "rap mIr mI'"
+  :options/by-size       "rap teywI' tIn"
+  :options/rows-suffix   "mIr Hoch teywI'Daq"
+  :options/has-header    "'ay' pong mIr wa'DIch ghaj teywI'wIj"
+  :options/repeat-header "Hoch teywI'Daq mIrvam yIqaSmoHqa'"
+
+  :action/browse      "yInej…"
+  :action/change      "yIchoH…"
+  :action/split       "teywI' yIpe'!"
+  :action/cancel      "yIqIl"
+  :action/split-again "latlh teywI' yIpe'"
+  :action/close       "yISoQmoH"
+  :action/about       "De'"
+  :action/help        "QaH"
+  :action/quit        "yImej"
+
+  :menu/file "teywI'"
+  :menu/help "QaH"
+
+  :scanning/checking "teywI' vIlegh…"
+
+  :done/created {:one   "Qapla'! wa' teywI' chenmoHlu' — {1}."
+                 :other "Qapla'! {0} teywI' chenmoHlu' — {1}."}
+  :done/where   "naDev teywI'mey:"
+
+  :help/title    "QaH"
+  :about/title   "{0} De'"
+  :about/tagline "tIn CSV teywI' tIpe', 'ej bIQuchchoH: Excel poSmoHlaH."
+  :about/language "Hol"
+  :about/theme    "Deghmey"
+  :about/made-with "Barcelona-Daq 🤖 lo'lu'chu' 'ej chenmoHlu'"
+  :about/unreviewed "tlhIngan Hol po'wI' loQ neH laDta'. yIvoqQo'."}}

@@ -27,7 +27,7 @@
 
 (def supported
   "Language tags shipped with the application, in the order they are offered."
-  ["en" "es" "fr" "de" "zh" "ja"])
+  ["en" "es" "fr" "de" "it" "pt" "zh" "ja"])
 
 (def fallback-tag "en")
 
@@ -92,11 +92,33 @@
       :else           {:meta    (merge (:meta shipped) (:meta supplied))
                        :strings (merge (:strings shipped) (:strings supplied))})))
 
+(def hidden-tags
+  "Shipped but not offered: the Easter eggs. tlh is Klingon's real ISO 639-3
+   code; Vulcan has no ISO code, so vuh follows the fan convention. Both
+   bundles are deliberately partial — English shows through underneath, as it
+   does for any missing phrase — which is also why they are exempt from the
+   completeness tests that every visible language must pass."
+  ["tlh" "vuh"])
+
+(defonce ^:private revealed
+  ;; Whether the hidden languages are on offer this session. Flipped by
+  ;; --hidden-languages on the command line, or by holding Alt/Option while
+  ;; opening the About dialog.
+  (atom false))
+
+(defn reveal-hidden! [] (reset! revealed true))
+(defn conceal-hidden!
+  "For tests, which must not leak a revealed state into each other."
+  [] (reset! revealed false))
+(defn hidden-revealed? [] @revealed)
+
 (defn available-tags
-  "Every language that can be chosen: those shipped, plus any valid ones the
-   user has supplied."
+  "Every language that can be chosen: those shipped, any valid ones the user
+   has supplied, and — once revealed — the Easter eggs."
   []
-  (vec (distinct (concat supported (sort (keys (:bundles @external)))))))
+  (vec (distinct (concat supported
+                         (when @revealed hidden-tags)
+                         (sort (keys (:bundles @external)))))))
 
 (defn- phrase-strings
   "Every string an entry could put on screen."
@@ -295,14 +317,16 @@
 (defn plural-category
   "Which of :one or :other applies to `n` in this language.
 
-   Only these six languages are covered, and only where they differ: French
-   treats zero as singular, Chinese and Japanese have no plural at all, and the
-   rest use the singular for exactly one."
+   Only the shipped languages are covered, and only where they differ: French
+   and Portuguese treat zero as singular, Chinese and Japanese have no plural
+   at all, and the rest use the singular for exactly one."
   [tag n]
   (let [n (long n)]
     (case (str tag)
       ("zh" "ja") :other
-      "fr"        (if (< n 2) :one :other)
+      ;; French and Portuguese treat zero as singular; CLDR pt covers both
+      ;; zero and one under :one.
+      ("fr" "pt") (if (< n 2) :one :other)
       (if (= n 1) :one :other))))
 
 (defn tr

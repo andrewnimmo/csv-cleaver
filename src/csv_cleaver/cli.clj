@@ -68,6 +68,10 @@
 
    [nil "--headless" "Run without opening a window. Only useful with --api."]
 
+   ;; Undocumented in the user guide, on purpose. Live long and prosper.
+   [nil "--hidden-languages"
+    "Also offer certain languages spoken rather far from Barcelona."]
+
    ["-h" "--help" "Show this message and exit."]
    ["-V" "--version" "Show the version and exit."]])
 

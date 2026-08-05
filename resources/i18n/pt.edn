@@ -1,0 +1,226 @@
+;; Português (do Brasil) — tradução de en.edn. Os marcadores {0}, {1} … são
+;; preenchidos pela aplicação e devem sobreviver à tradução.
+
+{:meta
+ {:locale    "pt"
+  :name      "Português"
+  :reviewed? false}
+
+ :strings
+ {;; Janela vazia
+  :empty/headline        "Arraste um arquivo CSV para cá"
+  :empty/headline-active "Solte para abri-lo"
+  :empty/subhead         "ou escolha um no computador"
+  :empty/hint            "As opções de divisão aparecem depois de escolher um arquivo."
+
+  ;; Verificando o arquivo escolhido
+  :scanning/checking "Verificando o arquivo…"
+  :scanning/counted  {:one   "Verificando o arquivo — {0} linha até agora"
+                      :other "Verificando o arquivo — {0} linhas até agora"}
+
+  ;; O cartão do arquivo
+  :file/data-rows            {:one "{0} linha de dados" :other "{0} linhas de dados"}
+  :file/rows                 {:one "{0} linha" :other "{0} linhas"}
+  :file/encoding             "Texto: {0}"
+  :file/encoding-western     "Texto: {0} (Europa Ocidental)"
+  :file/separated-semicolons "Separado por ponto e vírgula"
+  :file/separated-tabs       "Separado por tabulações"
+  :file/separated-pipes      "Separado por barras verticais"
+  :file/healthy              "Parece em ordem"
+
+  ;; Opções
+  :options/split-into    "Dividir em"
+  :options/by-rows       "Mesmo número de linhas"
+  :options/by-size       "Mesmo tamanho de arquivo"
+  :options/rows-suffix   "linhas em cada arquivo"
+  :options/size-suffix   "em cada arquivo"
+  :options/has-header    "Meu arquivo tem uma linha de cabeçalho"
+  :options/repeat-header "Repetir esse cabeçalho em cada arquivo"
+
+  ;; Para onde vão os resultados
+  :output/save-to "Salvar os arquivos em"
+  :output/named   "Chamados {0}, {1}, e assim por diante."
+
+  ;; Avançado
+  :advanced/label          "Avançado"
+  :advanced/summary        "— codificação de texto, nomes de arquivo"
+  :advanced/pattern-label  "Padrão de nome de arquivo"
+  :advanced/pattern-hint   "{name} é o nome do arquivo original, {index} é o número do arquivo."
+  :advanced/encoding-label   "Codificação de texto"
+  :advanced/encoding-detected    "Detectada"
+  :advanced/encoding-hint    "Detectada {0}. Só mude isto se os resultados abrirem com os acentos errados."
+  :advanced/detected         "Detectada"
+  :advanced/excel-safe       "Manter cada arquivo dentro do limite de linhas do Excel"
+  :advanced/excel-safe-hint  "Só importa ao dividir por tamanho, quando o número de linhas de um arquivo depende do comprimento delas."
+
+  ;; Durante a divisão
+  :splitting/headline "Dividindo {0}"
+  :splitting/progress "Arquivo {0} · {1} de {2} linhas"
+  :splitting/eta      "faltam cerca de {0}"
+
+  ;; Depois
+  :done/details      "Mostrar detalhes"
+  :done/created      {:one   "{0} arquivo criado em {1}"
+                      :other "{0} arquivos criados em {1}"}
+  :done/stopped-none "Interrompido. Nenhum arquivo foi criado."
+  :done/stopped-some {:one   "Interrompido. {0} arquivo já estava pronto antes da interrupção; o que estava sendo escrito foi removido."
+                      :other "Interrompido. {0} arquivos já estavam prontos antes da interrupção; o que estava sendo escrito foi removido."}
+  :done/log-line     "{0}  —  {1} linhas"
+
+  ;; Botões
+  :action/browse         "Procurar…"
+  :action/change         "Alterar…"
+  :action/split          "Dividir arquivo"
+  :action/cancel         "Cancelar"
+  :action/split-again    "Dividir outro arquivo"
+  :action/replace        "Substituir"
+  :action/new-folder     "Usar uma nova pasta"
+  :action/close          "Fechar"
+  :action/about          "Sobre"
+  :action/reveal-mac     "Mostrar no Finder"
+  :action/reveal-windows "Mostrar no Explorer"
+  :action/reveal-other   "Abrir pasta"
+
+  ;; Arquivos que seriam substituídos
+  :clash/title {:one "Um arquivo CSV nessa pasta usa este nome"
+                :other "{0} arquivos CSV nessa pasta usam estes nomes"}
+  :clash/body  "Nada foi escrito ainda. A aplicação não sabe o que são esses arquivos, apenas que os nomes coincidem."
+  :clash/more  "e mais {0}"
+
+  ;; Atalhos para o número de linhas
+  :options/common-sizes "Tamanhos comuns"
+  :preset/plain         "{0}"
+  :preset/excel-old     "{0} — limite do Excel antigo"
+  :preset/excel-max     "{0} — máximo do Excel"
+
+  ;; O que a divisão faria
+  :plan/one-file {:one "Tudo cabe em um único arquivo de {0} linha, então não haveria nada para dividir." :other "Tudo cabe em um único arquivo de {0} linhas, então não haveria nada para dividir."}
+  :plan/even {:one "Serão criados {0} arquivos com {1} linha cada." :other "Serão criados {0} arquivos com {1} linhas cada."}
+  :plan/uneven {:one "Serão criados {0} arquivos — {1} com {2} linha e um com {3}." :other "Serão criados {0} arquivos — {1} com {2} linhas e um com {3}."}
+  :plan/by-size {:one "Serão criados cerca de {0} arquivos, com aproximadamente {1} linha cada." :other "Serão criados cerca de {0} arquivos, com aproximadamente {1} linhas cada."}
+  :plan/many-files      "Isso criaria {0} arquivos em uma única pasta."
+  :plan/over-excel      "O Excel não consegue abrir um arquivo com mais de {0} linhas. A divisão será feita mesmo assim, caso os arquivos sejam abertos em outro lugar."
+  :plan/capped-at-excel "Os arquivos também vão parar em {0} linhas, para que o Excel possa abri-los."
+
+  ;; O que impede uma divisão
+  :problem/rows-needed   "Informe quantas linhas cada arquivo deve conter."
+  :problem/number-too-large "Esse número é grande demais. Tente um menor."
+  :problem/size-needed   "Informe o tamanho de cada arquivo."
+  :problem/no-data       "Este arquivo não tem linhas de dados para dividir."
+  :problem/pattern-empty "O padrão de nome de arquivo não pode ficar vazio."
+  :problem/pattern-index "O padrão precisa conter {index}, senão todos os arquivos teriam o mesmo nome."
+  :problem/pattern-chars "O padrão não pode conter estes caracteres: / \\ : * ? \" < > |"
+  :problem/unreadable    "Não foi possível ler esse arquivo."
+  :problem/no-permission "Você não tem permissão para escrever nessa pasta. Tente outra."
+  :problem/disk-full     "O disco está cheio, então os arquivos restantes não puderam ser escritos."
+  :problem/file-moved    "Esse arquivo não está mais onde estava. Pode ter sido movido ou excluído."
+  :problem/folder-create "Não foi possível criar essa pasta:\n{0}"
+  :problem/generic       "Algo deu errado e a divisão foi interrompida."
+
+  ;; O que há de errado com o arquivo
+  :damage/headline     {:one "{0} linha parece danificada" :other "{0} linhas parecem danificadas"}
+  :damage/ragged       {:one   "{0} linha tem um número de colunas diferente da primeira."
+                        :other "{0} linhas têm um número de colunas diferente da primeira."}
+  :damage/stray-quote  {:one   "{0} linha contém aspas onde o CSV não as permite."
+                        :other "{0} linhas contêm aspas onde o CSV não as permite."}
+  :damage/unterminated "O arquivo termina no meio de um valor entre aspas."
+  :damage/reassurance  "Elas serão copiadas exatamente como estão, entre {0} linhas no total: nada se perde."
+
+  ;; Tempo e tamanho
+  :duration/under-second "menos de um segundo"
+  :duration/seconds      "{0} segundos"
+  :duration/minutes      {:one "{0} minuto" :other "{0} minutos"}
+  :duration/seconds-part {:one "{0} segundo" :other "{0} segundos"}
+  :size/bytes            "{0} bytes"
+  :size/kb               "{0} KB"
+  :size/mb               "{0} MB"
+  :size/gb               "{0} GB"
+
+  ;; Sobre
+  :about/title      "Sobre o {0}"
+  :about/version    "Versão {0}"
+  :about/licence    "Distribuído sob a licença Apache License 2.0."
+  :about/contact         "Contato"
+  :about/made-with       "Feito com 🤖 em Barcelona"
+  :about/dict-word       "cleave"
+  :about/dict-pron       "/kliːv/"
+  :about/dict-pos        "verbo"
+  :about/dict-sense-1    "1. fender ou dividir, especialmente ao longo de uma linha natural."
+  :about/dict-sense-2    "2. agarrar-se, manter-se firmemente unido a."
+  :about/dict-note       "Uma palavra, dois sentidos opostos — um contrônimo. Esta aplicação faz o primeiro com o seu arquivo e o segundo com as suas linhas."
+  :about/notices    "Inclui um runtime Java sob a GPL v2 com Classpath Exception. Veja THIRD-PARTY.md."
+  :about/language   "Idioma"
+  :about/theme      "Aparência"
+  :about/theme-system "Acompanhar o sistema"
+  :about/theme-light  "Claro"
+  :about/theme-dark   "Escuro"
+  :about/unreviewed "Esta tradução ainda não foi revisada por um falante nativo."
+
+  ;; Perguntado apenas quando a detecção não consegue decidir
+  :header/first-row       "Primeira linha"
+  :header/question        "Esta linha traz os nomes das colunas ou a sua primeira linha de dados?"
+  :header/these-are-names "São nomes de colunas"
+  :header/this-is-data    "São dados"
+
+  ;; Ajuda
+  :action/help     "Ajuda"
+  :help/title      "Ajuda"
+  :help/q-header   "O que é uma linha de cabeçalho?"
+  :help/a-header   "A primeira linha de muitos arquivos CSV traz os nomes das colunas — id, nome, cidade — em vez de dados. Marcar a caixa diz à aplicação para tratá-la assim: ela não é contada como linha e pode ser repetida no topo de cada arquivo criado."
+  :help/q-quoted   "Uma das minhas células contém uma quebra de linha. Isso é um problema?"
+  :help/a-quoted   "Não. Um valor entre aspas pode conter quebras de linha, e esta aplicação mantém essa linha inteira. Dividir um arquivo contando linhas de texto, como muitas ferramentas fazem, cortaria essa linha ao meio e danificaria as duas partes."
+  :help/q-damaged  "Por que diz que algumas linhas parecem danificadas?"
+  :help/a-damaged  "Porque não seguem as regras habituais — uma linha com mais colunas que a primeira, ou aspas fora do lugar. Nada é consertado nem descartado: as linhas danificadas são copiadas exatamente como chegaram, então você não perde nada e pode examiná-las."
+  :help/q-encoding "O que é codificação de texto?"
+  :help/a-encoding "É como as letras são guardadas como números no arquivo. Isso é detectado automaticamente e normalmente não exige atenção. O único sinal de erro são acentos aparecendo como caracteres sem sentido ao abrir um resultado — a opção em Avançado existe para esse caso."
+  :help/q-excel    "Por que fala em 1.048.576 linhas?"
+  :help/a-excel    "É o máximo de linhas que o Excel abre em uma planilha. Versões antigas paravam em 65.536. Se um arquivo passa do limite, o Excel simplesmente não o abre — o que costuma ser justamente o motivo para dividi-lo."
+  :help/q-replace  "O que acontece com os arquivos que já estão na pasta?"
+  :help/a-replace  "Nada, a menos que você autorize. Antes de escrever, a pasta é verificada em busca de arquivos cujos nomes esta divisão usaria. Se houver algum, a lista é mostrada e você decide — inclusive escrever em outro lugar."
+  :help/q-cleave   "Por que o nome CSV Cleaver?"
+  :help/a-cleave   "To cleave é um verbo inglês curioso: significa tanto partir quanto manter-se unido — uma palavra com dois sentidos opostos, um contrônimo. Aqui acontecem os dois. A aplicação parte o seu arquivo em pedaços, e cada linha permanece unida ao que lhe pertence: quebras de linha entre aspas, cabeçalhos e acentos chegam juntos, intactos."
+
+  :problem/not-enough-space "Não há espaço suficiente no disco. Isto precisa de cerca de {0} e só há {1} livre."
+  :plan/tight-space "Sobraria pouquíssimo espaço no disco — cerca de {0} ao final."
+  :advanced/delimiter-label "Separador de colunas"
+  :advanced/delimiter-hint "Detectado automaticamente. Só mude se as colunas saírem erradas."
+  :delimiter/detected "Detectado"
+  :delimiter/comma "Vírgula  ,"
+  :delimiter/semicolon "Ponto e vírgula  ;"
+  :delimiter/tab "Tabulação"
+  :delimiter/pipe "Barra vertical  |"
+
+  :action/quit "Sair"
+
+  :menu/file "Arquivo"
+  :menu/help "Ajuda"
+
+  :about/tagline "Divida arquivos CSV grandes em arquivos menores que o Excel consegue abrir."
+  :file/separated-commas "Separado por vírgulas"
+  :file/preview "Primeiras linhas"
+  :advanced/delimiter-detected "Detectado: {0}."
+  :delimiter/name-comma "vírgulas"
+  :delimiter/name-semicolon "pontos e vírgulas"
+  :delimiter/name-tab "tabulações"
+  :delimiter/name-pipe "barras verticais"
+
+  :problem/nothing-to-split "Este arquivo já cabe em um único arquivo de {0} linhas, então não há nada para dividir."
+
+  :done/trashed {:one "{0} arquivo com nome coincidente foi movido para a Lixeira." :other "{0} arquivos com nomes coincidentes foram movidos para a Lixeira."}
+  :done/left-behind {:one "{0} arquivo com nome coincidente ainda está nessa pasta." :other "{0} arquivos com nomes coincidentes ainda estão nessa pasta."}
+  :clash/folder "Pasta: {0}"
+  :clash/replace-note "Substituir grava por cima dos arquivos listados. Os demais com nomes coincidentes vão para a Lixeira, de onde podem ser recuperados."
+  :clash/replace-note-no-trash "Substituir grava por cima dos arquivos listados. Os demais com nomes coincidentes ficam onde estão, porque este sistema não tem Lixeira para onde movê-los."
+  :output/new-folder "Esta pasta ainda não existe e será criada."
+  :output/existing-csv {:one "Cuidado: esta pasta já contém {0} arquivo CSV." :other "Cuidado: esta pasta já contém {0} arquivos CSV."}
+
+  :confirm/many-title "Criar {0} arquivos?"
+  :confirm/many-body "Tantos arquivos em uma única pasta podem deixá-la lenta ou inutilizável no gerenciador de arquivos, e a divisão vai demorar. Se não era isso que você queria, confira o número de linhas por arquivo."
+  :action/create-anyway "Criar mesmo assim"
+  :done/where "Os arquivos estão em:"
+
+  :file/one-column "Uma coluna apenas"
+  :file/not-a-table "Só foi encontrada uma coluna, então isto pode nem ser uma tabela. Ainda assim dá para dividir por linhas, e cada parte será uma cópia exata de um trecho do arquivo."
+  :advanced/delimiter-chosen "Você escolheu {0}. A detecção encontrou {1}."
+  :advanced/encoding-chosen "Você escolheu {0}. A detecção encontrou {1}."
+  :done/nothing-written "Nenhum arquivo foi criado, porque nada neste arquivo foi reconhecido como dados para dividir."}}

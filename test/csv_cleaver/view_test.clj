@@ -6,6 +6,7 @@
    [clojure.string :as str]
    [clojure.test :refer [deftest is testing]]
    [csv-cleaver.branding :as branding]
+   [csv-cleaver.desktop]
    [csv-cleaver.format :as fmt]
    [csv-cleaver.scan :as scan]
    [csv-cleaver.state :as state]
@@ -340,36 +341,59 @@
             past. It was in the About dialog, which met the requirement that it
             not be easy to press by accident and failed the requirement that it
             be findable at all."
-    (let [d    (view/content state/initial)
-          quit (first (filter #(= ::state/quit-requested (:event/type (:on-action %)))
-                              (nodes d)))]
-      (is (= :menu-item (:fx/type quit)) "a menu item, not a button")
-      (is (= [:shortcut :q] (:accelerator quit)) "with the platform shortcut")
-      (is (empty? (filter #(and (= :button (:fx/type %))
-                                (= ::state/quit-requested (:event/type (:on-action %))))
-                          (nodes d)))
-          "and no button anywhere that could be hit on the way to Split"))))
+    (with-redefs [csv-cleaver.desktop/os (constantly :windows)]
+      (let [d    (view/content state/initial)
+            quit (first (filter #(= ::state/quit-requested (:event/type (:on-action %)))
+                                (nodes d)))]
+        (is (= :menu-item (:fx/type quit)) "a menu item, not a button")
+        (is (= [:shortcut :q] (:accelerator quit)) "with the platform shortcut")
+        (is (empty? (filter #(and (= :button (:fx/type %))
+                                  (= ::state/quit-requested (:event/type (:on-action %))))
+                            (nodes d)))
+            "and no button anywhere that could be hit on the way to Split")))
+    (testing "except on macOS, where the application menu owns Quit and a File
+              menu holding only a duplicate would be clutter"
+      (with-redefs [csv-cleaver.desktop/os (constantly :mac)]
+        (let [d (view/content state/initial)]
+          (is (empty? (filter #(= ::state/quit-requested (:event/type (:on-action %)))
+                              (nodes d)))
+              "no Quit anywhere in the JavaFX menus — the app menu has it")
+          (is (= 1 (count (of-type d :menu))) "File is gone entirely"))))))
 
 (deftest the-menu-bar-offers-the-conventional-things
-  (let [d     (view/content state/initial)
-        menus (of-type d :menu)]
-    (is (= ["File" "Help"] (mapv :text menus)))
-    (is (:use-system-menu-bar (first (of-type d :menu-bar)))
-        "so macOS puts it in the system bar where it belongs")
-    (testing "Help reaches the same two overlays as the icon buttons"
-      (let [items (mapcat :items menus)
-            types (set (keep #(:event/type (:on-action %)) items))]
-        (is (contains? types ::state/help-toggled))
-        (is (contains? types ::state/about-toggled))))
-    (testing "and the icon buttons remain as the quick route"
-      (is (some #(and (= :button (:fx/type %))
-                      (= ::state/about-toggled (:event/type (:on-action %))))
-                (nodes d))))))
+  (with-redefs [csv-cleaver.desktop/os (constantly :windows)]
+    (let [d     (view/content state/initial)
+          menus (of-type d :menu)]
+      (is (= ["File" "Help"] (mapv :text menus)))
+      (is (:use-system-menu-bar (first (of-type d :menu-bar)))
+          "so macOS puts it in the system bar where it belongs")
+      (testing "Help reaches the same two overlays as the icon buttons"
+        (let [items (mapcat :items menus)
+              types (set (keep #(:event/type (:on-action %)) items))]
+          (is (contains? types ::state/help-toggled))
+          (is (contains? types ::state/about-toggled))))
+      (testing "and the icon buttons remain as the quick route"
+        (is (some #(and (= :button (:fx/type %))
+                        (= ::state/about-toggled (:event/type (:on-action %))))
+                  (nodes d))))))
+  (testing "on macOS, About moves to the application menu and out of Help —
+            one entry per convention, no duplicates"
+    (with-redefs [csv-cleaver.desktop/os (constantly :mac)]
+      (let [d     (view/content state/initial)
+            items (mapcat :items (of-type d :menu))]
+        (is (not-any? #(= ::state/about-toggled (:event/type (:on-action %))) items))
+        (is (some #(= ::state/help-toggled (:event/type (:on-action %))) items)
+            "Help itself stays")
+        (is (some #(and (= :button (:fx/type %))
+                        (= ::state/about-toggled (:event/type (:on-action %))))
+                  (nodes d))
+            "the info button still reaches About inside the window")))))
 
 (deftest the-menus-are-translated-like-everything-else
-  (let [german (view/content (state/with-language state/initial "de"))]
-    (is (= ["Datei" "Hilfe"] (mapv :text (of-type german :menu))))
-    (is (some #(= "Beenden" (:text %)) (of-type german :menu-item)))))
+  (with-redefs [csv-cleaver.desktop/os (constantly :windows)]
+    (let [german (view/content (state/with-language state/initial "de"))]
+      (is (= ["Datei" "Hilfe"] (mapv :text (of-type german :menu))))
+      (is (some #(= "Beenden" (:text %)) (of-type german :menu-item))))))
 
 (deftest the-startup-error-window-explains-itself-in-english
   (testing "the translations are the thing that is broken, so none of them can
