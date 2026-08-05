@@ -297,6 +297,18 @@
   :replace   "           (when (and opening? (:alt-down? state))\n             [[:reveal-hidden]]))))"
   :namespace "csv-cleaver.state-test"}
 
+ {:label     "the JNA entitlement is dropped, killing the notarised About menu"
+  :file      "package/macos/entitlements.plist"
+  :find      "  <key>com.apple.security.cs.disable-library-validation</key>\n  <true/>\n"
+  :replace   ""
+  :namespace "csv-cleaver.packaging-test"}
+
+ {:label     "signing forgets to hand jpackage the entitlements"
+  :file      "package/build-mac.sh"
+  :find      "            --mac-entitlements package/macos/entitlements.plist"
+  :replace   ""
+  :namespace "csv-cleaver.packaging-test"}
+
  {:label     "the entry point requires cljfx, so --headless dies on a server"
   :file      "src/csv_cleaver/main.clj"
   :find      "   [csv-cleaver.api.server :as api]"

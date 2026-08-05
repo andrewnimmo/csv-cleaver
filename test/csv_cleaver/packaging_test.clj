@@ -149,3 +149,28 @@
         (doseq [f ["LICENSE" "NOTICE" "THIRD-PARTY.md"]]
           (is (str/includes? text f)
               (str path " must stage " f " into the application")))))))
+
+(deftest the-signing-scaffolding-is-wired-and-inert
+  (testing "signing must switch on by adding secrets, never by editing the
+            build — so the wiring has to exist now, correct, while doing
+            nothing. The entitlements are the load-bearing part: each grants
+            something this application can name, and losing
+            disable-library-validation would make the app-menu About item
+            silently vanish from a hardened build, JNA's native dispatch
+            being unsigned by our identity."
+    (let [plist (slurp "package/macos/entitlements.plist")]
+      (doseq [ent ["com.apple.security.cs.allow-jit"
+                   "com.apple.security.cs.allow-unsigned-executable-memory"
+                   "com.apple.security.cs.disable-library-validation"]]
+        (is (str/includes? plist (str "<key>" ent "</key>")) ent)))
+    (let [mac (slurp "package/build-mac.sh")]
+      (is (str/includes? mac "--mac-entitlements package/macos/entitlements.plist")
+          "jpackage is handed the entitlements when signing")
+      (is (str/includes? mac "MACOS_SIGNING_IDENTITY")
+          "and signing keys off the identity being present, not off an edit")
+      (is (.isFile (io/file "package/macos/entitlements.plist"))
+          "the path the script names exists"))
+    (let [release (slurp ".github/workflows/release.yml")]
+      (doseq [needle ["notarytool submit" "stapler staple" "spctl --assess"
+                      "SHA256SUMS"]]
+        (is (str/includes? release needle) needle)))))

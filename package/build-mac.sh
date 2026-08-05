@@ -43,6 +43,20 @@ else
   echo "==> No icon at $ICON; building with the default"
 fi
 
+# Signing is inert until MACOS_SIGNING_IDENTITY is set — the full name of a
+# Developer ID Application certificate, e.g.
+#   "Developer ID Application: Andrew David Nimmo (TEAMID)".
+# With it set, jpackage signs the runtime, the bundle and the disk image with
+# the hardened runtime and the entitlements beside this script — see
+# docs/SIGNING.md for the whole path to a notarised release.
+SIGN_OPT=()
+if [ -n "${MACOS_SIGNING_IDENTITY:-}" ]; then
+  SIGN_OPT=(--mac-sign
+            --mac-signing-key-user-name "$MACOS_SIGNING_IDENTITY"
+            --mac-entitlements package/macos/entitlements.plist)
+  echo "==> Signing as: $MACOS_SIGNING_IDENTITY"
+fi
+
 # ── The runtime ─────────────────────────────────────────────────────────────
 #
 # jlink includes only the modules something declares a dependency on, and
@@ -79,6 +93,7 @@ jpackage \
   --dest "$APP_IMAGE_DIR" \
   --java-options "--enable-native-access=ALL-UNNAMED" \
   --java-options "-Dfile.encoding=UTF-8" \
+  ${SIGN_OPT[@]+"${SIGN_OPT[@]}"} \
   ${ICON_OPT[@]+"${ICON_OPT[@]}"}
   # ^ macOS still ships bash 3.2, where expanding an empty array under `set -u`
   #   is an "unbound variable" error. The ${x[@]+...} form is the portable way
@@ -119,6 +134,7 @@ jpackage \
   --app-image "$APP" \
   --license-file LICENSE \
   --mac-package-identifier "$BUNDLE_ID" \
+  ${SIGN_OPT[@]+"${SIGN_OPT[@]}"} \
   --dest "$DIST_DIR"
 
 echo "==> Done"

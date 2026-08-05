@@ -40,6 +40,8 @@ the rest accordingly.
 | Option-reveal of hidden languages lasts exactly one About | TESTED + **user-verified** | opening plainly or closing conceals; the command-line reveal is a separate session-long flag that concealing never touches; mutation caught |
 | Eight visible languages complete; two hidden ones partial-by-design | TESTED | parity/plural/placeholder suites; egg-bundle contract test |
 
+| Signing scaffolding inert and wired | OBSERVED + TESTED | unsigned `bb package` unchanged with the scaffolding in place; entitlements, script wiring and workflow steps pinned by test, two mutations caught. The *sufficiency* of the entitlements for notarisation is DERIVED until the first signed build — the JNA `disable-library-validation` need is the expected round-trip, stated in SIGNING.md |
+
 ## To verify on the next build (PENDING-USER)
 
 1. ~~App menu ▸ About~~ — **verified by the project manager**.
