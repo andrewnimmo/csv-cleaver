@@ -17,7 +17,15 @@
    degrades to the menu simply not gaining the item.
 
    Everything here must run on the AppKit main thread — which on macOS is the
-   JavaFX application thread, so callers use fx/on-fx-thread."
+   JavaFX application thread, so callers use fx/on-fx-thread.
+
+   One rule governs every function below: check preconditions, never rely on
+   catching. An Objective-C exception — an NSRangeException from indexing an
+   empty menu, say — does not become a Java exception at the JNA boundary; it
+   unwinds as C++, reaches objc_terminate, and aborts the whole JVM with
+   SIGABRT. Two such crashes were traced to exactly that: itemAtIndex: called
+   on a menu whose count nobody had checked. The try/catch wrappers here stop
+   Java-side surprises only; the count checks are the real safety."
   (:import
    (com.sun.jna Function NativeLibrary Pointer)))
 
@@ -89,13 +97,20 @@
       (.invoke register (to-array [cls]))
       (msg (msg cls "alloc") "init"))))
 
+(defn- item-count
+  "How many items `menu` has, zero for nil — the guard that keeps every
+   itemAtIndex: below in range, because out of range is not an error here, it
+   is a dead JVM."
+  ^long [menu]
+  (if menu (long (msg-long menu "numberOfItems")) 0))
+
 (defn- app-menu
   "The application submenu — item zero of NSApp's main menu — or nil when the
    furniture is not where this expects it."
   ^Pointer []
   (when-let [nsapp (msg (objc-class "NSApplication") "sharedApplication")]
     (when-let [main (msg nsapp "mainMenu")]
-      (when (pos? (msg-long main "numberOfItems"))
+      (when (pos? (item-count main))
         (msg (msg main "itemAtIndex:" (long 0)) "submenu")))))
 
 (defonce ^:private installed-item (atom nil))
@@ -113,6 +128,8 @@
       (do (msg existing "setTitle:" (nsstring title))
           true)
       (if-let [menu (app-menu)]
+        ;; insertItem:atIndex: 0 is legal on an empty menu, so no count guard
+        ;; is needed for the insert itself — only the reads above index.
         (let [item (-> (objc-class "NSMenuItem")
                        (msg "alloc")
                        (msg "initWithTitle:action:keyEquivalent:"
@@ -130,20 +147,24 @@
 
 (defn about-item-title
   "What the application menu's first item currently says, read back from
-   AppKit — the ground truth a test can hold, rather than what we intended."
+   AppKit — the ground truth a test can hold, rather than what we intended.
+   nil when the menu is empty: indexing it anyway would abort the JVM."
   []
   (try
     (when-let [menu (app-menu)]
-      (nsstring->str (msg (msg menu "itemAtIndex:" (long 0)) "title")))
+      (when (pos? (item-count menu))
+        (nsstring->str (msg (msg menu "itemAtIndex:" (long 0)) "title"))))
     (catch Throwable _ nil)))
 
 (defn perform-about-item!
   "Fire the application menu's first item exactly as AppKit would on a click.
    For tests: this exercises the target/selector plumbing, not our Clojure
-   handler called directly."
+   handler called directly. False rather than a dead JVM when there is
+   nothing at index zero."
   []
   (try
     (when-let [menu (app-menu)]
-      (msg menu "performActionForItemAtIndex:" (long 0))
-      true)
+      (when (pos? (item-count menu))
+        (msg menu "performActionForItemAtIndex:" (long 0))
+        true))
     (catch Throwable _ false)))

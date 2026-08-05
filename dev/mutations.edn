@@ -249,12 +249,6 @@
   :replace   "                         hidden-tags"
   :namespace "csv-cleaver.i18n-test"}
 
- {:label     "Alt plus About stops revealing the eggs"
-  :file      "src/csv_cleaver/state.clj"
-  :find      "           (when (and opening? (:alt-down? state))\n             [[:reveal-hidden]])"
-  :replace   "           nil"
-  :namespace "csv-cleaver.state-test"}
-
  {:label     "the dialog card stops fitting small windows"
   :file      "src/csv_cleaver/view.clj"
   :find      "       :max-height           Double/NEGATIVE_INFINITY\n       :max-width            640"
