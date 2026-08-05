@@ -186,6 +186,10 @@
   [_]
   (i18n/reveal-hidden!))
 
+(defmethod perform! :conceal-hidden
+  [_]
+  (i18n/conceal-hidden!))
+
 (defmethod perform! :compose-mail
   [_]
   (desktop/compose-mail!
@@ -330,27 +334,6 @@
       ::view/drag-over    (accept-drag! (:fx/event event))
       ::view/drag-dropped (complete-drop! (:fx/event event))
       ::view/close-requested (do (save-session!) (Platform/exit))
-
-      ;; A ToggleButton deselects when its selected self is clicked, and since
-      ;; no state changes, the identical re-rendered description never snaps
-      ;; the visual back. Consuming the press before the toggle can fire is
-      ;; what turns a pair of toggles into a radio choice.
-      ::view/guard-selected-toggle
-      (when (:selected? event)
-        (let [e (:fx/event event)]
-          (cond
-            ;; Any mouse press on the selected pill: swallowed before the
-            ;; toggle can fire and deselect itself.
-            (instance? javafx.scene.input.MouseEvent e)
-            (.consume ^javafx.scene.input.MouseEvent e)
-
-            ;; Space fires a focused toggle exactly like a click, so it gets
-            ;; the same guard — but only Space. Consuming every key here
-            ;; would trap Tab and leave the keyboard user stuck on the pill.
-            (and (instance? javafx.scene.input.KeyEvent e)
-                 (= javafx.scene.input.KeyCode/SPACE
-                    (.getCode ^javafx.scene.input.KeyEvent e)))
-            (.consume ^javafx.scene.input.KeyEvent e))))
 
       ;; Key transitions only matter for their modifier state; Alt is read here
       ;; because the pure layer cannot touch a KeyEvent.
@@ -505,6 +488,49 @@
   [_]
   (install-native-about!))
 
+(defn- selected-pill
+  "The selected segmented-pill ToggleButton at or above `node`, or nil.
+   Radio semantics apply only to the pill groups; a lone ToggleButton that
+   legitimately toggles off would not carry the pill style classes."
+  ^javafx.scene.control.ToggleButton [node]
+  (loop [n node]
+    (when (instance? javafx.scene.Node n)
+      (if (and (instance? javafx.scene.control.ToggleButton n)
+               (.isSelected ^javafx.scene.control.ToggleButton n)
+               (some #{"left-pill" "center-pill" "right-pill"}
+                     (.getStyleClass ^javafx.scene.Node n)))
+        n
+        (recur (.getParent ^javafx.scene.Node n))))))
+
+(defn install-radio-pill-guard!
+  "Make every selected pill un-deselectable, at the scene, in the capturing
+   phase.
+
+   The phase is the entire point. A handler on the button itself cannot
+   prevent the deselect: a control's behavior handlers are on the same node,
+   and same-node handlers all run regardless of consumption — which is why
+   the first version of this guard, a consuming :on-mouse-pressed, passed its
+   handler-level test and changed nothing in the running application. A
+   capturing filter runs before the button's behavior ever sees the event,
+   and its consumption really does stop delivery.
+
+   Space gets the same guard because it fires a focused toggle like a click;
+   only Space, because consuming more would trap keyboard navigation."
+  [^javafx.scene.Scene scene]
+  (.addEventFilter scene javafx.scene.input.MouseEvent/MOUSE_PRESSED
+                   (reify javafx.event.EventHandler
+                     (handle [_ e]
+                       (when (selected-pill (.getTarget ^javafx.scene.input.MouseEvent e))
+                         (.consume ^javafx.scene.input.MouseEvent e)))))
+  (.addEventFilter scene javafx.scene.input.KeyEvent/KEY_PRESSED
+                   (reify javafx.event.EventHandler
+                     (handle [_ e]
+                       (let [^javafx.scene.input.KeyEvent ke e]
+                         (when (and (= javafx.scene.input.KeyCode/SPACE (.getCode ke))
+                                    (selected-pill (.getFocusOwner scene)))
+                           (.consume ke))))))
+  scene)
+
 (defn start-window!
   [options]
   (reset! *state (startup-state state/initial (prefs/load-prefs) options))
@@ -512,7 +538,9 @@
   (fx/mount-renderer *state @renderer)
   (perform! [:apply-theme (:theme @*state)])
   (fx/on-fx-thread
-   (some-> (primary-stage) track-window-geometry!)
+   (when-let [stage (primary-stage)]
+     (track-window-geometry! stage)
+     (some-> (.getScene stage) install-radio-pill-guard!))
    (install-native-about!))
   (watch-system-appearance!))
 

@@ -388,3 +388,50 @@
         (is (true? @(fx/on-fx-thread (csv-cleaver.macos/perform-about-item!))))
         (is (= :about (:dialog @app/*state))
             "the click travelled AppKit → ObjC target → JNA → dispatch")))))
+
+(deftest ^:fx a-selected-pill-survives-a-real-click-sequence
+  (testing "the previous guard consumed the press in a handler on the button —
+            and a control's own behavior handlers run regardless of what a
+            sibling handler consumes, so the running application still showed
+            both pills off. This test fires the full press/release/click
+            sequence at the real materialised pill, in a real scene: first
+            with no guard, proving the sequence genuinely deselects (and that
+            this test can fail); then with the scene filter, proving it
+            cannot."
+    (tu/with-temp-dir [dir]
+      (letfn [(pills [^javafx.scene.Parent root]
+                (->> (.lookupAll root ".toggle-button")
+                     (filter #(some #{"left-pill" "right-pill" "center-pill"}
+                                    (.getStyleClass ^javafx.scene.Node %)))
+                     (filter #(.isSelected ^javafx.scene.control.ToggleButton %))))
+              (click! [^javafx.scene.Node node]
+                ;; Scene has no Stage here, so there are no screen
+                ;; coordinates; zeros are fine — the button behavior reads
+                ;; the target, not the geometry.
+                (let [ev (fn [t]
+                           (javafx.scene.input.MouseEvent.
+                            t 3.0 3.0 0.0 0.0
+                            javafx.scene.input.MouseButton/PRIMARY 1
+                            false false false false true false false
+                            true false false nil))]
+                  (javafx.event.Event/fireEvent node (ev javafx.scene.input.MouseEvent/MOUSE_PRESSED))
+                  (javafx.event.Event/fireEvent node (ev javafx.scene.input.MouseEvent/MOUSE_RELEASED))
+                  (javafx.event.Event/fireEvent node (ev javafx.scene.input.MouseEvent/MOUSE_CLICKED))))]
+        (let [build (fn [guard?]
+                      @(fx/on-fx-thread
+                        (let [root  (fx/instance
+                                     (fx/create-component
+                                      {:fx/type :stack-pane
+                                       :stylesheets (branding/stylesheets)
+                                       :children [(view/content (ready-state dir))]}
+                                      {:fx.opt/map-event-handler (fn [_])}))
+                              scene (javafx.scene.Scene. root 900 700)]
+                          (when guard? (app/install-radio-pill-guard! scene))
+                          (doto ^javafx.scene.Parent root (.applyCss) (.layout))
+                          (let [pill ^javafx.scene.control.ToggleButton (first (pills root))]
+                            (click! pill)
+                            (.isSelected pill)))))]
+          (is (false? (build false))
+              "without the guard the sequence deselects — the test is armed")
+          (is (true? (build true))
+              "with the scene filter the selected pill cannot be clicked off"))))))

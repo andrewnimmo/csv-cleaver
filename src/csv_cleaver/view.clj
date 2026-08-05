@@ -362,32 +362,28 @@
 ;; ── Options ─────────────────────────────────────────────────────────────────
 
 (defn mode-toggle
-  "Two toggle buttons acting as one radio choice.
-
-   The :on-mouse-pressed guard is what makes them radio-like. A JavaFX
-   ToggleButton deselects when its selected self is clicked — and because that
-   click changes no state, the re-rendered description is identical and cljfx
-   never pushes the visual back, leaving a control that looks switched off
-   while the application still splits by rows. The press on an already-selected
-   button is consumed in csv-cleaver.app before the toggle can fire."
+  "Two toggle buttons acting as one radio choice. What makes them radio-like —
+   a selected pill that cannot be clicked off — is not here: it is a
+   capturing-phase event filter installed on the scene in csv-cleaver.app.
+   A handler on the button itself cannot do it, because a control's own
+   behavior handlers run regardless of what a sibling handler consumes;
+   consumption only stops propagation to other nodes. That is why the first
+   version of this guard, tested at the handler, changed nothing in the
+   running application."
   [{:keys [mode] :as st}]
   (let [ctx (state/ctx st)]
     {:fx/type :h-box
      :children
-     [{:fx/type          :toggle-button
-       :style-class      ["toggle-button" "left-pill"]
-       :text             (i18n/tr ctx :options/by-rows)
-       :selected         (= mode :rows)
-       :on-mouse-pressed {:event/type ::guard-selected-toggle :selected? (= mode :rows)}
-       :on-key-pressed   {:event/type ::guard-selected-toggle :selected? (= mode :rows)}
-       :on-action        {:event/type ::state/mode-changed :mode :rows}}
-      {:fx/type          :toggle-button
-       :style-class      ["toggle-button" "right-pill"]
-       :text             (i18n/tr ctx :options/by-size)
-       :selected         (= mode :bytes)
-       :on-mouse-pressed {:event/type ::guard-selected-toggle :selected? (= mode :bytes)}
-       :on-key-pressed   {:event/type ::guard-selected-toggle :selected? (= mode :bytes)}
-       :on-action        {:event/type ::state/mode-changed :mode :bytes}}]}))
+     [{:fx/type     :toggle-button
+       :style-class ["toggle-button" "left-pill"]
+       :text        (i18n/tr ctx :options/by-rows)
+       :selected    (= mode :rows)
+       :on-action   {:event/type ::state/mode-changed :mode :rows}}
+      {:fx/type     :toggle-button
+       :style-class ["toggle-button" "right-pill"]
+       :text        (i18n/tr ctx :options/by-size)
+       :selected    (= mode :bytes)
+       :on-action   {:event/type ::state/mode-changed :mode :bytes}}]}))
 
 (defn preset-row
   "The row-count shortcuts, each saying what it is for. A bare 65,000 tells a
@@ -892,17 +888,13 @@
        (for [[value theme-key style] [[:system :about/theme-system "left-pill"]
                                       [:light :about/theme-light "center-pill"]
                                       [:dark :about/theme-dark "right-pill"]]]
-         ;; Same radio-guard as mode-toggle: a selected pill must not
-         ;; deselect on a second click.
-         {:fx/type          :toggle-button
-          :style-class      ["toggle-button" style]
-          :text             (i18n/tr ctx theme-key)
-          :selected         (= theme value)
-          :on-mouse-pressed {:event/type ::guard-selected-toggle
-                             :selected? (= theme value)}
-          :on-key-pressed   {:event/type ::guard-selected-toggle
-                             :selected? (= theme value)}
-          :on-action        {:event/type ::state/theme-changed :theme value}})}
+         ;; Radio semantics come from the scene filter in csv-cleaver.app,
+         ;; same as the mode pills.
+         {:fx/type     :toggle-button
+          :style-class ["toggle-button" style]
+          :text        (i18n/tr ctx theme-key)
+          :selected    (= theme value)
+          :on-action   {:event/type ::state/theme-changed :theme value}})}
 
       ;; Quit is not here. It was, and that was wrong: an About box is not
       ;; where anyone looks for the way out. It lives in the File menu.

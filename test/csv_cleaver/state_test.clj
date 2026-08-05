@@ -601,12 +601,14 @@
       (is (= [[:reveal-hidden]]
              (:effects (state/handle alt-down {:event/type ::state/about-toggled})))
           "Alt held while opening About reveals them")
-      (is (empty? (:effects (state/handle state/initial
-                                          {:event/type ::state/about-toggled})))
-          "without Alt, About is just About")
-      (is (empty? (:effects (state/handle (assoc alt-down :dialog :about)
-                                          {:event/type ::state/about-toggled})))
-          "closing About reveals nothing, whatever the keys are doing"))))
+      (is (= [[:conceal-hidden]]
+             (:effects (state/handle state/initial
+                                     {:event/type ::state/about-toggled})))
+          "without Alt, About conceals — a plain About never shows the eggs")
+      (is (= [[:conceal-hidden]]
+             (:effects (state/handle (assoc alt-down :dialog :about)
+                                     {:event/type ::state/about-toggled})))
+          "closing About conceals, whatever the keys are doing"))))
 
 (deftest changing-language-refreshes-the-native-about-title
   (let [{:keys [effects]} (state/handle state/initial
@@ -614,3 +616,21 @@
                                          :language-name "Español"})]
     (is (some #{[:sync-native-about]} effects)
         "the macOS application menu's About must follow the window's language")))
+
+(deftest the-option-reveal-lasts-exactly-one-about
+  (testing "reported after the App-menu About was verified: one Option-click
+            revealed the eggs for every later About. Opening plainly, or
+            closing, must conceal — while the command-line flag, being
+            explicit, is a different mechanism and stays."
+    (let [alt   (state/apply-event state/initial
+                                   {:event/type ::state/alt-changed :down? true})
+          plain state/initial]
+      (is (= [[:reveal-hidden]]
+             (:effects (state/handle alt {:event/type ::state/about-toggled}))))
+      (is (= [[:conceal-hidden]]
+             (:effects (state/handle plain {:event/type ::state/about-toggled})))
+          "opened without Option: concealed, whatever an earlier About did")
+      (is (= [[:conceal-hidden]]
+             (:effects (state/handle (assoc plain :dialog :about)
+                                     {:event/type ::state/dialog-closed})))
+          "and the Close button conceals too"))))

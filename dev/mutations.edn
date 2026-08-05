@@ -245,7 +245,7 @@
 
  {:label     "the hidden languages leak into the default picker"
   :file      "src/csv_cleaver/i18n.clj"
-  :find      "                         (when @revealed hidden-tags)"
+  :find      "                         (when (hidden-revealed?) hidden-tags)"
   :replace   "                         hidden-tags"
   :namespace "csv-cleaver.i18n-test"}
 
@@ -293,9 +293,15 @@
 
  {:label     "a selected mode pill switches itself off again"
   :file      "src/csv_cleaver/app.clj"
-  :find      "      ::view/guard-selected-toggle\n      (when (:selected? event)"
-  :replace   "      ::view/guard-selected-toggle\n      (when false"
-  :namespace "csv-cleaver.app-test"}
+  :find      "                       (when (selected-pill (.getTarget ^javafx.scene.input.MouseEvent e))\n                         (.consume ^javafx.scene.input.MouseEvent e))"
+  :replace   "                       nil"
+  :namespace "csv-cleaver.fx-smoke-test"}
+
+ {:label     "a plain About keeps the eggs revealed from an earlier Option-About"
+  :file      "src/csv_cleaver/state.clj"
+  :find      "           (if (and opening? (:alt-down? state))\n             [[:reveal-hidden]]\n             [[:conceal-hidden]]))))"
+  :replace   "           (when (and opening? (:alt-down? state))\n             [[:reveal-hidden]]))))"
+  :namespace "csv-cleaver.state-test"}
 
  {:label     "the entry point requires cljfx, so --headless dies on a server"
   :file      "src/csv_cleaver/main.clj"

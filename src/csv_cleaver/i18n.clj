@@ -100,24 +100,40 @@
    completeness tests that every visible language must pass."
   ["tlh" "vuh"])
 
-(defonce ^:private revealed
-  ;; Whether the hidden languages are on offer this session. Flipped by
-  ;; --hidden-languages on the command line, or by holding Alt/Option while
-  ;; opening the About dialog.
+(defonce ^:private revealed-by-flag
+  ;; --hidden-languages on the command line: explicit, so it holds for the
+  ;; whole session.
   (atom false))
 
-(defn reveal-hidden! [] (reset! revealed true))
+(defonce ^:private revealed-now
+  ;; Alt/Option held while opening About: holds only while that About stays
+  ;; open. The first version was one sticky flag, so a single Option-click
+  ;; revealed the eggs for every later About — which the project manager
+  ;; correctly called undefined: opened plainly, About must show the normal
+  ;; languages.
+  (atom false))
+
+(defn reveal-hidden!
+  "The transient reveal — an About opened with Alt/Option." []
+  (reset! revealed-now true))
+
+(defn reveal-hidden-permanently!
+  "The command-line reveal, for the whole session." []
+  (reset! revealed-by-flag true))
+
 (defn conceal-hidden!
-  "For tests, which must not leak a revealed state into each other."
-  [] (reset! revealed false))
-(defn hidden-revealed? [] @revealed)
+  "End the transient reveal. Deliberately leaves the command-line flag alone:
+   an explicit --hidden-languages is not undone by closing a dialog." []
+  (reset! revealed-now false))
+
+(defn hidden-revealed? [] (or @revealed-by-flag @revealed-now))
 
 (defn available-tags
   "Every language that can be chosen: those shipped, any valid ones the user
    has supplied, and — once revealed — the Easter eggs."
   []
   (vec (distinct (concat supported
-                         (when @revealed hidden-tags)
+                         (when (hidden-revealed?) hidden-tags)
                          (sort (keys (:bundles @external)))))))
 
 (defn- phrase-strings

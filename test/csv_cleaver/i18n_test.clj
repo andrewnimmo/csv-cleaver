@@ -246,3 +246,16 @@
                                       (if (= tag "tlh") "qatlh" "Poprah"))
                     "and the Help questions speak the egg's own language"))
               (finally (i18n/conceal-hidden!)))))))))
+
+(deftest the-command-line-reveal-outlives-a-concealment
+  (testing "conceal! ends the Option-reveal only; --hidden-languages is an
+            explicit choice and closing a dialog must not undo it"
+    (try
+      (i18n/reveal-hidden-permanently!)
+      (i18n/conceal-hidden!)
+      (is (true? (i18n/hidden-revealed?)))
+      (is (every? (set (i18n/available-tags)) ["tlh" "vuh"]))
+      (finally
+        ;; reach the flag directly: tests must not leak a permanent reveal
+        (reset! @#'csv-cleaver.i18n/revealed-by-flag false)
+        (i18n/conceal-hidden!)))))

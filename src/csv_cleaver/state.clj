@@ -398,11 +398,15 @@
   (let [opening? (not= :about (:dialog state))]
     (apply with-effects
            (assoc state :dialog (when opening? :about))
-           ;; Alt held while opening About reveals the hidden languages — the
-           ;; same convention macOS uses for Option-changed menus. An effect,
-           ;; not a direct call: state stays pure and the tests stay honest.
-           (when (and opening? (:alt-down? state))
-             [[:reveal-hidden]]))))
+           ;; Alt held while opening About reveals the hidden languages for
+           ;; exactly that opening; any other transition — opened plainly, or
+           ;; closed — conceals them again. One sticky flag here was the bug:
+           ;; a single Option-click revealed the eggs for every later About.
+           ;; The command-line flag is a different, session-long mechanism and
+           ;; concealing never touches it.
+           (if (and opening? (:alt-down? state))
+             [[:reveal-hidden]]
+             [[:conceal-hidden]]))))
 
 (defmethod handle ::quit-requested
   [state _]
@@ -410,7 +414,11 @@
 
 (defmethod handle ::dialog-closed
   [state _]
-  (with-effects (assoc state :dialog nil)))
+  (apply with-effects
+         (assoc state :dialog nil)
+         ;; Closing About ends the transient egg reveal; closing anything else
+         ;; has nothing to conceal but concealing is harmless and simpler.
+         [[:conceal-hidden]]))
 
 (def selectable-delimiters
   "Offered behind Advanced when the detected separator is wrong. The first

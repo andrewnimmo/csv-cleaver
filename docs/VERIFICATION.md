@@ -35,22 +35,22 @@ the rest accordingly.
 | Alt/Option + About reveals hidden languages | TESTED for wiring, **PENDING-USER for the keystroke** | real KeyEvent driven through the real scene; the focus path from a physical key press cannot be exercised headless |
 | Session survives ⌘Q / Glass Quit / kill | TESTED for mechanism | geometry-tracking + shutdown-hook tests; the ⌘Q path itself on a live Mac is PENDING-USER |
 | macOS app menu carries Quit (Glass's own) | DERIVED + user-observed | `MacApplication.installDefaultMenus` read from bytecode; the user reports Quit present |
-| macOS app menu carries About, translated, opening the About overlay | OBSERVED + TESTED | installed via the Objective-C runtime (JNA) after the public-API route was proven absent; the fx test reads the item's title back **from AppKit** and fires it through `performActionForItemAtIndex:` — AppKit's own click dispatch — asserting the overlay opens. Probe run on record: install → "About CSV Cleaver" → retitle "Acerca de CSV Cleaver" → perform → handler fired |
-| A selected mode/theme pill cannot be switched off | TESTED | real MouseEvent and KeyEvents through the guard: press and Space consumed on a selected pill, Tab never trapped, unselected pills unaffected; mutation caught. The visual on a live click is PENDING-USER below |
+| macOS app menu carries About, translated, opening the About overlay | OBSERVED + TESTED + **user-verified** | installed via the Objective-C runtime (JNA) after the public-API route was proven absent; the fx test reads the item's title back **from AppKit** and fires it through `performActionForItemAtIndex:` — AppKit's own click dispatch — asserting the overlay opens. Probe run on record: install → "About CSV Cleaver" → retitle "Acerca de CSV Cleaver" → perform → handler fired |
+| A selected mode/theme pill cannot be switched off | TESTED (armed) | the first guard consumed the press in a same-node handler, which cannot block a control's own behavior — its handler-level test passed while the running app still deselected. Now a capturing scene filter; the test fires the full press/release/click at the real pill and asserts both directions: no guard → deselects, guard → cannot. Live click PENDING-USER |
+| Option-reveal of hidden languages lasts exactly one About | TESTED | opening plainly or closing conceals; the command-line reveal is a separate session-long flag that concealing never touches; mutation caught |
 | Eight visible languages complete; two hidden ones partial-by-design | TESTED | parity/plural/placeholder suites; egg-bundle contract test |
 
 ## To verify on the next build (PENDING-USER)
 
-1. **App menu ▸ About CSV Cleaver** exists, above Hide, and opens the About
-   overlay; switch language in About and the menu item's title follows.
-2. Help and About titles intact at the right edge — the mechanism is Text
-   nodes this time, not more padding.
-3. Hold Option, click the ℹ️ button: the Language picker offers tlhIngan Hol
-   and Vuhlkansu.
-4. Click the already-selected "Equal row counts" pill: it must stay selected —
-   never the both-off state.
-5. One file dialog at a time; ⌘Q quits cleanly with one open.
-6. Move/resize the window, quit with ⌘Q: position remembered on next launch.
+1. ~~App menu ▸ About~~ — **verified by the project manager**.
+2. Click the already-selected "Equal row counts" pill: stays selected — the
+   fix is different this time (capturing scene filter), and the automated
+   test now fails without it, which the previous one did not.
+3. Open About with Option: eggs offered. Close it, reopen **without**
+   Option: eggs gone again.
+4. Help and About titles intact at the right edge (Text nodes).
+5. One file dialog at a time; ⌘Q quits cleanly with one open; window
+   position remembered across a ⌘Q.
 
 ## Falsification record
 
@@ -68,8 +68,9 @@ without verifying the path to it.
 | "Title clipping fixed" (padding) | 'p' still clipped on Retina | padding widens a Label *and moves its text*, leaving the same knife-edge; fix verified at 1× for a 2× defect |
 | "Alt reveals hidden languages" | keypress did nothing | handlers sat on a node that never has focus; tests dispatched synthetic maps, proving the handler worked if reached, never that anything reached it |
 | "macOS app menu carries About, tested" | no such menu item exists | `Desktop.setAboutHandler` handles an event AWT never receives under JavaFX, whose Glass toolkit owns the menu; "tested" meant handlers installed without error |
+| "Selected pill cannot be switched off, TESTED" | both pills still clickable to grey | the guard consumed the press in a same-node handler, which cannot block a control's own behavior handlers; the test proved the flag was set, not that the toggle was prevented — the seventh instance of mechanism-without-path, caught this time within a day by the PENDING-USER step |
 
-Six falsified claims across roughly twenty substantive reports in the same
+Seven falsified claims across roughly twenty substantive reports in the same
 period. The corrective in force: every claim now carries one of the four
 levels above, and "done" is reserved for OBSERVED or TESTED.
 
