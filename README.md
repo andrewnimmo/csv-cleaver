@@ -20,6 +20,7 @@ French, German, Italian, Portuguese, Chinese and Japanese.
 | Driving it from a script | **[docs/API.md](docs/API.md)** |
 | Assessing the security of any of it | **[docs/SECURITY.md](docs/SECURITY.md)** |
 | Asking who — and what — wrote this | **[docs/PROVENANCE.md](docs/PROVENANCE.md)** |
+| Checking what is verified, and how | **[docs/VERIFICATION.md](docs/VERIFICATION.md)** |
 
 ---
 
