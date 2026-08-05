@@ -29,6 +29,9 @@ if exist "%STAGE_DIR%" rmdir /s /q "%STAGE_DIR%"
 mkdir "%DIST_DIR%"
 mkdir "%STAGE_DIR%"
 copy target\csv-cleaver-*.jar "%STAGE_DIR%\" >nul
+copy LICENSE "%STAGE_DIR%\" >nul
+copy NOTICE "%STAGE_DIR%\" >nul
+copy THIRD-PARTY.md "%STAGE_DIR%\" >nul
 
 for %%f in ("%STAGE_DIR%\*.jar") do set MAIN_JAR=%%~nxf
 
@@ -48,6 +51,7 @@ jpackage ^
   --app-version "%APP_VERSION%" ^
   --vendor "%VENDOR%" ^
   --copyright "%COPYRIGHT%" ^
+  --license-file LICENSE ^
   --input "%STAGE_DIR%" ^
   --main-jar "%MAIN_JAR%" ^
   --add-modules java.se,jdk.localedata,jdk.charsets,jdk.crypto.ec,jdk.unsupported,jdk.zipfs,jdk.management ^

@@ -358,9 +358,14 @@
           [event] (routed st {:event/type :csv-cleaver.view/new-folder-requested})]
       (is (= :csv-cleaver.state/collision-resolved (:event/type event)))
       (is (= :new-dir (:choice event)))
+      ;; The whole event in the failure message: this assertion failed once in
+      ;; a full run and never since, and the report did not say what the event
+      ;; actually was. If it fires again, this time it testifies.
       (is (str/starts-with? (.getName ^File (:dir event)) "orders split ")
-          "named after the file, inside the folder the user chose")
-      (is (= (io/file dir "out") (.getParentFile ^File (:dir event)))))))
+          (str "named after the file, inside the folder the user chose — got "
+               (pr-str event)))
+      (is (= (io/file dir "out") (.getParentFile ^File (:dir event)))
+          (pr-str event)))))
 
 (deftest ordinary-events-flow-through-the-pure-handler
   (testing "everything that is not one of the special cases goes to

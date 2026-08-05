@@ -27,9 +27,11 @@
  :copyright "Copyright © 2026 Andrew David Nimmo"
  :contact   "contact+csv.cleaver@nimmo.dev"
 
- ;; Shown in the About dialog and the README, verbatim. Provenance in five
- ;; words; docs/PROVENANCE.md is the long form.
- :made-with "Made with 🤖 in Barcelona"
+ ;; Provenance in five words, shown in the About dialog. nil means the
+ ;; application's own translated line (:about/made-with in every language
+ ;; bundle); a rebrand can put its own words here, which are then shown
+ ;; verbatim — the same arrangement as the tagline.
+ :made-with nil
  :homepage  "https://github.com/andrewnimmo/csv-cleaver"
 
  ;; Leave as nil to use the theme's own accent colour.

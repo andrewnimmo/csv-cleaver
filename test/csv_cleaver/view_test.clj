@@ -611,3 +611,17 @@
             (str tag ": the contact address"))
         (is (some #(= :image-view (:fx/type %)) (nodes d))
             (str tag ": the icon is in the box"))))))
+
+(deftest the-provenance-line-speaks-the-windows-language
+  (testing "brand voice, not a legal string, so it is translated like any other
+            phrase — unlike the copyright notice directly above it"
+    (is (text-containing (view/content (assoc state/initial :dialog :about))
+                         #"Made with 🤖 in Barcelona"))
+    (is (text-containing (view/content (-> state/initial
+                                           (state/with-language "es")
+                                           (assoc :dialog :about)))
+                         #"Hecho con 🤖 en Barcelona"))
+    (testing "a rebrand's own wording wins, verbatim"
+      (with-redefs [branding/value (fn [k] (when (= k :made-with) "Forged in Osaka"))]
+        (is (text-containing (view/content (assoc state/initial :dialog :about))
+                             #"Forged in Osaka"))))))

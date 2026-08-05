@@ -788,8 +788,8 @@
       (when-let [contact (branding/value :contact)]
         {:fx/type :label :style-class ["hint"] :wrap-text true
          :text    (str (i18n/tr ctx :about/contact) ": " contact)})
-      (when-let [made (branding/value :made-with)]
-        {:fx/type :label :style-class ["hint"] :wrap-text true :text made})
+      {:fx/type :label :style-class ["hint"] :wrap-text true
+       :text    (or (branding/value :made-with) (i18n/tr ctx :about/made-with))}
       {:fx/type :separator}
 
       {:fx/type :label :text (i18n/tr ctx :about/language)}

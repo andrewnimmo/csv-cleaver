@@ -121,6 +121,7 @@
   :about/version      "版本 {0}"
   :about/licence      "依据 Apache 2.0 许可证发布。"
   :about/contact         "联系方式"
+  :about/made-with       "在巴塞罗那用 🤖 制作"
   :about/notices      "内置的 Java 运行时依据 GPL v2 及 Classpath 例外条款发布。详见 THIRD-PARTY.md。"
   :about/language     "语言"
   :about/theme        "外观"

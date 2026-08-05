@@ -28,6 +28,7 @@ echo "==> Staging"
 rm -rf "$DIST_DIR" "$STAGE_DIR" "$APP_DIR"
 mkdir -p "$DIST_DIR" "$STAGE_DIR"
 cp target/csv-cleaver-*.jar "$STAGE_DIR/"
+cp LICENSE NOTICE THIRD-PARTY.md "$STAGE_DIR/"
 MAIN_JAR=$(basename "$STAGE_DIR"/*.jar)
 
 ICON_OPT=()
@@ -51,6 +52,7 @@ COMMON=(
   --copyright "$COPYRIGHT"
   --input "$STAGE_DIR"
   --main-jar "$MAIN_JAR"
+  --license-file LICENSE
   --add-modules "$MODULES"
   --main-class csv_cleaver.main
   --java-options "--enable-native-access=ALL-UNNAMED"

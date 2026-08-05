@@ -135,3 +135,17 @@
           "ico header: reserved 0, type 1")
       (is (= [0x89 0x50 0x4e 0x47] (magic (:linux icons) 4))
           "png signature"))))
+
+(deftest the-licence-actually-reaches-the-user
+  (testing "NOTICE promises that THIRD-PARTY.md is installed alongside the
+            application, and for months nothing was: only the jar was staged.
+            A warranty disclaimer the user never receives is worth little, so
+            every platform stages the three legal files and hands LICENSE to
+            jpackage, which presents it at install time."
+    (doseq [path scripts]
+      (when-let [text (source path)]
+        (is (str/includes? text "--license-file LICENSE")
+            (str path " must present the licence at install time"))
+        (doseq [f ["LICENSE" "NOTICE" "THIRD-PARTY.md"]]
+          (is (str/includes? text f)
+              (str path " must stage " f " into the application")))))))

@@ -29,6 +29,11 @@ echo "==> Staging"
 rm -rf "$DIST_DIR" "$STAGE_DIR"
 mkdir -p "$DIST_DIR" "$STAGE_DIR"
 cp target/csv-cleaver-*.jar "$STAGE_DIR/"
+# The licence, the copyright notice and the third-party attributions travel
+# inside the installed application — NOTICE promises as much, and a warranty
+# disclaimer the user never receives is worth little. jpackage copies
+# everything in --input into the app's directory.
+cp LICENSE NOTICE THIRD-PARTY.md "$STAGE_DIR/"
 MAIN_JAR=$(basename "$STAGE_DIR"/*.jar)
 
 ICON_OPT=()
@@ -69,6 +74,7 @@ jpackage \
   --mac-package-identifier "$BUNDLE_ID" \
   --input "$STAGE_DIR" \
   --main-jar "$MAIN_JAR" \
+  --license-file LICENSE \
   --add-modules "$MODULES" \
   --main-class csv_cleaver.main \
   --dest "$APP_IMAGE_DIR" \

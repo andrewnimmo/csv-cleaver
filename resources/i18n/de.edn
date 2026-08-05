@@ -126,6 +126,7 @@
   :about/version      "Version {0}"
   :about/licence      "Lizenziert unter der Apache-Lizenz 2.0."
   :about/contact         "Kontakt"
+  :about/made-with       "Mit 🤖 in Barcelona gemacht"
   :about/notices      "Enthält eine Java-Laufzeitumgebung unter GPL v2 mit Classpath-Ausnahme. Siehe THIRD-PARTY.md."
   :about/language     "Sprache"
   :about/theme        "Erscheinungsbild"
