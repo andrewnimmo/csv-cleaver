@@ -59,6 +59,10 @@
      "<!doctype html>\n<html lang=\"en\">\n<head>\n"
      "<meta charset=\"utf-8\">\n"
      "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n"
+     ;; Google Search Console ownership proof. Verification fetches the root
+     ;; page, but every page carrying it costs nothing and survives Google
+     ;; later being pointed at a subpage.
+     "<meta name=\"google-site-verification\" content=\"z3NocoQ5SZh74db3ndpryU17g6qvP4Uid00NBtkdIwY\">\n"
      "<title>" (esc (if title (str title " — " name) name)) "</title>\n"
      "<meta name=\"description\" content=\"" (esc (str name " — split large CSV files into smaller files that Excel can open. Free, open source, private by design.")) "\">\n"
      "<link rel=\"icon\" href=\"" p "assets/icon.png\">\n"
