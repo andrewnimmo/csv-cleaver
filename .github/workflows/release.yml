@@ -3,9 +3,14 @@ name: Release
 # Push a tag to cut a release:
 #     git tag v2.0.0 && git push origin v2.0.0
 #
-# jpackage builds only for the machine it runs on, so each installer comes from
-# its own runner. macOS needs two: Apple Silicon and Intel cannot be built from
-# one another.
+# jpackage builds for the architecture of the JDK that runs it — there is no
+# cross-compilation flag. The Intel macOS installer is therefore built on the
+# Apple Silicon runner by running an x64 JDK under Rosetta 2: an emulated
+# native build, not a cross-compile. Everything downstream follows the JDK's
+# own reported arch — jpackage's launcher and runtime, and tools.deps'
+# JavaFX native classifiers (chosen from os.arch of the resolving JVM) — and
+# the arch of the result is read back from the built binary with lipo rather
+# than assumed. Intel runners themselves need a paid GitHub plan.
 #
 # Nothing here is signed. The steps marked "signing" activate the moment the
 # corresponding secrets exist, so turning it on later means adding secrets
@@ -29,18 +34,26 @@ jobs:
         include:
           - os: macos-latest
             label: macOS (Apple Silicon)
+            slug: macos-arm64
+            java-arch: aarch64
+            mac-arch: apple-silicon
             script: ./package/build-mac.sh
             artifacts: dist/*.dmg
-          - os: macos-13
+          - os: macos-latest
             label: macOS (Intel)
+            slug: macos-x64
+            java-arch: x64
+            mac-arch: intel
             script: ./package/build-mac.sh
             artifacts: dist/*.dmg
           - os: windows-latest
             label: Windows (x64)
+            slug: windows-x64
             script: package\build-windows.bat
             artifacts: dist/*.msi
           - os: ubuntu-latest
             label: Linux (x64)
+            slug: linux-x64
             script: ./package/build-linux.sh
             artifacts: |
               dist/*.deb
@@ -75,11 +88,22 @@ jobs:
           echo "MACOS_SIGNING_IDENTITY=$IDENTITY" >> "$GITHUB_ENV"
           echo "Will sign as: $IDENTITY"
 
+      # Rosetta 2 ships on GitHub's Apple Silicon images, but "ships" is an
+      # assumption about someone else's image; installing is idempotent and
+      # the x64 JDK below fails loudly either way.
+      - name: Ensure Rosetta 2 (Intel-on-ARM build)
+        if: runner.os == 'macOS' && matrix.java-arch == 'x64'
+        run: sudo softwareupdate --install-rosetta --agree-to-license || true
+
+      # java-arch is what makes the Intel build Intel: an x64 JDK under
+      # Rosetta reports os.arch=x86_64, and everything keys off that. Empty
+      # (the non-mac jobs) means the runner's own architecture.
       - name: Set up JDK 25
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '25'
+          architecture: ${{ matrix.java-arch }}
 
       - name: Set up Clojure
         uses: DeLaGuardo/setup-clojure@13.0
@@ -102,23 +126,42 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y fakeroot libfuse2
 
+      # Two build steps because one is not possible: the previous single step
+      # forced bash everywhere, and bash read the Windows script's backslash
+      # as an escape — `package\build-windows.bat` became
+      # `packagebuild-windows.bat`, exit 127. A .bat needs cmd.
       - name: Build installer
+        if: runner.os != 'Windows'
         shell: bash
         run: |
           chmod +x package/*.sh || true
           ${{ matrix.script }}
 
-      # Both macOS runners emit "CSV Cleaver-<version>.dmg". Left alone, the
+      - name: Build installer (Windows)
+        if: runner.os == 'Windows'
+        shell: cmd
+        run: ${{ matrix.script }}
+
+      # Both macOS jobs emit "CSV Cleaver-<version>.dmg". Left alone, the
       # released files would collide when the artifacts are merged and one
       # architecture would silently overwrite the other — an Intel user
       # downloading an Apple Silicon binary. The architecture goes into the
-      # name here, where the ambiguity starts.
-      - name: Name the architecture (macOS)
+      # name here, and it is read from the built launcher itself with lipo,
+      # not from uname — both jobs now run on the same ARM runner, so uname
+      # would call the Intel build apple-silicon. The matrix says what each
+      # job promises; lipo says what it produced; a mismatch fails rather
+      # than releases.
+      - name: Name and verify the architecture (macOS)
         if: runner.os == 'macOS'
         shell: bash
         run: |
+          BIN=$(find target/app-image -type f -path '*/Contents/MacOS/*' | head -1)
+          arch=$(lipo -archs "$BIN" | sed 's/x86_64/intel/; s/arm64/apple-silicon/')
+          if [ "$arch" != "${{ matrix.mac-arch }}" ]; then
+            echo "!!! This job promises ${{ matrix.mac-arch }} but built $arch" >&2
+            exit 1
+          fi
           for f in dist/*.dmg; do
-            arch=$(uname -m | sed 's/x86_64/intel/; s/arm64/apple-silicon/')
             mv "$f" "${f%.dmg}-${arch}.dmg"
           done
 
@@ -162,7 +205,7 @@ jobs:
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.os }}-installers
+          name: ${{ matrix.slug }}-installers
           path: ${{ matrix.artifacts }}
           if-no-files-found: error
 
