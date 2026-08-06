@@ -52,6 +52,7 @@ the rest accordingly.
 | The AppImage stage works | OBSERVED twice | first in an amd64 container against the real script logic (emulation divergences on record in the test script), then live on the runner |
 | CVSS ≥ 7.0 fails the audit; the gate is read | OBSERVED | nvd-clojure's startup echo shows the config at the level it reads |
 | The published MSI installs and the application works on real Windows 11 | **user-verified** | installed from the release page by the project manager, 2026-08-06 — the first shipped installer confirmed on real hardware rather than a runner |
+| The published Apple Silicon dmg installs and the application works on a real Mac | **user-verified** | installed and tested by the project manager, 2026-08-06. General "works as expected"; the two specific checks below were not named and stay open |
 
 ## To verify on the next build (PENDING-USER)
 
