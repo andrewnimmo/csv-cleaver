@@ -87,6 +87,15 @@
   ;; dependency tree against the NIST National Vulnerability Database.
   :audit
   {:replace-deps {nvd-clojure/nvd-clojure {:mvn/version "5.3.0"}
+                  ;; Two patches past what nvd-clojure pins. 12.2.0 dies
+                  ;; building a fresh NVD database: two 2026 Mozilla CVEs
+                  ;; carry reference URLs longer than its VARCHAR(1000)
+                  ;; column, so every clean CI runner failed while machines
+                  ;; with old databases sailed on. Diagnosed from the H2
+                  ;; error in the CI log after two rounds of blaming the
+                  ;; runner network.
+                  org.owasp/dependency-check-core  {:mvn/version "12.2.2"}
+                  org.owasp/dependency-check-utils {:mvn/version "12.2.2"}
                   org.clojure/clojure     {:mvn/version "1.12.5"}}
    :main-opts    ["-m" "nvd.task.check" "nvd-config.edn"]}
 

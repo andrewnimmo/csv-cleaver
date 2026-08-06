@@ -108,9 +108,12 @@ jobs:
       - name: Restore NVD database
         uses: actions/cache/restore@v4
         with:
-          path: |
-            ~/.m2/repository/org/owasp/dependency-check-data
-            ~/.dependency-check
+          # The real location, learned by finding the odc.mv.db on disk: the
+          # database lives under the dependency-check-utils artifact,
+          # version-scoped — which is also why upgrading the tool forces a
+          # clean rebuild. The first version of this step cached a directory
+          # that does not exist.
+          path: ~/.m2/repository/org/owasp/dependency-check-utils/*/data
           key: nvd-db-${{ runner.os }}-${{ steps.nvd-week.outputs.week }}
           restore-keys: nvd-db-${{ runner.os }}-
 
@@ -123,9 +126,7 @@ jobs:
         if: always()
         uses: actions/cache/save@v4
         with:
-          path: |
-            ~/.m2/repository/org/owasp/dependency-check-data
-            ~/.dependency-check
+          path: ~/.m2/repository/org/owasp/dependency-check-utils/*/data
           key: nvd-db-${{ runner.os }}-${{ steps.nvd-week.outputs.week }}
 
       # Being behind is not itself a vulnerability, but it is how you come to
