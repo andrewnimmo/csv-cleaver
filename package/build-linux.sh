@@ -83,13 +83,33 @@ fi
 if command -v appimagetool >/dev/null 2>&1; then
   echo "==> AppImage"
   APPDIR="$APP_DIR/$APP_NAME"
+  SLUG="${APP_NAME// /-}"
   cat > "$APPDIR/AppRun" <<EOF
 #!/bin/sh
 HERE="\$(dirname "\$(readlink -f "\$0")")"
 exec "\$HERE/bin/$APP_NAME" "\$@"
 EOF
   chmod +x "$APPDIR/AppRun"
-  appimagetool "$APPDIR" "$DIST_DIR/${APP_NAME// /-}-${APP_VERSION}-x86_64.AppImage"
+  # appimagetool refuses an AppDir without a top-level .desktop file and the
+  # icon that .desktop names — jpackage's app image provides neither at the
+  # root. This branch shipped without them and could never have produced an
+  # AppImage; nothing noticed because for months nothing installed
+  # appimagetool either. The icon comes from branding.edn's own file rather
+  # than from jpackage's internal layout, which is not a documented contract.
+  cat > "$APPDIR/$SLUG.desktop" <<EOF
+[Desktop Entry]
+Type=Application
+Name=$APP_NAME
+Exec=AppRun
+Icon=$SLUG
+Categories=Utility;
+Terminal=false
+EOF
+  cp "$ICON" "$APPDIR/$SLUG.png"
+  # ARCH stated rather than guessed: appimagetool otherwise infers it by
+  # scanning the AppDir for ELF binaries, and the filename below already
+  # promises x86_64 either way.
+  ARCH=x86_64 appimagetool "$APPDIR" "$DIST_DIR/$SLUG-${APP_VERSION}-x86_64.AppImage"
 else
   # Locally this is a courtesy — the .deb is the main event and installing
   # appimagetool should not be an entry fee for building it. On CI the same

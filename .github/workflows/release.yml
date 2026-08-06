@@ -124,15 +124,20 @@ jobs:
       # appimagetool itself, which the first release forgot: the runtime was
       # installed, the tool never was, build-linux.sh skipped the AppImage
       # with a courtesy message, and v2.0.0 published without the file its
-      # own notes described. The script now hard-fails on CI in that case,
-      # and the tool is pinned to AppImageKit 13 rather than a moving tag.
+      # own notes described. The script now hard-fails on CI in that case.
+      #
+      # The tool is pinned to AppImage/appimagetool 1.9.1 — the maintained
+      # repository. The first pin, AppImageKit 13, 404ed: that project was
+      # retired and its release assets renamed with an obsolete- prefix.
+      # Both the tag and the asset name were checked against the GitHub API
+      # and the URL fetched before this pin was committed.
       - name: Install AppImage tooling
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
           sudo apt-get install -y fakeroot libfuse2
           sudo curl -fsSL -o /usr/local/bin/appimagetool \
-            https://github.com/AppImage/AppImageKit/releases/download/13/appimagetool-x86_64.AppImage
+            https://github.com/AppImage/appimagetool/releases/download/1.9.1/appimagetool-x86_64.AppImage
           sudo chmod +x /usr/local/bin/appimagetool
           appimagetool --version
 
