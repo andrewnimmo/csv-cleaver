@@ -60,7 +60,7 @@ jobs:
               dist/*.AppImage
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       # ── Signing, part 1: the certificate ────────────────────────────────
       # Inert until the secrets exist. MACOS_CERTIFICATE is a base64 .p12 of a
@@ -99,20 +99,20 @@ jobs:
       # Rosetta reports os.arch=x86_64, and everything keys off that. Empty
       # (the non-mac jobs) means the runner's own architecture.
       - name: Set up JDK 25
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: '25'
           architecture: ${{ matrix.java-arch }}
 
       - name: Set up Clojure
-        uses: DeLaGuardo/setup-clojure@13.0
+        uses: DeLaGuardo/setup-clojure@13.6
         with:
           cli: latest
           bb: latest
 
       - name: Cache dependencies
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: |
             ~/.m2/repository
@@ -203,7 +203,7 @@ jobs:
       # warnings then fade with reputation. docs/SIGNING.md has the details.
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ${{ matrix.slug }}-installers
           path: ${{ matrix.artifacts }}
@@ -215,10 +215,10 @@ jobs:
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/')
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Collect installers
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           path: installers
           merge-multiple: true
@@ -232,7 +232,7 @@ jobs:
           cat SHA256SUMS
 
       - name: Publish
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           files: installers/**/*
           generate_release_notes: true
