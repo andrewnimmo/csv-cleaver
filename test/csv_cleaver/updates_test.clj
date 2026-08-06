@@ -46,6 +46,11 @@
       "a trailing slash is someone's hand-edited branding.edn, not an error")
   (testing "a rebrand pointing elsewhere disables the feature rather than
             asking this repository about someone else's fork"
+    ;; A two-segment path on a non-GitHub host, deliberately: the first
+    ;; version of this test used a one-segment URL, which even an
+    ;; any-host regex rejects — the mutation gate reported the assertion
+    ;; unable to fail, because it never exercised the part that matters.
+    (is (nil? (updates/releases-endpoint "https://gitlab.com/owner/repo")))
     (is (nil? (updates/releases-endpoint "https://example.com/my-app")))
     (is (nil? (updates/releases-endpoint nil)))))
 
