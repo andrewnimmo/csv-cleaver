@@ -42,6 +42,16 @@ the rest accordingly.
 
 | Signing scaffolding inert and wired | OBSERVED + TESTED | unsigned `bb package` unchanged with the scaffolding in place; entitlements, script wiring and workflow steps pinned by test, two mutations caught. The *sufficiency* of the entitlements for notarisation is DERIVED until the first signed build — the JNA `disable-library-validation` need is the expected round-trip, stated in SIGNING.md |
 
+## Release v2.0.0 — run 31091724587, commit `082779a`
+
+| Claim | Level | Evidence |
+|---|---|---|
+| Five installers published: AppImage, deb, two dmgs, msi | OBSERVED | asset list read back from the GitHub API after publish |
+| SHA256SUMS covers all five; digests are real | OBSERVED | AppImage re-downloaded and re-hashed locally; digest matches the published one |
+| The Intel dmg is x86_64, built on the ARM runner under Rosetta | OBSERVED | x64 JDK in the job log; `lipo -archs` assertion in the workflow fails on mismatch and passed; the packaged binary started under Rosetta ("It starts: 2.0.0") |
+| The AppImage stage works | OBSERVED twice | first in an amd64 container against the real script logic (emulation divergences on record in the test script), then live on the runner |
+| CVSS ≥ 7.0 fails the audit; the gate is read | OBSERVED | nvd-clojure's startup echo shows the config at the level it reads |
+
 ## To verify on the next build (PENDING-USER)
 
 1. ~~App menu ▸ About~~ — **verified by the project manager**.
@@ -73,6 +83,23 @@ without verifying the path to it.
 Seven falsified claims across roughly twenty substantive reports in the same
 period. The corrective in force: every claim now carries one of the four
 levels above, and "done" is reserved for OBSERVED or TESTED.
+
+The release added a second column of falsifier: the first live run. These
+claims were stated at DERIVED or below and disproven by the machine before
+any user saw them — the ledger records them because "the scaffolding is
+wired" had been reported with more confidence than a never-executed branch
+deserved.
+
+| Claim as stated | Falsified by | Root cause |
+|---|---|---|
+| "Release workflow wired, TESTED" | tag run: zero jobs, no log | a generator wrote `\1` as byte 0x01; GitHub rejected the whole file; the source-level tests checked for strings, not for validity |
+| "Signing/release scaffolding inert and correct" | first Linux release leg | the AppImage branch had never executed anywhere: tool never installed, pin URL recalled from memory (404), and an AppDir layout appimagetool rejects |
+| "Actions deprecation bump, versions checked" | every job, in seconds | 13.6 assumed from the old two-part tag pattern; the tag that exists is 13.6.1 |
+
+The pattern is the same one as above — mechanism verified without the path —
+plus one refinement worth keeping: a pin, a URL, or a version written from
+memory is an assumption wearing a pin's clothes. Every such value now gets
+checked against the live source before it is committed.
 
 Resolution note: the app-menu About found its real implementation afterwards —
 through the Objective-C runtime, verified by reading AppKit's own state — so
