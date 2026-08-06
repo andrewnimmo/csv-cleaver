@@ -106,7 +106,7 @@ jobs:
           architecture: ${{ matrix.java-arch }}
 
       - name: Set up Clojure
-        uses: DeLaGuardo/setup-clojure@13.0
+        uses: DeLaGuardo/setup-clojure@13.5
         with:
           cli: latest
           bb: latest
