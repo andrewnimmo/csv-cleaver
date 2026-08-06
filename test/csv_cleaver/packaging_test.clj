@@ -161,7 +161,8 @@
             a workflow or build script. (The test fixtures that do embed such
             bytes are input data, deliberately hostile, and out of scope.)"
     (doseq [path (concat ["/.github/workflows/ci.yml"
-                          "/.github/workflows/release.yml"]
+                          "/.github/workflows/release.yml"
+                          "/.github/workflows/pages.yml"]
                          (map #(str "/" %) scripts))
             :let [f (io/file (str "." path))]]
       (is (.isFile f) (str path " exists"))

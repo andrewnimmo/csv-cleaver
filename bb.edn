@@ -3,6 +3,10 @@
 
 {:min-bb-version "1.3.0"
 
+ ;; For the site task only. Version checked against the live Clojars API on
+ ;; 2026-08-06; renders GFM tables, which docs/VERIFICATION.md depends on.
+ :deps {markdown-clj/markdown-clj {:mvn/version "1.12.9"}}
+
  :tasks
  {:requires ([babashka.fs :as fs]
              [cheshire.core :as json]
@@ -182,6 +186,10 @@
   shots
   {:doc  "Render every screen to target/shots as PNG, in both themes."
    :task (clj "-M:shots")}
+
+  site
+  {:doc  "Build the documentation site into target/site. Deployed to GitHub Pages by .github/workflows/pages.yml."
+   :task (load-file "dev/site.clj")}
 
   check
   {:doc     "Everything CI runs: format, lint, tests, vulnerabilities."
