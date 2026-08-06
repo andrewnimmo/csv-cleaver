@@ -54,6 +54,14 @@ the rest accordingly.
 | The published MSI installs and the application works on real Windows 11 | **user-verified** | installed from the release page by the project manager, 2026-08-06 — the first shipped installer confirmed on real hardware rather than a runner |
 | The published Apple Silicon dmg installs and the application works on a real Mac | **user-verified** | installed and tested by the project manager, 2026-08-06. General "works as expected"; the two specific checks below were not named and stay open |
 
+## The update check — commit `5ff3e90`
+
+| Claim | Level | Evidence |
+|---|---|---|
+| Update check: manual button, opt-in startup, quiet by contract, `--no-update-check` removes it | TESTED | offline tests replay every answer GitHub can give, including none; 3 mutations caught — `newer?` inverted, the quiet check nagging, a rebranded fork phoning this repository. The third was caught only after the gate exposed the first version of its test as unable to fail: its non-GitHub URL had a one-segment path that even the mutated regex rejected |
+| Headless/API modes never check | DERIVED | the check is wired only in `start-window!`, which headless runs never reach — the same structural guarantee the no-cljfx rule rests on |
+| The live endpoint answers as the tests assume | PENDING | one real check the day a newer release exists to find; until then the parsing is pinned to the API's documented shape |
+
 ## To verify on the next build (PENDING-USER)
 
 1. ~~App menu ▸ About~~ — **verified by the project manager**.
@@ -63,6 +71,9 @@ the rest accordingly.
 4. Help and About titles intact at the right edge (Text nodes).
 5. One file dialog at a time; ⌘Q quits cleanly with one open; window
    position remembered across a ⌘Q.
+6. The update controls in About: Check for updates answers (up-to-date
+   today), the startup checkbox sticks across a restart, and with
+   `--no-update-check` the whole section is absent.
 
 ## Falsification record
 
