@@ -51,6 +51,7 @@ the rest accordingly.
 | The Intel dmg is x86_64, built on the ARM runner under Rosetta | OBSERVED | x64 JDK in the job log; `lipo -archs` assertion in the workflow fails on mismatch and passed; the packaged binary started under Rosetta ("It starts: 2.0.0") |
 | The AppImage stage works | OBSERVED twice | first in an amd64 container against the real script logic (emulation divergences on record in the test script), then live on the runner |
 | CVSS ≥ 7.0 fails the audit; the gate is read | OBSERVED | nvd-clojure's startup echo shows the config at the level it reads |
+| The published MSI installs and the application works on real Windows 11 | **user-verified** | installed from the release page by the project manager, 2026-08-06 — the first shipped installer confirmed on real hardware rather than a runner |
 
 ## To verify on the next build (PENDING-USER)
 
