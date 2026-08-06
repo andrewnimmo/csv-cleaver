@@ -166,7 +166,7 @@ jobs:
         run: xvfb-run -a clojure -M:coverage
 
       - name: Upload report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: coverage
           path: target/coverage
@@ -205,7 +205,7 @@ jobs:
         run: xvfb-run -a clojure -M:shots
 
       - name: Upload screenshots
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: screens
           path: target/shots
