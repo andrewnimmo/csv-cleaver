@@ -38,7 +38,7 @@ jobs:
           bb: latest
 
       - name: Cache dependencies
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: |
             ~/.m2/repository
@@ -83,7 +83,7 @@ jobs:
           bb: latest
 
       - name: Cache dependencies
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: |
             ~/.m2/repository
@@ -106,7 +106,7 @@ jobs:
         run: echo "week=$(date +%G-%V)" >> "$GITHUB_OUTPUT"
 
       - name: Restore NVD database
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v6
         with:
           # The real location, learned by finding the odc.mv.db on disk: the
           # database lives under the dependency-check-utils artifact,
@@ -124,7 +124,7 @@ jobs:
 
       - name: Save NVD database
         if: always()
-        uses: actions/cache/save@v4
+        uses: actions/cache/save@v6
         with:
           path: ~/.m2/repository/org/owasp/dependency-check-utils/*/data
           key: nvd-db-${{ runner.os }}-${{ steps.nvd-week.outputs.week }}
@@ -153,7 +153,7 @@ jobs:
           cli: latest
 
       - name: Cache dependencies
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: |
             ~/.m2/repository
@@ -190,7 +190,7 @@ jobs:
           cli: latest
 
       - name: Cache dependencies
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: |
             ~/.m2/repository
