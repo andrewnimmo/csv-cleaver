@@ -68,6 +68,13 @@
 
    [nil "--headless" "Run without opening a window. Only useful with --api."]
 
+   ;; The kill switch for the one feature that talks to the internet. The
+   ;; window's own controls are opt-in already; this removes them entirely,
+   ;; for machines where "makes no requests" must be a guarantee rather
+   ;; than a setting someone could tick.
+   [nil "--no-update-check"
+    "Never look online for newer versions, and hide the controls that would."]
+
    ;; Undocumented in the user guide, on purpose. Live long and prosper.
    [nil "--hidden-languages"
     "Also offer certain languages spoken rather far from Barcelona."]

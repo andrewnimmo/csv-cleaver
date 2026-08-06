@@ -10,6 +10,12 @@
     (is (nil? (:locale options)))
     (is (nil? (:theme options)))))
 
+(deftest update-checking-can-be-forbidden
+  (testing "the kill switch parses; its absence really is absence, so the
+            default remains \"the user decides in the window\""
+    (is (true? (get-in (cli/parse ["--no-update-check"]) [:options :no-update-check])))
+    (is (nil? (get-in (cli/parse []) [:options :no-update-check])))))
+
 (deftest a-language-can-be-forced
   (testing "the point of this option: seeing the window in Japanese without
             changing the machine's own language"

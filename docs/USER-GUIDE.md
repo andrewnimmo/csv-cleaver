@@ -205,6 +205,27 @@ application is open.
 
 ---
 
+## Checking for updates
+
+Under the **i** button there is a **Check for updates** button. Pressing it
+asks GitHub — where releases are published — whether a newer version exists,
+and if one does, shows a link to its download page. Nothing downloads or
+installs itself; you fetch the new installer and run it yourself, exactly as
+you did the first time.
+
+Nothing is ever checked without you asking. If you would like the application
+to look once at startup, tick **Check automatically when the application
+starts** — then, if a newer version exists, a small link appears at the bottom
+of the window, and if you are offline or already current, nothing appears at
+all. The request carries no data of yours: only the application's own name and
+version, which is how polite software introduces itself to a server.
+
+If the application is deployed somewhere it must never make a network request,
+start it with `--no-update-check`: the button and the checkbox disappear, and
+no check can happen by any route.
+
+---
+
 ## Getting help inside the application
 
 The **?** button answers the questions people actually ask: what a header row
@@ -228,4 +249,8 @@ switches it on, and it never reaches beyond your own machine.
 - Change your original file in any way.
 - Overwrite anything without asking you first.
 - Repair, reformat or silently alter a single row of your data.
-- Connect to the internet, or send your data anywhere.
+- Send your data anywhere. Splitting never touches the network. The one
+  request the application can make — the update check above — happens only
+  when you press the button or tick the box, carries nothing but the
+  application's own name and version, and can be forbidden outright with
+  `--no-update-check`.

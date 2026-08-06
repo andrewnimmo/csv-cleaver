@@ -403,7 +403,9 @@
   "Remembered settings a language change must leave exactly alone. `:language`
    is excluded below for the obvious reason."
   #{:theme :template :mode :advanced-open? :excel-safe? :output-base :window
-    :rows :size-bytes})
+    :rows :size-bytes
+    ;; A boolean opt-in has no language to be sensitive to.
+    :check-updates-on-start?})
 
 (deftest every-remembered-setting-is-classified
   (testing "this test exists to fail when a setting is added without anyone

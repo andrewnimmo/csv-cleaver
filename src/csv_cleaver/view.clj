@@ -896,6 +896,43 @@
           :selected    (= theme value)
           :on-action   {:event/type ::state/theme-changed :theme value}})}
 
+      ;; Updates, manual-first: nothing is looked up until the button is
+      ;; pressed, and the startup check below it is an opt-in the user
+      ;; ticks. Absent entirely under --no-update-check — for a machine
+      ;; where "makes no requests" must be a property, not a setting.
+      (when (:update-check-allowed? st)
+        (let [{:keys [status version]} (:update st)]
+          {:fx/type :v-box
+           :spacing 6
+           :children
+           (compact
+            [{:fx/type :separator}
+             {:fx/type   :h-box
+              :spacing   10
+              :alignment :baseline-left
+              :children
+              (compact
+               [{:fx/type   :button
+                 :text      (i18n/tr ctx :about/check-updates)
+                 :disable   (= status :checking)
+                 :on-action {:event/type ::state/update-check-clicked}}
+                (case status
+                  :checking {:fx/type :label :style-class ["hint"]
+                             :text (i18n/tr ctx :about/update-checking)}
+                  :up-to-date {:fx/type :label :style-class ["hint"]
+                               :text (i18n/tr ctx :about/update-none)}
+                  :update-available {:fx/type   :hyperlink
+                                     :text      (i18n/tr ctx :about/update-available version)
+                                     :on-action {:event/type ::state/update-link-clicked}}
+                  :error {:fx/type :label :style-class ["hint"]
+                          :text (i18n/tr ctx :about/update-failed)}
+                  nil)])}
+             {:fx/type  :check-box
+              :text     (i18n/tr ctx :about/update-on-start)
+              :selected (boolean (:check-updates-on-start? st))
+              :on-selected-changed {:event/type ::state/update-on-start-toggled
+                                    :event/value-key :enabled?}}])}))
+
       ;; Quit is not here. It was, and that was wrong: an About box is not
       ;; where anyone looks for the way out. It lives in the File menu.
       {:fx/type   :h-box
@@ -1021,38 +1058,49 @@
 (defn footer
   [{:keys [phase result] :as st}]
   (let [ctx    (state/ctx st)
+        ;; The whole visible result of the opt-in startup check: one small
+        ;; link, sharing the footer's quiet corner, opening the release
+        ;; page. No dialog, no badge on the Split button, nothing modal —
+        ;; an update is information, not an interruption.
+        update-link (when (= :update-available (get-in st [:update :status]))
+                      {:fx/type   :hyperlink
+                       :style-class ["hyperlink" "hint"]
+                       :text      (i18n/tr ctx :about/update-available
+                                           (get-in st [:update :version]))
+                       :on-action {:event/type ::state/update-link-clicked}})
         spacer {:fx/type :region :h-box/hgrow :always}]
     {:fx/type     :h-box
      :style-class ["footer-bar"]
      :alignment   :center-right
      :spacing     8
      :children
-     (case phase
-       (:empty :scanning) [spacer]
+     (into (compact [update-link])
+           (case phase
+             (:empty :scanning) [spacer]
 
        ;; After a split the options are still here, so Split file stays the
        ;; primary action and re-running is one press. The extra two only appear
        ;; once there is a result to reveal or to move on from.
-       :ready (compact
-               [spacer
-                (when result
-                  {:fx/type   :button
-                   :text      (i18n/tr ctx :action/split-again)
-                   :on-action {:event/type ::state/reset}})
-                (when result
-                  {:fx/type   :button
-                   :text      (i18n/tr ctx (desktop/reveal-label-key))
-                   :on-action {:event/type ::state/reveal-requested}})
-                {:fx/type     :button
-                 :style-class ["button" "accent"]
-                 :text        (i18n/tr ctx :action/split)
-                 :disable     (not (state/ready? st))
-                 :on-action   {:event/type ::state/split-requested}}])
+             :ready (compact
+                     [spacer
+                      (when result
+                        {:fx/type   :button
+                         :text      (i18n/tr ctx :action/split-again)
+                         :on-action {:event/type ::state/reset}})
+                      (when result
+                        {:fx/type   :button
+                         :text      (i18n/tr ctx (desktop/reveal-label-key))
+                         :on-action {:event/type ::state/reveal-requested}})
+                      {:fx/type     :button
+                       :style-class ["button" "accent"]
+                       :text        (i18n/tr ctx :action/split)
+                       :disable     (not (state/ready? st))
+                       :on-action   {:event/type ::state/split-requested}}])
 
-       :splitting [spacer
-                   {:fx/type   :button
-                    :text      (i18n/tr ctx :action/cancel)
-                    :on-action {:event/type ::state/cancel-requested}}])}))
+             :splitting [spacer
+                         {:fx/type   :button
+                          :text      (i18n/tr ctx :action/cancel)
+                          :on-action {:event/type ::state/cancel-requested}}]))}))
 
 ;; ── Root ────────────────────────────────────────────────────────────────────
 

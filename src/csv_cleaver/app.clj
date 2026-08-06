@@ -21,6 +21,7 @@
    [csv-cleaver.scan :as scan]
    [csv-cleaver.split :as split]
    [csv-cleaver.state :as state]
+   [csv-cleaver.updates :as updates]
    [csv-cleaver.view :as view])
   (:import
    (atlantafx.base.theme PrimerDark PrimerLight)
@@ -195,6 +196,19 @@
   (desktop/compose-mail!
    (desktop/mail-uri (branding/value :contact)
                      (str (branding/app-name) " " (branding/build-label)))))
+
+(defmethod perform! :check-updates
+  [[_ {:keys [quiet?]}]]
+  ;; The check runs off the FX thread and reports back through the ordinary
+  ;; event route; updates/check! has already collapsed every possible failure
+  ;; to {:status :error}, so this callback cannot throw for network reasons.
+  (run-async! #(dispatch! {:event/type ::state/update-checked
+                           :result     (updates/check!)
+                           :quiet?     (boolean quiet?)})))
+
+(defmethod perform! :open-url
+  [[_ url]]
+  (when url (desktop/browse-url! url)))
 
 (defmethod perform! :reveal
   [[_ dir]]
@@ -430,7 +444,12 @@
         ;; Nothing here has to know what language wrote them, which is the whole
         ;; reason they are stored as numbers.
         (state/with-values saved)
-        (assoc :theme theme))))
+        (assoc :theme theme)
+        ;; --no-update-check removes the update feature for this run: no
+        ;; startup check regardless of the remembered opt-in, and no
+        ;; controls in About to start one by hand. The double guard below
+        ;; (allowed AND opted in) is what start-window! consults.
+        (assoc :update-check-allowed? (not (:no-update-check options))))))
 
 (defn track-window-geometry!
   "Keep the stage's position and size in the state, so the session can be
@@ -542,7 +561,14 @@
      (track-window-geometry! stage)
      (some-> (.getScene stage) install-radio-pill-guard!))
    (install-native-about!))
-  (watch-system-appearance!))
+  (watch-system-appearance!)
+  ;; The opt-in startup check, quiet by contract: only "a newer release
+  ;; exists" ever reaches the window, as a small link in the footer. Being
+  ;; offline, rate-limited or already current leaves no trace, and the
+  ;; check happens off the FX thread after the window is already up.
+  (let [{:keys [update-check-allowed? check-updates-on-start?]} @*state]
+    (when (and update-check-allowed? check-updates-on-start?)
+      (perform! [:check-updates {:quiet? true}]))))
 
 (defn show-language-problems!
   "Refuse to start in a language we cannot vouch for, and say why.

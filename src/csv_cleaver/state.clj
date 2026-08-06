@@ -83,7 +83,19 @@
    :dialog          nil
    :collisions      []
    :replacing       []
-   :drag-over?      false})
+   :drag-over?      false
+
+   ;; Looking online for a newer release. :update holds the last outcome —
+   ;; nil, {:status :checking}, or what csv-cleaver.updates/check! returned.
+   ;; :update-check-allowed? is the --no-update-check kill switch: false
+   ;; removes the whole feature from the window, so a machine started with
+   ;; the flag can be relied on to make no update request at all.
+   ;; :check-updates-on-start? is the remembered opt-in for checking without
+   ;; being asked; it defaults to off because looking online uninvited is a
+   ;; choice the user makes, not one made for them.
+   :update                  nil
+   :update-check-allowed?   true
+   :check-updates-on-start? false})
 
 ;; ── Derived values ──────────────────────────────────────────────────────────
 ;; Computed from state rather than stored in it, so they can never go stale.
@@ -384,6 +396,31 @@
 (defmethod handle ::contact-clicked
   [state _]
   (with-effects state [:compose-mail]))
+
+(defmethod handle ::update-check-clicked
+  [state _]
+  (with-effects (assoc state :update {:status :checking})
+    [:check-updates {:quiet? false}]))
+
+(defmethod handle ::update-checked
+  [state {:keys [result quiet?]}]
+  ;; A quiet check is the startup one nobody asked to see the result of:
+  ;; only "there is an update" is worth keeping. Offline, rate-limited or
+  ;; already current, the quiet path leaves no trace — an opt-in courtesy
+  ;; must not manufacture status messages.
+  (if (and quiet? (not= :update-available (:status result)))
+    (with-effects state)
+    (with-effects (assoc state :update result))))
+
+(defmethod handle ::update-link-clicked
+  [state _]
+  (with-effects state [:open-url (get-in state [:update :url])]))
+
+(defmethod handle ::update-on-start-toggled
+  [state {:keys [enabled?]}]
+  (let [enabled? (boolean enabled?)]
+    (with-effects (assoc state :check-updates-on-start? enabled?)
+      [:save-prefs {:check-updates-on-start? enabled?}])))
 
 (defmethod handle ::window-moved
   [state {:keys [window]}]

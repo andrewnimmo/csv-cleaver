@@ -318,3 +318,30 @@ output reproduces the input byte for byte.
 
 **When to revisit.** If a CSV library ever offers verbatim record text
 alongside its parse, most of this becomes unnecessary and should go.
+
+## 18. The update check is manual-first, and one flag removes it
+
+**Decision.** Checking for a newer release is a button in the About dialog.
+An automatic check at startup exists but is opt-in, off by default, and shows
+nothing unless an update actually exists. `--no-update-check` removes the
+feature entirely — controls and all. The check is one GET to GitHub's public
+releases endpoint, derived from `branding.edn`'s `:homepage`; it downloads
+nothing, installs nothing, and identifies nobody.
+
+**Why.** This application's standing promise is that the user's data never
+leaves their machine, and its posture is that network activity is something
+the user chooses. A self-updater would break both — it is also three
+platforms' worth of signing and swap-in machinery this project does not need.
+The endpoint comes from branding rather than a constant so a rebranded fork
+asks its own repository or, pointed anywhere that is not GitHub, quietly has
+no update feature at all — better than phoning this one. The flag exists
+because "makes no requests" must be a property an administrator can rely on,
+not a checkbox someone could tick back on.
+
+**Costs accepted.** The startup check being quiet means an offline user who
+opted in gets no feedback that nothing was checked; that is the point of it
+being quiet. Users who never open About never learn a new version exists
+unless they opt in — accepted, because nagging was the alternative.
+
+**When to revisit.** If releases ever move off GitHub, `releases-endpoint`
+needs a second recognised host, and the feature stays dark until it gets one.

@@ -94,6 +94,19 @@
         true)
       (catch Throwable _ false)))))
 
+(defn browse-url!
+  "Open `url` in the user's browser. Same contract as compose-mail!: the
+   doing is injectable for tests, and it gives up quietly — a release page
+   that fails to open is an inconvenience, not an error worth a dialog."
+  ([url] (browse-url! url (fn [^java.net.URI u] (.browse (Desktop/getDesktop) u))))
+  ([url open!]
+   (boolean
+    (try
+      (when (and url (Desktop/isDesktopSupported))
+        (open! (java.net.URI. (str url)))
+        true)
+      (catch Throwable _ false)))))
+
 (defn prefs-file
   "Where remembered settings live, following each platform's convention."
   (^File [] (prefs-file (os) (System/getProperty "user.home")))

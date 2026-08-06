@@ -313,4 +313,22 @@
   :file      "src/csv_cleaver/main.clj"
   :find      "   [csv-cleaver.api.server :as api]"
   :replace   "   [cljfx.api :as fx]\n   [csv-cleaver.api.server :as api]"
-  :namespace "csv-cleaver.main-test"}]
+  :namespace "csv-cleaver.main-test"}
+
+ {:label     "newer? inverted — every user is told to downgrade forever"
+  :file      "src/csv_cleaver/updates.clj"
+  :find      "(pos? (compare (pad b) (pad a)))"
+  :replace   "(neg? (compare (pad b) (pad a)))"
+  :namespace "csv-cleaver.updates-test"}
+
+ {:label     "the quiet startup check nags about being offline"
+  :file      "src/csv_cleaver/state.clj"
+  :find      "(if (and quiet? (not= :update-available (:status result)))"
+  :replace   "(if false"
+  :namespace "csv-cleaver.updates-test"}
+
+ {:label     "a rebranded fork phones this repository about updates"
+  :file      "src/csv_cleaver/updates.clj"
+  :find      "(re-matches #\"https://github\\.com/([^/]+)/([^/]+?)/?\""
+  :replace   "(re-matches #\"https://[^/]+/([^/]+)/([^/]+?)/?\""
+  :namespace "csv-cleaver.updates-test"}]

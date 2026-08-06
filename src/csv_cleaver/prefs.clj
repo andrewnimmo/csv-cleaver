@@ -15,7 +15,7 @@
   "Settings restored at startup. Deliberately excludes anything about a
    particular file — the window always opens ready for a new one."
   [:theme :language :template :mode :rows :size-bytes :advanced-open?
-   :excel-safe? :output-base :window])
+   :excel-safe? :output-base :window :check-updates-on-start?])
 
 (def abandoned
   "Settings older versions wrote that are now deliberately ignored.

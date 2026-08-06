@@ -15,6 +15,14 @@
         (is (= :dark (:theme loaded)))
         (is (= 100 (:rows loaded)))))))
 
+(deftest the-update-opt-in-survives-a-restart
+  (testing "ticking \"check at startup\" is a preference like any other: it
+            has to still be ticked tomorrow, or opting in silently lapses"
+    (tu/with-temp-dir [dir]
+      (let [file (io/file dir "settings.edn")]
+        (prefs/save-prefs! file {:check-updates-on-start? true})
+        (is (true? (:check-updates-on-start? (prefs/load-prefs file))))))))
+
 (deftest a-folder-comes-back-as-a-file-not-a-string
   (tu/with-temp-dir [dir]
     (let [file (io/file dir "settings.edn")]
