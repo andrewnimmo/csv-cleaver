@@ -903,7 +903,12 @@
       (when (:update-check-allowed? st)
         (let [{:keys [status version]} (:update st)]
           {:fx/type :v-box
-           :spacing 6
+           ;; The same 10px rhythm as the card, plus room at the bottom:
+           ;; this section is the last thing before the pinned Close row,
+           ;; and a rule above with nothing below read as cramped — the
+           ;; project manager's screenshot, not a guess.
+           :spacing 10
+           :padding {:bottom 8}
            :children
            (compact
             [{:fx/type :separator}

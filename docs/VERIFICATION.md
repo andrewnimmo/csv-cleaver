@@ -60,7 +60,7 @@ the rest accordingly.
 |---|---|---|
 | Update check: manual button, opt-in startup, quiet by contract, `--no-update-check` removes it | TESTED | offline tests replay every answer GitHub can give, including none; 3 mutations caught — `newer?` inverted, the quiet check nagging, a rebranded fork phoning this repository. The third was caught only after the gate exposed the first version of its test as unable to fail: its non-GitHub URL had a one-segment path that even the mutated regex rejected |
 | Headless/API modes never check | DERIVED | the check is wired only in `start-window!`, which headless runs never reach — the same structural guarantee the no-cljfx rule rests on |
-| The live endpoint answers as the tests assume | PENDING | one real check the day a newer release exists to find; until then the parsing is pinned to the API's documented shape |
+| The live endpoint answers as the tests assume | **user-verified for the up-to-date path** | the project manager pressed the button against the real endpoint, 2026-08-06: "appears to be working". The update-available path stays PENDING until a newer release exists to find |
 
 ## To verify on the next build (PENDING-USER)
 
@@ -71,9 +71,10 @@ the rest accordingly.
 4. Help and About titles intact at the right edge (Text nodes).
 5. One file dialog at a time; ⌘Q quits cleanly with one open; window
    position remembered across a ⌘Q.
-6. The update controls in About: Check for updates answers (up-to-date
-   today), the startup checkbox sticks across a restart, and with
-   `--no-update-check` the whole section is absent.
+6. ~~Check for updates answers~~ — **verified by the project manager**
+   (up-to-date path). Still open: the startup checkbox sticking across a
+   restart, `--no-update-check` removing the section, and the bottom
+   spacing of the About card after the tightness fix.
 
 ## Falsification record
 
