@@ -698,3 +698,32 @@
           (is (seq titles) (str tag " " (name dialog)))
           (is (every? #(= :text (:fx/type %)) titles)
               (str tag " " (name dialog) " title must be a Text node")))))))
+
+(deftest the-update-controls-obey-the-kill-switch
+  (testing "present by default: a manual button and the startup opt-in, both
+            wired through the effect system"
+    (let [d (view/content (assoc state/initial :dialog :about))]
+      (is (contains? (actions d) ::state/update-check-clicked))
+      (is (some #(= ::state/update-on-start-toggled
+                    (get-in % [:on-selected-changed :event/type]))
+                (nodes d)))))
+  (testing "absent entirely under --no-update-check — for a machine where
+            \"makes no requests\" must be a property, not a setting, there
+            must be nothing left to click"
+    (let [d (view/content (-> state/initial
+                              (assoc :dialog :about)
+                              (assoc :update-check-allowed? false)))]
+      (is (not (contains? (actions d) ::state/update-check-clicked)))
+      (is (not (contains? (actions d) ::state/update-link-clicked))))))
+
+(deftest the-footer-carries-the-quiet-update-link
+  (testing "the entire visible result of the opt-in startup check: one link,
+            only when a newer release exists"
+    (let [armed (assoc state/initial
+                       :update {:status :update-available
+                                :version "9.9.9" :url "u"})]
+      (is (contains? (actions (view/footer armed)) ::state/update-link-clicked))
+      (is (text-containing (view/footer armed) #"9\.9\.9"))
+      (is (not (contains? (actions (view/footer state/initial))
+                          ::state/update-link-clicked))
+          "and no link when there is nothing to say"))))
