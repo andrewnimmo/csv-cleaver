@@ -150,6 +150,33 @@
           (is (str/includes? text f)
               (str path " must stage " f " into the application")))))))
 
+(deftest workflows-and-scripts-are-plain-text
+  (testing "one byte of 0x01 where a sed backreference's \\1 belonged made
+            GitHub reject release.yml wholesale: the tag build 'ran' with zero
+            jobs, and the workflow list showed a path where a name should be —
+            the only visible symptoms. The byte arrived through a generator
+            that treated \\1 as an escape sequence. YAML validity can't be
+            asserted here without a parser dependency, but the class of
+            corruption that actually occurred can: no control byte belongs in
+            a workflow or build script. (The test fixtures that do embed such
+            bytes are input data, deliberately hostile, and out of scope.)"
+    (doseq [path (concat ["/.github/workflows/ci.yml"
+                          "/.github/workflows/release.yml"]
+                         (map #(str "/" %) scripts))
+            :let [f (io/file (str "." path))]]
+      (is (.isFile f) (str path " exists"))
+      (when (.isFile f)
+        (let [bad (->> (slurp f)
+                       (keep-indexed
+                        (fn [i c]
+                          (when (and (< (int c) 0x20)
+                                     (not (#{\newline \tab \return} c)))
+                            [i (format "0x%02x" (int c))])))
+                       (take 3))]
+          (is (empty? bad)
+              (str path " contains control bytes at [index code]: "
+                   (pr-str bad))))))))
+
 (deftest the-signing-scaffolding-is-wired-and-inert
   (testing "signing must switch on by adding secrets, never by editing the
             build — so the wiring has to exist now, correct, while doing
