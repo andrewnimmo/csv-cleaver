@@ -91,6 +91,19 @@ EOF
   chmod +x "$APPDIR/AppRun"
   appimagetool "$APPDIR" "$DIST_DIR/${APP_NAME// /-}-${APP_VERSION}-x86_64.AppImage"
 else
+  # Locally this is a courtesy — the .deb is the main event and installing
+  # appimagetool should not be an entry fee for building it. On CI the same
+  # courtesy shipped a release whose notes promised an AppImage that was not
+  # there: the workflow had installed the AppImage *runtime* but never the
+  # tool, this branch said "skipping" into a log nobody reads, and the
+  # uploader was satisfied because the .deb matched its glob. A release
+  # build that cannot produce what the release notes sell has to say so
+  # with an exit code.
+  if [ -n "${CI:-}" ]; then
+    echo "!!! appimagetool not found, and this is a CI build." >&2
+    echo "    The release notes promise an AppImage; refusing to under-deliver silently." >&2
+    exit 1
+  fi
   echo "==> appimagetool not found; skipping AppImage (the .deb was still built)"
 fi
 

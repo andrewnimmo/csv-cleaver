@@ -120,11 +120,21 @@ jobs:
           key: ${{ runner.os }}-deps-${{ hashFiles('deps.edn') }}
           restore-keys: ${{ runner.os }}-deps-
 
+      # fakeroot for jpackage's .deb; libfuse2 to *run* AppImages — and
+      # appimagetool itself, which the first release forgot: the runtime was
+      # installed, the tool never was, build-linux.sh skipped the AppImage
+      # with a courtesy message, and v2.0.0 published without the file its
+      # own notes described. The script now hard-fails on CI in that case,
+      # and the tool is pinned to AppImageKit 13 rather than a moving tag.
       - name: Install AppImage tooling
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
           sudo apt-get install -y fakeroot libfuse2
+          sudo curl -fsSL -o /usr/local/bin/appimagetool \
+            https://github.com/AppImage/AppImageKit/releases/download/13/appimagetool-x86_64.AppImage
+          sudo chmod +x /usr/local/bin/appimagetool
+          appimagetool --version
 
       # Two build steps because one is not possible: the previous single step
       # forced bash everywhere, and bash read the Windows script's backslash
