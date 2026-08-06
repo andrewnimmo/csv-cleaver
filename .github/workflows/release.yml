@@ -47,7 +47,7 @@ jobs:
               dist/*.AppImage
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       # ── Signing, part 1: the certificate ────────────────────────────────
       # Inert until the secrets exist. MACOS_CERTIFICATE is a base64 .p12 of a
@@ -172,7 +172,7 @@ jobs:
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/')
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Collect installers
         uses: actions/download-artifact@v4
