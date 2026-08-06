@@ -251,37 +251,26 @@ jobs:
         with:
           files: installers/**/*
           generate_release_notes: true
+# One line per paragraph, however long: GitHub renders release
+          # bodies in comment mode, where every newline is a hard <br> —
+          # unlike repo Markdown, where single newlines reflow. The v2.0.0
+          # notes were wrapped at 70 columns for this file's readability and
+          # published ragged.
           body: |
             ## Installing
 
-            Unless this release says otherwise below, the installers are
-            **not code signed**, and each system will warn about them the
-            first time. `SHA256SUMS` lists every file's digest for manual
-            verification either way.
+            Unless this release says otherwise below, the installers are **not code signed**, and each system will warn about them the first time. `SHA256SUMS` lists every file's digest for manual verification either way.
 
-            **macOS** — the first attempt will say the application cannot be
-            opened. Right-click it in Applications and choose Open, then confirm.
-            You only have to do this once. Download the Apple Silicon build for
-            an M-series Mac, the Intel build for anything older.
+            **macOS** — the first attempt will say the application cannot be opened. Right-click it in Applications and choose Open, then confirm. You only have to do this once. Download the Apple Silicon build for an M-series Mac, the Intel build for anything older.
 
-            **Windows** — SmartScreen shows "Windows protected your PC". Choose
-            More info, then Run anyway.
+            **Windows** — SmartScreen shows "Windows protected your PC". Choose More info, then Run anyway.
 
-            **Linux** — install the `.deb` with
-            `sudo dpkg -i csv-cleaver_*.deb`, or make the AppImage executable
-            with `chmod +x` and run it directly.
+            **Linux** — install the `.deb` with `sudo dpkg -i csv-cleaver_*.deb`, or make the AppImage executable with `chmod +x` and run it directly.
 
             Every installer contains its own Java runtime. Nothing else is needed.
 
             ## Provenance
 
-            This codebase was written predominantly by Claude (Anthropic,
-            model `claude-fable-5`, via Claude Code) under the direction of
-            **Andrew David Nimmo** as Technical Project Manager, who set the
-            requirements, made the decisions, and acceptance-tested every
-            build. [PROVENANCE.md](https://github.com/andrewnimmo/csv-cleaver/blob/main/docs/PROVENANCE.md)
-            states precisely what that means;
-            [VERIFICATION.md](https://github.com/andrewnimmo/csv-cleaver/blob/main/docs/VERIFICATION.md)
-            records what is verified and how.
+            This codebase was written predominantly by Claude (Anthropic, model `claude-fable-5`, via Claude Code) under the direction of **Andrew David Nimmo** as Technical Project Manager, who set the requirements, made the decisions, and acceptance-tested every build. [PROVENANCE.md](https://github.com/andrewnimmo/csv-cleaver/blob/main/docs/PROVENANCE.md) states precisely what that means; [VERIFICATION.md](https://github.com/andrewnimmo/csv-cleaver/blob/main/docs/VERIFICATION.md) records what is verified and how.
 
             Made with 🤖 in Barcelona.
