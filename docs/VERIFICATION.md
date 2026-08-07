@@ -54,6 +54,18 @@ the rest accordingly.
 | The published MSI installs and the application works on real Windows 11 | **user-verified** | installed from the release page by the project manager, 2026-08-06 — the first shipped installer confirmed on real hardware rather than a runner |
 | The published Apple Silicon dmg installs and the application works on a real Mac | **user-verified** | installed and tested by the project manager, 2026-08-06. General "works as expected"; the two specific checks below were not named and stay open |
 
+## Release v2.1.0 — run 31155781836, commit `fc51793`
+
+All five jobs green on the first attempt — the first release to need no
+round-trips. Five installers plus SHA256SUMS published; the MSI's digest
+re-verified by downloading and re-hashing (OBSERVED). Along the way this
+release's CI surfaced and closed two standing defects: the audit gate's
+first live catch (a CVSS 7.5 false positive, answered by removing the
+msgpack jar rather than suppressing — see the commit "What is not on the
+classpath cannot have a CVE"), and the timestamped-folder flake, which
+fired under cloverage exactly as its own assertion message was armed to
+report, and was cured by removing the shared state read it depended on.
+
 ## The update check — commit `5ff3e90`
 
 | Claim | Level | Evidence |
