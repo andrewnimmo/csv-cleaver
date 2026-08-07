@@ -522,13 +522,24 @@
            :headers {"Content-Type" "application/json"}
            :body "{\"error\":\"Missing or wrong token. Use the Authorization: Bearer header.\"}"})))))
 
+(def formats
+  "JSON and EDN, exactly as API.md offers, and nothing else. muuntaja's
+   default instance also negotiates the two transit formats, one of which
+   rides on org.msgpack/msgpack — a jar abandoned in 2015 whose CPE
+   collects every other language's MessagePack CVEs as false positives.
+   That jar is excluded in deps.edn, and this restriction is what makes
+   the exclusion safe: no Accept header can steer a request into code
+   that would want the missing class."
+  (m/create (update m/default-options :formats
+                    select-keys ["application/json" "application/edn"])))
+
 (defn app
   [{:keys [token] :as config}]
   (-> (ring/ring-handler
        (ring/router
         (routes config)
         {:data {:coercion   reitit.coercion.malli/coercion
-                :muuntaja   m/instance
+                :muuntaja   formats
                 :middleware [openapi/openapi-feature
                              parameters/parameters-middleware
                              muuntaja/format-middleware

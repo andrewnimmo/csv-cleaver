@@ -1,19 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<suppressions xmlns="https://jeremylong.github.io/DependencyCheck/dependency-suppression.1.3.xsd">
-  <!-- Every entry here must name its reason and its scope. A suppression
-       without a written justification is a finding being hidden. -->
+<!-- False positives the audit is told to ignore, each with its reason.
 
-  <suppress>
-    <notes><![CDATA[
-      CVE-2026-54522 is a defect in MessagePack for Ruby — the buffer.c C
-      extension of the Ruby gem (rmem page pool reuse in
-      MessagePack::Buffer#clear). Dependency-check matches it onto
-      org.msgpack/msgpack, the unrelated Java library this project gets
-      transitively through com.cognitect/transit-java. Same product name,
-      different codebase, different language. Suppressed for that CVE and
-      that artifact only.
-    ]]></notes>
-    <packageUrl regex="true">^pkg:maven/org\.msgpack/msgpack@.*$</packageUrl>
-    <cve>CVE-2026-54522</cve>
-  </suppress>
+     Currently empty. It held a per-CVE suppression for org.msgpack/msgpack
+     0.6.12 — a 2015 jar whose CPE (msgpack:msgpack) collects every Ruby and
+     Python MessagePack CVE as a false positive. Two landed in the first two
+     days of the gate, which showed per-CVE suppression to be a treadmill;
+     the jar itself is now excluded in deps.edn (the API negotiates only
+     JSON and EDN, so nothing could reach it), and a suppression for an
+     absent jar is clutter. The file and its wiring stay, so the next real
+     false positive costs one entry here rather than plumbing. -->
+<suppressions xmlns="https://jeremylong.github.io/DependencyCheck/dependency-suppression.1.3.xsd">
 </suppressions>

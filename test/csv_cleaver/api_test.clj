@@ -61,6 +61,17 @@
                         (for [i (range 1 61)]
                           (str i ",Name " i ",Town " i "\n")))))
 
+;; ── What is not on the classpath cannot have a CVE ──────────────────────────
+
+(deftest msgpack-stays-off-the-classpath
+  (testing "org.msgpack/msgpack is a 2015 jar reachable only through transit,
+            a format this API deliberately does not offer; its CPE collects
+            other languages' MessagePack CVEs as audit false positives. It is
+            excluded in deps.edn, and this pins the exclusion against a
+            dependency bump quietly reintroducing it."
+    (is (nil? (io/resource "org/msgpack/MessagePack.class"))
+        "the msgpack jar is back on the classpath — see deps.edn exclusions")))
+
 ;; ── The token is the whole boundary ─────────────────────────────────────────
 
 (deftest nothing-is-answered-without-the-token
