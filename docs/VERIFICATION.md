@@ -72,7 +72,7 @@ report, and was cured by removing the shared state read it depended on.
 |---|---|---|
 | Update check: manual button, opt-in startup, quiet by contract, `--no-update-check` removes it | TESTED | offline tests replay every answer GitHub can give, including none; 3 mutations caught — `newer?` inverted, the quiet check nagging, a rebranded fork phoning this repository. The third was caught only after the gate exposed the first version of its test as unable to fail: its non-GitHub URL had a one-segment path that even the mutated regex rejected |
 | Headless/API modes never check | DERIVED | the check is wired only in `start-window!`, which headless runs never reach — the same structural guarantee the no-cljfx rule rests on |
-| The live endpoint answers as the tests assume | **user-verified for the up-to-date path** | the project manager pressed the button against the real endpoint, 2026-08-06: "appears to be working". The update-available path stays PENDING until a newer release exists to find |
+| The live endpoint answers as the tests assume | **user-verified, both paths** | up-to-date: the project manager pressed the button against the real endpoint, 2026-08-06. Update-available: an installed 2.0.0 found v2.1.0 the day it was published and its release-page link worked, 2026-08-07. Every status this feature can show has now been seen on real hardware |
 
 ## To verify on the next build (PENDING-USER)
 
