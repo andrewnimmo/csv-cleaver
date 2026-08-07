@@ -355,10 +355,17 @@
       (let [e ^javafx.scene.input.KeyEvent (:fx/event event)]
         (dispatch! {:event/type ::state/alt-changed :down? (.isAltDown e)}))
 
-      ;; The picker shows translated labels, so the label has to be mapped back
-      ;; to the character it stands for.
+      ;; The picker shows translated labels, so the label has to be mapped
+      ;; back to the character it stands for — with the language context the
+      ;; event carries, which is the language the clicked label was drawn
+      ;; in. These three branches used to read @*state here instead, and
+      ;; that was a flake with a history: any other thread touching state
+      ;; between the click and the read changed the answer. It fired once
+      ;; on Windows CI (blanked survey), was half-fixed in the tests, and
+      ;; fired again under cloverage's slower instrumented run before the
+      ;; reads were removed altogether.
       ::view/delimiter-picked
-      (let [ctx   (state/ctx @*state)
+      (let [ctx   (:ctx event)
             label (:label event)
             match (first (filter #(= label (i18n/tr ctx (:label-key %)))
                                  state/selectable-delimiters))]
@@ -369,14 +376,13 @@
       ;; but the picker still hands back whatever string it is showing.
       ::view/charset-picked
       (dispatch! {:event/type ::state/charset-override-changed
-                  :choice     (state/charset-for-label (state/ctx @*state)
+                  :choice     (state/charset-for-label (:ctx event)
                                                        (:label event))})
 
       ::view/new-folder-requested
-      (let [{:keys [out-dir survey]} @*state]
-        (dispatch! {:event/type ::state/collision-resolved
-                    :choice     :new-dir
-                    :dir        (timestamped-dir out-dir (:file survey))}))
+      (dispatch! {:event/type ::state/collision-resolved
+                  :choice     :new-dir
+                  :dir        (timestamped-dir (:out-dir event) (:file event))})
 
       (let [{:keys [state effects]} (state/handle @*state event)]
         (reset! *state state)

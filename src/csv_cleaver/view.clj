@@ -557,7 +557,14 @@
                                                                         state/selectable-delimiters))
                                                          (first state/selectable-delimiters))))
           :items            (mapv #(i18n/tr ctx (:label-key %)) state/selectable-delimiters)
-          :on-value-changed {:event/type ::delimiter-picked :event/value-key :label}}
+          ;; The event carries the language context of the frame that drew
+          ;; the picker: the label being handed back is in that language,
+          ;; so that context — not whatever the shared state atom says at
+          ;; delivery time — is the right one to map it with. Reading the
+          ;; atom from the handler was a flake that fired twice: another
+          ;; thread could touch state between the click and the read.
+          :on-value-changed {:event/type ::delimiter-picked :event/value-key :label
+                             :ctx ctx}}
          ;; Once the user has overridden it, nothing here was "detected
          ;; automatically" and the advice about changing it is spent. Say what
          ;; they chose and what detection had found, so the two are separable.
@@ -580,7 +587,8 @@
           :value            (state/charset-label
                              ctx (or charset-override state/detected-charset))
           :items            (state/charset-labels ctx)
-          :on-value-changed {:event/type ::charset-picked :event/value-key :label}}
+          :on-value-changed {:event/type ::charset-picked :event/value-key :label
+                             :ctx ctx}}
          {:fx/type :label :style-class ["hint"] :wrap-text true
           :text    (let [detected (get-in survey [:encoding :label])]
                      (if (and charset-override
@@ -791,7 +799,12 @@
          :style-class ["button" "accent"]
          :default-button true
          :text        (i18n/tr ctx :action/new-folder)
-         :on-action   {:event/type ::new-folder-requested}}]}])))
+         ;; The folder and the source file ride in the event. The dialog
+         ;; showing this button is already a rendering of exactly that
+         ;; state, so nothing fresher can exist to fetch at click time.
+         :on-action   {:event/type ::new-folder-requested
+                       :out-dir out-dir
+                       :file    (get-in st [:survey :file])}}]}])))
 
 (defn about-dialog
   [{:keys [theme] :as st}]

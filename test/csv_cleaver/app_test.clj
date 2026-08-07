@@ -323,16 +323,17 @@
   "Run one event through app/handle-event with the dispatch loop captured.
    Returns the events it forwarded.
 
-   The state atom is REBOUND, not reset. Resetting the shared defonce left a
-   window in which worker threads from earlier tests — a scan still winding
-   down — could overwrite it between the reset and the read. Locally that was
-   a nameless once-in-five-runs flake; the slower Windows CI runner hit it
-   every time, with the file stem missing from the timestamped folder because
-   another thread had blanked the survey mid-test."
-  [start-state event]
+   No state is rebound, because these branches of handle-event no longer
+   read any: the events carry their own data, put there by the view that
+   drew the control. This helper's previous version rebound app/*state,
+   and its docstring told the story of the flake that made rebinding
+   necessary — a worker thread blanking the survey mid-test. The rebinding
+   narrowed the window without closing it: the same flake fired again
+   under cloverage's slower instrumented run, and the cure was removing
+   the shared read, not fencing it."
+  [event]
   (let [forwarded (atom [])]
-    (with-redefs [app/*state  (atom start-state)
-                  app/dispatch! (fn [e] (swap! forwarded conj e))]
+    (with-redefs [app/dispatch! (fn [e] (swap! forwarded conj e))]
       (app/handle-event event))
     @forwarded))
 
@@ -342,8 +343,8 @@
       (let [st    (state/with-language state/initial tag)
             ctx   (state/ctx st)
             semi  (i18n/tr ctx :delimiter/semicolon)
-            [event] (routed st {:event/type :csv-cleaver.view/delimiter-picked
-                                :label semi})]
+            [event] (routed {:event/type :csv-cleaver.view/delimiter-picked
+                             :label semi :ctx ctx})]
         (is (= :csv-cleaver.state/delimiter-override-changed (:event/type event)) tag)
         (is (= \; (:choice event)) tag)))))
 
@@ -351,23 +352,25 @@
   (doseq [tag ["en" "fr" "ja"]]
     (let [st  (state/with-language state/initial tag)
           ctx (state/ctx st)
-          [event] (routed st {:event/type :csv-cleaver.view/charset-picked
-                              :label (state/charset-label ctx "UTF-16LE")})]
+          [event] (routed {:event/type :csv-cleaver.view/charset-picked
+                           :label (state/charset-label ctx "UTF-16LE") :ctx ctx})]
       (is (= "UTF-16LE" (:choice event)) tag))
     (let [st  (state/with-language state/initial tag)
           ctx (state/ctx st)
-          [event] (routed st {:event/type :csv-cleaver.view/charset-picked
-                              :label (state/charset-label ctx state/detected-charset)})]
+          [event] (routed {:event/type :csv-cleaver.view/charset-picked
+                           :label (state/charset-label ctx state/detected-charset)
+                           :ctx ctx})]
       (is (= state/detected-charset (:choice event))
           (str tag ": the translated Detected entry maps back to the sentinel")))))
 
 (deftest declining-to-replace-goes-to-a-fresh-timestamped-folder
   (tu/with-temp-dir [dir]
     (let [f  (tu/write-file dir "orders.csv" "id\n1\n")
-          st (assoc state/initial
-                    :out-dir (io/file dir "out")
-                    :survey  {:file f})
-          [event] (routed st {:event/type :csv-cleaver.view/new-folder-requested})]
+          ;; The event carries the folder and the file, as the collision
+          ;; dialog's button now sends them; the view test pins that shape.
+          [event] (routed {:event/type :csv-cleaver.view/new-folder-requested
+                           :out-dir (io/file dir "out")
+                           :file    f})]
       (is (= :csv-cleaver.state/collision-resolved (:event/type event)))
       (is (= :new-dir (:choice event)))
       ;; The whole event in the failure message: this assertion failed once in

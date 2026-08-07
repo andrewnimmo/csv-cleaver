@@ -499,7 +499,12 @@
                                         (:event/type (:on-action %)))
                                     (nodes d)))]
             (is (true? (:default-button safe)))
-            (is (contains? (set (:style-class safe)) "accent"))))
+            (is (contains? (set (:style-class safe)) "accent"))
+            (testing "and its event carries the folder and the file, so the
+                      handler never reads shared state — the read was a flake
+                      that fired twice before the data moved into the event"
+              (is (= dir (get-in safe [:on-action :out-dir])))
+              (is (some? (get-in safe [:on-action :file]))))))
         (testing "and it says what replacing will do to files not listed"
           (is (text-containing d #"Trash|left alone")))))))
 
