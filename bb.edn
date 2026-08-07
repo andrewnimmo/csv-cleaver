@@ -15,7 +15,6 @@
 
   :init
   (do
-    (def app-version "2.0.0")
     (defn clj [& args]
       (let [{:keys [exit]} (shell {:continue true} (str/join " " (cons "clojure" args)))]
         (when-not (zero? exit) (System/exit exit)))))

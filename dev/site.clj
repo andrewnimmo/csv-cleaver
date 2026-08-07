@@ -129,6 +129,10 @@
    "  <div class=\"card\"><h3>Eight languages</h3><p>English, Spanish, French, German, Italian, Portuguese, Chinese and Japanese — numbers formatted correctly in each.</p></div>\n"
    "  <div class=\"card\"><h3>A REST API too</h3><p>Run it headless with <code>--api</code> and script it: async jobs, uploads, a Swagger page. <a href=\"api.html\">API docs</a>.</p></div>\n"
    "  <div class=\"card\"><h3>Honest about itself</h3><p>Written predominantly by an AI under human direction, and it says so — with a <a href=\"verification.html\">verification ledger</a> of what is proven and how.</p></div>\n"
+   "</section>\n"
+   "<section class=\"cleave card\" id=\"privacy\">\n"
+   "  <p><strong>Privacy</strong></p>\n"
+   "  <p class=\"muted\">This site is static files served by GitHub Pages: no cookies, no analytics, no tracking scripts. Your browser makes one request to GitHub's API, to show the latest version number on the download button; pages served from github.io appear in GitHub's ordinary server logs, covered by the <a href=\"https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement\">GitHub Privacy Statement</a>. The <code>google-site-verification</code> tag in the page header is an inert ownership proof for search indexing — it loads nothing and reports nothing about you. The application's own privacy promises are stronger still: see <a href=\"user-guide.html\">the user guide</a>.</p>\n"
    "</section>\n"))
 
 (defn build! []

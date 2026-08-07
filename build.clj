@@ -12,7 +12,10 @@
    [clojure.tools.build.api :as b]))
 
 (def lib 'dev.nimmo/csv-cleaver)
-(def version "2.0.0")
+;; branding.edn is the one place the version lives. This file held its own
+;; copy until 2.1.0, when the bump found three definitions to keep agreeing —
+;; the same drift the copyright notice was cured of.
+(def version (:version (read-string (slurp "resources/branding.edn"))))
 (def main-ns 'csv-cleaver.main)
 
 (def class-dir "target/classes")
