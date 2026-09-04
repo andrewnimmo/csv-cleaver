@@ -345,3 +345,42 @@ unless they opt in — accepted, because nagging was the alternative.
 
 **When to revisit.** If releases ever move off GitHub, `releases-endpoint`
 needs a second recognised host, and the feature stays dark until it gets one.
+
+---
+
+## 19. Two locales may be named; the default may not
+
+**Decision.** Every case fold and format in the codebase belongs to one of two
+namespaces. `csv-cleaver.i18n` renders for the *user*, through the locale of
+the window, passed explicitly. `csv-cleaver.text` renders for *machines* —
+language tags, CLI keywords, file names, format tokens — pinned to
+`Locale/ROOT`. The raw calls (`str/lower-case`, `clojure.core/format`, a bare
+`.toLowerCase`, `SimpleDateFormat`, and the rest) are banned everywhere else by
+`bb locale-lint`, which runs in CI and is pinned clean by the test suite; a
+knowingly-safe line may carry a `locale-ok` comment with its reason. `bb
+test-tr` runs the whole suite under tr_TR, the locale whose dotted and dotless
+i make an unpinned fold fail loudly instead of quietly.
+
+**Why.** Decision 9 recorded the lesson — a bare `format` follows the JVM
+default locale, and an English window on this project's own Spanish development
+machine rendered 1,204,338 as `1.204.338` — but a lesson that is only recorded
+recurs: at the time the gate landed, this codebase had grown ten raw
+locale-sensitive calls since, one of which turned `--locale IT` into the
+non-language `ıt` on any Turkish machine. Two sibling projects hit the same
+class of fault before the rule became tooling. The gate is what was missing:
+the rule now fails a build instead of relying on being remembered.
+
+**The exemption list is the design.** Exactly two source namespaces escape the
+lint, and each for a stated reason: `csv-cleaver.text` because every call in it
+names `Locale/ROOT`, and `csv-cleaver.i18n` because it is the sanctioned home
+of explicit locale choice — it owns the one legitimate `Locale/getDefault`,
+in `detect-tag`, choosing a startup language. Exemption is not a licence: the
+i18n namespace's own machine-facing folds still go through `csv-cleaver.text`.
+
+**Rejected.** Linting the test tree. Tests are full of literal formats, and the
+behavioural net is better there anyway: `bb test-tr` runs every test under the
+adversarial locale, which catches what no pattern can.
+
+**Cost.** One more namespace to know about, a second test-suite run in CI, and
+a lint whose patterns are regular expressions over lines — which is why a
+comment must not name a banned form, and why waivers are spelled `locale-ok`.

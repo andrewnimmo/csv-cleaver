@@ -14,7 +14,8 @@
    [clojure.string :as str]
    [clojure.tools.cli :as cli]
    [csv-cleaver.branding :as branding]
-   [csv-cleaver.i18n :as i18n]))
+   [csv-cleaver.i18n :as i18n]
+   [csv-cleaver.text :as text]))
 
 (def options
   [["-l" "--locale TAG"
@@ -30,7 +31,9 @@
 
    ["-t" "--theme NAME"
     "Appearance: auto, light or dark. Auto follows the system and is the default."
-    :parse-fn #(let [k (keyword (str/lower-case %))]
+    ;; The pinned fold, because on a machine set to Turkish the raw one
+    ;; would turn --theme LIGHT into :lıght, which is then refused.
+    :parse-fn #(let [k (keyword (text/lower %))]
                  ;; "auto" is the word people reach for; "system" is what the
                  ;; code calls it. Both are accepted.
                  (if (= k :auto) :system k))
@@ -59,7 +62,7 @@
     ;; Without this the summary shows the keyword, :path, which is an
     ;; implementation detail leaking into the one place it must not.
     :default-desc "path"
-    :parse-fn #(keyword (str/lower-case %))
+    :parse-fn #(keyword (text/lower %))
     :validate [#{:none :path :upload :both}
                "Choose one of: none, path, upload, both"]]
 
@@ -92,7 +95,7 @@
     (or (branding/value :tagline)
         (i18n/tr (i18n/context i18n/fallback-tag) :about/tagline))
     ""
-    (str "Usage: " (-> (branding/app-name) str/lower-case (str/replace " " "-"))
+    (str "Usage: " (-> (branding/app-name) text/lower (str/replace " " "-"))
          " [options]")
     ""
     "Options:"

@@ -331,4 +331,40 @@
   :file      "src/csv_cleaver/updates.clj"
   :find      "(re-matches #\"https://github\\.com/([^/]+)/([^/]+?)/?\""
   :replace   "(re-matches #\"https://[^/]+/([^/]+)/([^/]+?)/?\""
-  :namespace "csv-cleaver.updates-test"}]
+  :namespace "csv-cleaver.updates-test"}
+
+ {:label     "text/lower loses its pin and follows the machine again"
+  :file      "src/csv_cleaver/text.clj"
+  :find      "(.toLowerCase ^String (str s) Locale/ROOT)"
+  :replace   "(.toLowerCase ^String (str s))"
+  :namespace "csv-cleaver.text-test"}
+
+ {:label     "text/fmt loses its pin — the 1.204.338 fault, in the fix itself"
+  :file      "src/csv_cleaver/text.clj"
+  :find      "(String/format Locale/ROOT pattern (to-array args))"
+  :replace   "(String/format pattern (to-array args))"
+  :namespace "csv-cleaver.text-test"}
+
+ {:label     "the language-tag fold follows the machine — Turkish loses Italian"
+  :file      "src/csv_cleaver/i18n.clj"
+  :find      "(str/split #\"-\") first\n                       text/lower)]"
+  :replace   "(str/split #\"-\") first\n                       str/lower-case)]"
+  :namespace "csv-cleaver.text-test"}
+
+ {:label     "the theme option folds with the machine's locale again"
+  :file      "src/csv_cleaver/cli.clj"
+  :find      "#(let [k (keyword (text/lower %))]"
+  :replace   "#(let [k (keyword (str/lower-case %))]"
+  :namespace "csv-cleaver.text-test"}
+
+ {:label     "the locale lint quietly scans nothing and reports clean"
+  :file      "dev/locale_lint.clj"
+  :find      "(concat (file-seq (io/file \"src\")) (file-seq (io/file \"dev\")))"
+  :replace   "(concat (file-seq (io/file \"missing\")) (file-seq (io/file \"gone\")))"
+  :namespace "csv-cleaver.text-test"}
+
+ {:label     "the locale lint stops seeing a bare clojure.core format call"
+  :file      "dev/locale_lint.clj"
+  :find      "   [#\"\\(format\\s\" \"use csv-cleaver.text/fmt (Locale/ROOT) — or csv-cleaver.i18n for anything a user reads\"]\n"
+  :replace   ""
+  :namespace "csv-cleaver.text-test"}]

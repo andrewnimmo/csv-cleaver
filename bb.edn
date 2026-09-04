@@ -3,6 +3,11 @@
 
 {:min-bb-version "1.3.0"
 
+ ;; For locale-lint, which runs natively under bb — no JVM start-up for a
+ ;; check that reads a couple of dozen files. Nothing here loads an
+ ;; application namespace unless a task asks it to.
+ :paths ["src" "dev"]
+
  ;; For the site task only. Version checked against the live Clojars API on
  ;; 2026-08-06; renders GFM tables, which docs/VERIFICATION.md depends on.
  :deps {markdown-clj/markdown-clj {:mvn/version "1.12.9"}}
@@ -114,6 +119,14 @@
   {:doc  "Run clj-kondo over the source and tests."
    :task (clj "-M:lint")}
 
+  locale-lint
+  {:doc  "Forbid default-locale text operations outside csv-cleaver.text and csv-cleaver.i18n. See dev/locale_lint.clj."
+   :task (exec 'locale-lint/run)}
+
+  test-tr
+  {:doc  "The whole suite under the Turkish locale — the canonical adversary for anything that quietly reads the machine's locale."
+   :task (clj "-J-Duser.language=tr" "-J-Duser.country=TR" "-M:test")}
+
   audit
   {:doc  "Check dependencies against the NIST vulnerability database."
    ;; nvd-clojure 5 wants the classpath to scan handed to it explicitly rather
@@ -191,8 +204,8 @@
    :task (load-file "dev/site.clj")}
 
   check
-  {:doc     "Everything CI runs: format, lint, tests, vulnerabilities."
-   :depends [format:check lint test audit]}
+  {:doc     "Everything CI runs: format, lint, locale lint, tests (plain and under tr_TR), vulnerabilities."
+   :depends [format:check lint locale-lint test test-tr audit]}
 
   clean
   {:doc  "Remove build output."

@@ -15,11 +15,17 @@
    1.204.338. Numbers that end up in file names do not — those stay ASCII so
    that a file manager can still sort them. That distinction is the whole
    reason the formatting helpers take a context rather than reading the JVM's
-   default locale, which is what produced 1.204.338 in an English window."
+   default locale, which is what produced 1.204.338 in an English window.
+
+   Text meant for a machine — language tags, file names, format tokens — goes
+   the other way entirely, through csv-cleaver.text, pinned to Locale/ROOT.
+   These are the only two namespaces allowed to name a locale; `bb locale-lint`
+   holds everything else to that."
   (:require
    [clojure.edn :as edn]
    [clojure.java.io :as io]
-   [clojure.string :as str])
+   [clojure.string :as str]
+   [csv-cleaver.text :as text])
   (:import
    (java.io File)
    (java.text NumberFormat)
@@ -206,7 +212,7 @@
    Restricted to plain letters, so nothing can reach outside the folder or
    masquerade as a path."
   [^String filename]
-  (let [stem (str/lower-case (str/replace filename #"\.edn$" ""))]
+  (let [stem (text/lower (str/replace filename #"\.edn$" ""))]
     (when (re-matches #"[a-z]{2,3}" stem) stem)))
 
 (defn load-external!
@@ -268,7 +274,7 @@
   "The language to start in: the system's, when we have it, otherwise English."
   ([] (detect-tag (Locale/getDefault)))
   ([^Locale locale]
-   (let [language (str/lower-case (str (.getLanguage locale)))]
+   (let [language (text/lower (str (.getLanguage locale)))]
      (if (some #{language} supported) language fallback-tag))))
 
 (defn normalise-tag
@@ -278,7 +284,7 @@
   [tag]
   (when tag
     (let [language (-> (str tag) (str/replace "_" "-") (str/split #"-") first
-                       str/lower-case)]
+                       text/lower)]
       (some #{language} (available-tags)))))
 
 (defn context
@@ -394,4 +400,4 @@
   "A whole number with ASCII digits and no separators, for file names and
    anywhere else a machine will read it back."
   [n]
-  (String/format Locale/ROOT "%d" (to-array [(long n)])))
+  (text/fmt "%d" (long n)))

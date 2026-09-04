@@ -2,7 +2,8 @@
   "The few things that differ between macOS, Windows and Linux."
   (:require
    [clojure.java.io :as io]
-   [clojure.string :as str])
+   [clojure.string :as str]
+   [csv-cleaver.text :as text])
   (:import
    (java.awt Desktop Desktop$Action)
    (java.io File)))
@@ -11,7 +12,7 @@
   "Which family of operating system this is: :mac, :windows or :linux."
   ([] (os (System/getProperty "os.name")))
   ([^String os-name]
-   (let [n (str/lower-case (str os-name))]
+   (let [n (text/lower (str os-name))]
      (cond
        (str/includes? n "mac")  :mac
        (str/includes? n "win")  :windows
