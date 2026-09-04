@@ -24,7 +24,9 @@
    [csv-cleaver.view :as view])
   (:import
    (java.io File)
-   (javafx.scene Node)))
+   (javafx.scene Node Scene)
+   (javafx.scene.control ButtonBase)
+   (javafx.stage Stage)))
 
 (defn materialise
   "Build `description` into live JavaFX objects on the FX thread and return the
@@ -74,6 +76,71 @@
       (doseq [[label screen] screens]
         (testing label
           (is (instance? Node (materialise (view/content screen)))))))))
+
+(defn- laid-out-in-window
+  "Materialise `description` at the window's own size with CSS applied and
+   layout run, and hand the root to `f` on the FX thread. Unlike `laid-out`
+   below — whose deliberately roomy scene exists so every control has a skin
+   to read text from — this one reproduces the squeeze: real window size, in
+   a shown (invisible, parked off-screen) window, as dev/shots.clj renders."
+  [description f]
+  @(fx/on-fx-thread
+    (let [node  (fx/instance (fx/create-component description))
+          stage (doto (Stage.)
+                  (.setScene (Scene. node 720.0 660.0))
+                  (.setOpacity 0.0)
+                  (.setX -30000.0)
+                  (.show))]
+      (try
+        (.applyCss ^Node node)
+        (.layout node)
+        (f node)
+        (finally (.hide stage))))))
+
+(deftest ^:fx no-button-surrenders-its-label
+  ;; The file card's Change… button rendered as "Chang…": when its header row
+  ;; ran short, the HBox shrank the button below its preferred width and the
+  ;; label ellipsized. The path beside it may give way — it knows how to — a
+  ;; control's label may not, because a button that does not say what it does
+  ;; is not a control. Every button on every screen, laid out at the window's
+  ;; own size, must get at least the width it asked for.
+  ;;
+  ;; The file lives in a deliberately deep folder. The squeeze only happens
+  ;; when the path label's preferred width overflows the row, and a system
+  ;; temp path is not reliably long enough — the first version of this test
+  ;; passed with the fix removed, which is exactly the green-while-guarding-
+  ;; nothing failure dev/mutations.edn exists to catch, and it did.
+  (tu/with-temp-dir [shallow]
+    (let [dir   (doto (File. shallow
+                             (str/join File/separator
+                                       (repeat 6 "a-longer-folder-name")))
+                  .mkdirs)
+          ready (ready-state dir)
+          screens
+          {"ready"      ready
+           "damaged"    (ready-state dir "a,b,c\n1,2,3\n4,5\n")
+           "advanced"   (assoc ready :advanced-open? true)
+           "done"       (assoc ready :phase :ready
+                               :result {:files [:a :b] :elapsed-ms 6432
+                                        :written [{:file (File. "people_0001.csv")
+                                                   :rows 2}]})
+           "name clash" (assoc ready :dialog :collisions
+                               :collisions (mapv #(File. dir (str "people_000" % ".csv"))
+                                                 (range 1 7)))}]
+      (doseq [[label screen] screens]
+        (testing label
+          (laid-out-in-window
+           (view/content screen)
+           (fn [^Node root]
+             (let [buttons (filter #(and (instance? ButtonBase %)
+                                         (.isVisible ^Node %)
+                                         (.isManaged ^Node %))
+                                   (.lookupAll root ".button"))]
+               (is (seq buttons))
+               (doseq [^ButtonBase b buttons]
+                 (is (>= (+ (.getWidth b) 0.5) (.prefWidth b -1.0))
+                     (str "'" (.getText b) "' is squeezed below the width "
+                          "its label needs")))))))))))
 
 (deftest ^:fx the-stylesheet-is-on-the-classpath-and-loads
   (testing "a missing stylesheet leaves the window unstyled rather than

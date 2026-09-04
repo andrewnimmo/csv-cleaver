@@ -363,6 +363,12 @@
   :replace   "(concat (file-seq (io/file \"missing\")) (file-seq (io/file \"gone\")))"
   :namespace "csv-cleaver.text-test"}
 
+ {:label     "the Change button gives its label away again"
+  :file      "src/csv_cleaver/view.clj"
+  :find      "          :min-width Double/NEGATIVE_INFINITY\n          :text      (i18n/tr ctx :action/change)\n          :on-action {:event/type ::state/browse-input-requested}}"
+  :replace   "          :text      (i18n/tr ctx :action/change)\n          :on-action {:event/type ::state/browse-input-requested}}"
+  :namespace "csv-cleaver.fx-smoke-test"}
+
  {:label     "the locale lint stops seeing a bare clojure.core format call"
   :file      "dev/locale_lint.clj"
   :find      "   [#\"\\(format\\s\" \"use csv-cleaver.text/fmt (Locale/ROOT) — or csv-cleaver.i18n for anything a user reads\"]\n"
