@@ -11,7 +11,8 @@
    a sentence is far easier to test than a widget."
   (:require
    [clojure.string :as str]
-   [csv-cleaver.i18n :as i18n])
+   [csv-cleaver.i18n :as i18n]
+   [csv-cleaver.text :as text])
   (:import
    (java.text NumberFormat ParsePosition)
    (java.util Locale)))
@@ -113,7 +114,10 @@
    what the application itself showed them, and being told nothing is wrong
    with it would be indefensible."
   [ctx size-key]
-  (-> (i18n/tr ctx size-key "") str/trim str/upper-case not-empty))
+  ;; The pinned fold: this exists so "25 mb" matches "MB", and both sides must
+  ;; fold identically whatever the machine's locale — a Turkish default turns
+  ;; "gib" and "GIB" into different strings.
+  (-> (i18n/tr ctx size-key "") str/trim text/upper not-empty))
 
 (defn size-tokens
   "Every unit this language could reasonably be handed, as [token key factor],
@@ -137,7 +141,7 @@
    {:value :unit :factor}, or nil. A bare number means megabytes, which is what
    someone typing into a box labelled \"in each file\" intends."
   [ctx s]
-  (let [text (-> (str s) str/trim str/upper-case)
+  (let [text (-> (str s) str/trim text/upper)
         [digits unit factor]
         (or (some (fn [[token key f]]
                     (when (str/ends-with? text token)

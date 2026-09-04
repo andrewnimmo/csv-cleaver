@@ -27,8 +27,9 @@
    (atlantafx.base.theme PrimerDark PrimerLight)
    (javafx.beans.value ChangeListener)
    (java.io File)
-   (java.text SimpleDateFormat)
-   (java.util Date)
+   (java.time LocalDateTime)
+   (java.time.format DateTimeFormatter)
+   (java.util Locale)
    (javafx.application Application Platform)
    (javafx.scene.input DragEvent TransferMode)
    (javafx.stage DirectoryChooser FileChooser FileChooser$ExtensionFilter Stage Window)))
@@ -317,7 +318,11 @@
 (defn timestamped-dir
   "A sibling folder to write into when the user declines to replace anything."
   ^File [^File out-dir ^File source]
-  (let [stamp (.format (SimpleDateFormat. "yyyy-MM-dd HHmm") (Date.))]
+  ;; Locale/ROOT because this is a folder name: on a machine whose locale
+  ;; writes other digits or counts years in another calendar, the default
+  ;; locale would put those in the name.
+  (let [stamp (.format (DateTimeFormatter/ofPattern "yyyy-MM-dd HHmm" Locale/ROOT)
+                       (LocalDateTime/now))]
     (File. out-dir (str (some-> source .getName (str/replace #"\.[^.]*$" ""))
                         " split " stamp))))
 

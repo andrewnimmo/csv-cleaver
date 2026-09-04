@@ -130,6 +130,8 @@ For CI, add it as a repository secret named `NVD_API_KEY`;
 ```bash
 bb test          # everything
 bb test:fast     # skip the tests needing a JavaFX toolkit
+bb test-tr       # everything again, under the Turkish locale
+bb locale-lint   # no default-locale text operations outside their two homes
 bb coverage      # report in target/coverage
 ```
 
@@ -146,6 +148,14 @@ Three layers, each catching what the others cannot:
    from every screen in every language. These catch what map-based tests cannot:
    a misspelled property, or a `when` leaving a `nil` in a children vector.
    Tagged `^:fx`; on a headless machine run them under `xvfb-run`.
+
+Around all three sits the locale gate (R85, and decision 19 in
+[DECISIONS.md](DECISIONS.md)): `bb locale-lint` forbids raw default-locale
+folds and formats outside `csv-cleaver.text` and `csv-cleaver.i18n`, and
+`bb test-tr` reruns the whole suite with the JVM defaulted to Turkish — the
+locale that turns an unpinned case fold into a visible failure. Both run in CI,
+and the lint is also pinned clean by `text_test`, so reintroducing a raw call
+fails `bb test` itself.
 
 ### Writing a test that is worth having
 

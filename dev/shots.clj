@@ -14,6 +14,7 @@
    [csv-cleaver.branding :as branding]
    [csv-cleaver.scan :as scan]
    [csv-cleaver.state :as state]
+   [csv-cleaver.text :as text]
    [csv-cleaver.view :as view])
   (:import
    (atlantafx.base.theme PrimerDark PrimerLight)
@@ -101,7 +102,7 @@
                                               {:file (io/file "customers-2024_0002.csv") :rows 500}
                                               {:file (io/file "customers-2024_0003.csv") :rows 203}]})]
      ["7-clash"     (assoc ready :dialog :collisions
-                           :collisions (mapv #(io/file dir (format "customers-2024_%04d.csv" %))
+                           :collisions (mapv #(io/file dir (text/fmt "customers-2024_%04d.csv" %))
                                              (range 1 7)))]
      ["8-about"     (assoc ready :dialog :about)]
      ["9-help"      (assoc ready :dialog :help)]

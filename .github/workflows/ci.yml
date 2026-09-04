@@ -53,6 +53,11 @@ jobs:
       - name: Lint
         run: bb lint
 
+      # No default-locale text operations outside csv-cleaver.text and
+      # csv-cleaver.i18n. See dev/locale_lint.clj and decision 19.
+      - name: Locale lint
+        run: bb locale-lint
+
       # JavaFX needs a display. Linux runners have none, so the smoke tests that
       # build real widgets run under a virtual one; macOS and Windows runners
       # have a desktop session already.
@@ -63,6 +68,14 @@ jobs:
       - name: Test
         if: runner.os != 'Linux'
         run: clojure -M:test
+
+      # The whole suite again with the JVM defaulted to Turkish — the locale
+      # whose dotted and dotless i makes an unpinned case fold fail loudly.
+      # One platform is enough: the JDK's locale data is the same on all three,
+      # so this run varies the locale, not the operating system.
+      - name: Test under tr_TR (Linux, virtual display)
+        if: runner.os == 'Linux'
+        run: xvfb-run -a bb test-tr
 
   security:
     name: Vulnerabilities

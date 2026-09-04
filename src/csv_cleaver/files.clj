@@ -9,7 +9,8 @@
        every accented character into mojibake the moment the user double-clicks
        one of the results."
   (:require
-   [clojure.string :as str])
+   [clojure.string :as str]
+   [csv-cleaver.text :as text])
   (:import
    (java.io BufferedWriter File FileInputStream FileOutputStream
             InputStreamReader OutputStreamWriter Reader Writer)
@@ -89,6 +90,6 @@
      :csv-count (count (filter (fn [^File f]
                                  (and (.isFile f)
                                       (str/ends-with?
-                                       (str/lower-case (.getName f)) ".csv")))
+                                       (text/lower (.getName f)) ".csv")))
                                (or (.listFiles dir) (make-array File 0))))}
     {:exists? false :csv-count 0}))

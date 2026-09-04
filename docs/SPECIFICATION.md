@@ -239,6 +239,17 @@ it as the wrong one turns a hundred thousand into a hundred. Text stored by
 earlier versions is ignored rather than guessed at: forgetting a row count once
 is a smaller harm than silently dividing it by a thousand.
 
+**R85.** Text meant for a machine — language tags, CLI keywords, file and
+folder names, format tokens — comes out identical on every machine, whatever
+its locale. Case folds and formats for such text go through `csv-cleaver.text`,
+pinned to `Locale/ROOT`; only `csv-cleaver.i18n` may ask what the machine's
+locale is, and only to choose a startup language. R29 is the other half of the
+same rule: what a user reads follows the *window's* language, what a machine
+reads follows no language at all, and nothing follows the JVM default. Enforced
+by `bb locale-lint`, and exercised by `bb test-tr`, which runs the whole suite
+under the Turkish locale — the one where an unpinned fold turns `--locale IT`
+into the non-language `ıt`.
+
 **R84.** There is exactly one copyright notice, defined in `branding.edn` in
 the form `Copyright © <year> <name>`. The About dialog, the NOTICE file and the
 installer metadata (what macOS Get Info and Windows file properties show) all
