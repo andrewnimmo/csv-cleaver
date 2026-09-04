@@ -348,6 +348,11 @@
             :text-overrun :leading-ellipsis
             :text         (path-of (.getParentFile (.getAbsoluteFile file)))}]}
          {:fx/type   :button
+          ;; USE_PREF_SIZE. When this row runs short it is the path label's
+          ;; job to give way — it knows how to ellipsize — never the button's:
+          ;; without this, the header squeezed it to "Chang…" at the window's
+          ;; own default width.
+          :min-width Double/NEGATIVE_INFINITY
           :text      (i18n/tr ctx :action/change)
           :on-action {:event/type ::state/browse-input-requested}}]}
        {:fx/type :flow-pane :hgap 6 :vgap 6 :children (file-chips st)}
@@ -475,6 +480,9 @@
                 :h-box/hgrow :always
                 :max-width Double/MAX_VALUE)
          {:fx/type   :button
+          ;; USE_PREF_SIZE, same reason as the file card's Change button: the
+          ;; path beside it gives way, the label never does.
+          :min-width Double/NEGATIVE_INFINITY
           :text      (i18n/tr ctx :action/change)
           :on-action {:event/type ::state/browse-output-requested}}]}
        (when (nil? (naming/template-problem template))
