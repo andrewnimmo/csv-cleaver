@@ -65,7 +65,11 @@
   (->> (concat (file-seq (io/file "src")) (file-seq (io/file "dev")))
        (filter (fn [^java.io.File f]
                  (and (.isFile f) (re-matches #".*\.cljc?" (.getName f)))))
-       (map str)
+       ;; Forward slashes whatever the platform, or the exemptions would
+       ;; silently stop matching on the Windows CI runner — and a lint that
+       ;; flags its own exempt files fails loudly, which is at least the
+       ;; better direction to fail in.
+       (map (fn [f] (str/replace (str f) "\\" "/")))
        (remove (fn [path] (some #(str/ends-with? path %) exempt)))
        sort))
 
