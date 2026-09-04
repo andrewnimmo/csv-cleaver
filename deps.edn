@@ -43,12 +43,13 @@
   ;; public hook. Used only on macOS, in csv-cleaver.macos; harmless elsewhere.
   net.java.dev.jna/jna           {:mvn/version "5.19.1"}
 
-  ;; The newest patch of the 25 LTS line, matching the JDK the installers
-  ;; bundle. A 26 GA exists, but changing toolkit line is not drift — it is
-  ;; its own change, reviewed with `bb shots` open.
-  org.openjfx/javafx-base        {:mvn/version "25.0.4"}
-  org.openjfx/javafx-graphics    {:mvn/version "25.0.4"}
-  org.openjfx/javafx-controls    {:mvn/version "25.0.4"}}
+  ;; The newest GA of the toolkit, moved to deliberately — a toolkit line
+  ;; change is never taken as drift. Reviewed as prescribed: every screen
+  ;; rendered with `bb shots` on 25.0.4 and again on 26.0.2, the two sets
+  ;; pixel-diffed, and the movers looked at.
+  org.openjfx/javafx-base        {:mvn/version "26.0.2"}
+  org.openjfx/javafx-graphics    {:mvn/version "26.0.2"}
+  org.openjfx/javafx-controls    {:mvn/version "26.0.2"}}
 
  :aliases
  {:run
@@ -88,7 +89,7 @@
   ;; dev/icons.clj; run with `bb icons`.
   :icons
   {:extra-paths ["dev"]
-   :extra-deps  {org.openjfx/javafx-swing {:mvn/version "25.0.4"}}
+   :extra-deps  {org.openjfx/javafx-swing {:mvn/version "26.0.2"}}
    :jvm-opts    ["--enable-native-access=ALL-UNNAMED" "-Dfile.encoding=UTF-8"]
    :main-opts   ["-m" "icons"]}
 
