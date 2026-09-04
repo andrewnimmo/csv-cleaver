@@ -1,0 +1,71 @@
+name: Audit
+
+# The NVD vulnerability audit, on the self-hosted runner. Two reasons it lives
+# apart from ci.yml:
+#
+#   Persistence. dependency-check keeps its NVD mirror under ~/.m2, and a
+#   machine that keeps its disk keeps the mirror. On the hosted runners the
+#   mirror had to be rebuilt through a cache dance that died readily on runner
+#   networks; a twenty-minute build was a good day. Here the first run builds
+#   it once and every later run reuses it.
+#
+#   Safety. This repository is public, and a self-hosted runner must never
+#   execute a stranger's code — GitHub's own guidance on fork pull requests is
+#   blunt about this. So this workflow has no pull_request trigger, and must
+#   never gain one. It audits what is already on main, on every push and once
+#   a night — which loses nothing worth having: new CVEs land against old
+#   dependencies far more often than a pull request introduces one, and the
+#   nightly run catches those where a PR-triggered audit never would.
+
+on:
+  push:
+    branches: [main]
+  schedule:
+    # Nightly. The dependencies change only on push, but the vulnerability
+    # database changes every day.
+    - cron: '17 5 * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: audit
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    name: Vulnerabilities
+    runs-on: [self-hosted, Linux, X64]
+    # There is one runner slot; a hung NVD download must not hold it all day.
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up JDK 25
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '25'
+
+      - name: Set up Clojure
+        uses: DeLaGuardo/setup-clojure@13.6.1
+        with:
+          cli: latest
+          bb: latest
+
+      # No cache steps: persistence is the point of this machine — ~/.m2
+      # survives between runs, NVD mirror included. nvd-clojure requires an
+      # API key: add NVD_API_KEY as a repository secret, or this step fails
+      # rather than passing quietly. Get one free from
+      # https://nvd.nist.gov/developers/request-an-api-key
+      - name: Known vulnerabilities
+        env:
+          NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
+        run: bb audit || (echo "retrying once — a first NVD mirror build can be flaky" && bb audit)
+
+      # Being behind is not itself a vulnerability, but it is how you come to
+      # be running one. Reported, not enforced.
+      - name: Dependency drift
+        continue-on-error: true
+        run: bb outdated
