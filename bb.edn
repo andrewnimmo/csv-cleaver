@@ -9,8 +9,8 @@
  :paths ["src" "dev"]
 
  ;; For the site task only. Version checked against the live Clojars API on
- ;; 2026-08-06; renders GFM tables, which docs/VERIFICATION.md depends on.
- :deps {markdown-clj/markdown-clj {:mvn/version "1.12.9"}}
+ ;; 2026-09-05; renders GFM tables, which docs/VERIFICATION.md depends on.
+ :deps {markdown-clj/markdown-clj {:mvn/version "1.12.10"}}
 
  :tasks
  {:requires ([babashka.fs :as fs]

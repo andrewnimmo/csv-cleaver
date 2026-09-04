@@ -1,17 +1,17 @@
 {:paths ["src" "resources"]
 
  :deps
- {org.clojure/clojure            {:mvn/version "1.12.5"}
+ {org.clojure/clojure            {:mvn/version "1.12.6"}
 
   ;; cljfx declares javafx-media and javafx-web as hard dependencies. Neither is
   ;; used here, and javafx-web alone carries a WebKit native of ~180 MB, which
   ;; would land in every installer. Excluded, with the modules we do use pinned
   ;; explicitly so every JavaFX artifact resolves at the same version.
-  cljfx/cljfx                    {:mvn/version "1.10.10"
+  cljfx/cljfx                    {:mvn/version "1.10.361"
                                   :exclusions  [org.openjfx/javafx-media
                                                 org.openjfx/javafx-web]}
 
-  org.clojure/tools.cli          {:mvn/version "1.1.230"}
+  org.clojure/tools.cli          {:mvn/version "1.4.256"}
 
   ;; The optional local HTTP service. Off unless --api is given; see
   ;; docs/API.md and the security note in docs/SECURITY.md.
@@ -31,16 +31,21 @@
   ;; -54513 (CVSS 8.1, polymorphic type validation) plus five more; the last of
   ;; them is fixed in 2.21.5. Found by `bb audit` — remove this pin once reitit
   ;; itself resolves to 2.21.5 or later, and check with `bb audit` rather than
-  ;; by eye.
-  com.fasterxml.jackson.core/jackson-databind {:mvn/version "2.21.5"}
+  ;; by eye. Checked 2026-09-05: the newest stable reitit is still 0.10.1,
+  ;; which still resolves 2.21.1, and the unpinned tree still fails the audit
+  ;; on all seven CVEs. The pin stays, and follows drift.
+  com.fasterxml.jackson.core/jackson-databind {:mvn/version "2.22.2"}
 
   io.github.mkpaz/atlantafx-base {:mvn/version "2.1.0"}
 
   ;; The Objective-C runtime, for the one thing JavaFX cannot do: put About
   ;; into the macOS application menu, which Glass builds natively with no
   ;; public hook. Used only on macOS, in csv-cleaver.macos; harmless elsewhere.
-  net.java.dev.jna/jna           {:mvn/version "5.17.0"}
+  net.java.dev.jna/jna           {:mvn/version "5.19.1"}
 
+  ;; The newest patch of the 25 LTS line, matching the JDK the installers
+  ;; bundle. A 26 GA exists, but changing toolkit line is not drift — it is
+  ;; its own change, reviewed with `bb shots` open.
   org.openjfx/javafx-base        {:mvn/version "25.0.4"}
   org.openjfx/javafx-graphics    {:mvn/version "25.0.4"}
   org.openjfx/javafx-controls    {:mvn/version "25.0.4"}}
@@ -105,9 +110,13 @@
                   ;; with old databases sailed on. Diagnosed from the H2
                   ;; error in the CI log after two rounds of blaming the
                   ;; runner network.
+                  ;; 13.0.0 exists, but a major of the scanner is not drift:
+                  ;; nvd-clojure 5.3 pins the 12 line, and a major typically
+                  ;; changes the database schema, forcing every machine to
+                  ;; rebuild its NVD mirror. Take it when nvd-clojure does.
                   org.owasp/dependency-check-core  {:mvn/version "12.2.2"}
                   org.owasp/dependency-check-utils {:mvn/version "12.2.2"}
-                  org.clojure/clojure     {:mvn/version "1.12.5"}}
+                  org.clojure/clojure     {:mvn/version "1.12.6"}}
    :main-opts    ["-m" "nvd.task.check" "nvd-config.edn"]}
 
   ;; Dependencies that have moved on. Being behind is not itself a
@@ -117,7 +126,7 @@
    :main-opts    ["-m" "antq.core"]}
 
   :lint
-  {:replace-deps {clj-kondo/clj-kondo {:mvn/version "2026.07.24"}}
+  {:replace-deps {clj-kondo/clj-kondo {:mvn/version "2026.08.04"}}
    :main-opts    ["-m" "clj-kondo.main" "--lint" "src" "test" "build.clj"]}
 
   :format
