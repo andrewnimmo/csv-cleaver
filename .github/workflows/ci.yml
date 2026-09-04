@@ -64,76 +64,8 @@ jobs:
         if: runner.os != 'Linux'
         run: clojure -M:test
 
-  security:
-    name: Vulnerabilities
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
-
-      - name: Set up JDK 25
-        uses: actions/setup-java@v5
-        with:
-          distribution: temurin
-          java-version: '25'
-
-      - name: Set up Clojure
-        uses: DeLaGuardo/setup-clojure@13.6.1
-        with:
-          cli: latest
-          bb: latest
-
-      - name: Cache dependencies
-        uses: actions/cache@v6
-        with:
-          path: |
-            ~/.m2/repository
-            ~/.gitlibs
-          key: ${{ runner.os }}-deps-${{ hashFiles('deps.edn') }}
-          restore-keys: ${{ runner.os }}-deps-
-
-      # Known vulnerabilities in anything that ships. nvd-clojure requires an
-      # NVD API key: add NVD_API_KEY as a repository secret, or this step fails
-      # rather than passing quietly. Get one free from
-      # https://nvd.nist.gov/developers/request-an-api-key
-      # dependency-check's first run builds a local NVD mirror, which dies
-      # readily on runner networks — and the default cache saves only on job
-      # success, so a failed build could never seed its own cache: a permanent
-      # red loop. The database is therefore cached with an explicit always-save,
-      # and the audit retried once; a resumed build completes what the first
-      # attempt fetched.
-      - name: NVD cache key
-        id: nvd-week
-        run: echo "week=$(date +%G-%V)" >> "$GITHUB_OUTPUT"
-
-      - name: Restore NVD database
-        uses: actions/cache/restore@v6
-        with:
-          # The real location, learned by finding the odc.mv.db on disk: the
-          # database lives under the dependency-check-utils artifact,
-          # version-scoped — which is also why upgrading the tool forces a
-          # clean rebuild. The first version of this step cached a directory
-          # that does not exist.
-          path: ~/.m2/repository/org/owasp/dependency-check-utils/*/data
-          key: nvd-db-${{ runner.os }}-${{ steps.nvd-week.outputs.week }}
-          restore-keys: nvd-db-${{ runner.os }}-
-
-      - name: Known vulnerabilities
-        env:
-          NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
-        run: bb audit || (echo "retrying once — NVD mirror build is flaky" && bb audit)
-
-      - name: Save NVD database
-        if: always()
-        uses: actions/cache/save@v6
-        with:
-          path: ~/.m2/repository/org/owasp/dependency-check-utils/*/data
-          key: nvd-db-${{ runner.os }}-${{ steps.nvd-week.outputs.week }}
-
-      # Being behind is not itself a vulnerability, but it is how you come to
-      # be running one. Reported, not enforced.
-      - name: Dependency drift
-        continue-on-error: true
-        run: bb outdated
+  # The vulnerability audit lives in audit.yml, on the self-hosted runner,
+  # and deliberately has no pull_request trigger — see the note there.
 
   coverage:
     name: Coverage

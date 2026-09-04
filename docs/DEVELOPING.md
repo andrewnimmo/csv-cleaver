@@ -121,7 +121,10 @@ echo your-key-here > .nvd-api-key
 what tooling runs in — read the former and not the latter.
 
 For CI, add it as a repository secret named `NVD_API_KEY`;
-`.github/workflows/ci.yml` already passes it through.
+`.github/workflows/audit.yml` already passes it through. That workflow runs on
+the self-hosted runner, on pushes to main and nightly — never on pull
+requests, because the repository is public and a self-hosted runner must never
+execute a stranger's code.
 
 ---
 
