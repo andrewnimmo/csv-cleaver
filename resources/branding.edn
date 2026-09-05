@@ -15,7 +15,7 @@
 
 {:name      "CSV Cleaver"
  :tagline   nil
- :version   "2.1.0"
+ :version   "2.2.0"
  :bundle-id "dev.nimmo.csvcleaver"
  :vendor    "Andrew David Nimmo"
 
