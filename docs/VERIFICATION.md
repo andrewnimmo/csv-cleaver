@@ -74,6 +74,27 @@ classpath cannot have a CVE"), and the timestamped-folder flake, which
 fired under cloverage exactly as its own assertion message was armed to
 report, and was cured by removing the shared state read it depended on.
 
+## Release v2.2.0 — run 33985098661, commit `ab40d1d`
+
+| Claim | Level | Evidence |
+|---|---|---|
+| Five installers plus SHA256SUMS published | OBSERVED | asset list read back from the GitHub API after publish |
+| The digests are real | OBSERVED | the deb re-downloaded and re-hashed locally; digest matches the published one |
+| The published artefacts are built from the release commit | OBSERVED | the near-miss below is why this line exists |
+
+The near-miss worth its own paragraph: minutes before the real release, a
+stale lightweight `v2.2.0` tag reached origin pointing at an August commit —
+a tree whose branding still said 2.1.0 — and its workflow was already
+building wrong installers under the right version number. Created, almost
+certainly, by a bare `git tag v2.2.0` in a checkout whose HEAD predated five
+merged PRs. The run was cancelled mid-build (nothing published; the release
+list was read back to confirm), the tag deleted and re-created as an
+annotated tag at the release commit, and the run that followed is the one
+above. The falsification record's rule — a value written from memory is an
+assumption wearing a pin's clothes — gains a sibling: **a tag created in a
+stale checkout is a release of whatever that checkout last saw.** Tag from
+the commit, not from wherever HEAD happens to be: `git tag -a v<x> <sha>`.
+
 ## The update check — commit `5ff3e90`
 
 | Claim | Level | Evidence |
@@ -95,11 +116,10 @@ report, and was cured by removing the shared state read it depended on.
    (up-to-date path). Still open: the startup checkbox sticking across a
    restart, `--no-update-check` removing the section, and the bottom
    spacing of the About card after the tightness fix.
-7. The 2.2.0 smoke dmg (`dist/CSV Cleaver-2.2.0.dmg`, built 2026-09-05)
-   installs and runs on a real Mac — the first artefact on the JavaFX 26
-   toolkit. Worth a look while there: the file card's Change… button reads
-   in full on the done screen (the fix this release carries), and numbers
-   still follow the window's language, not the machine's.
+7. ~~The 2.2.0 smoke dmg installs and runs on a real Mac~~ — **verified by
+   the project manager**, 2026-09-05, before the release was tagged: the
+   first artefact on the JavaFX 26 toolkit, smoke-tested from the branch
+   build of the release commit's tree.
 
 ## Falsification record
 
