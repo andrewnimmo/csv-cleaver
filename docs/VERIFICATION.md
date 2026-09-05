@@ -19,16 +19,16 @@ record at the bottom is a metric, not a confession box: it says where claims
 from this project's own development proved unreliable, so a reader can weight
 the rest accordingly.
 
-## Active claims — build `e2047cb`
+## Active claims — build `2f9c995` (v2.2.0 candidate)
 
 | Claim | Level | Evidence |
 |---|---|---|
 | Splitting is byte-faithful; concatenating output reproduces input | TESTED | `samples_test/every-sample-splits-and-rejoins-byte-for-byte`; scanner mutations caught |
 | Nothing on disk is overwritten without consent | TESTED | collision tests + API `nothing-already-on-disk-is-replaced`; mutation caught |
 | API refuses without token; input modes enforced; loopback only | OBSERVED + TESTED | live smoke on real socket (401/400/202/404 on record); 5 API mutations caught |
-| Installer bundles locale data; packaged binary starts | OBSERVED | build inspects its own image and launches it; `It starts: 2.0.0 (e2047cb)` |
+| Installer bundles locale data; packaged binary starts | OBSERVED | build inspects its own image and launches it; `It starts: CSV Cleaver 2.2.0 (33ce16b)` — the 2026-09-05 smoke build of this branch, whose parenthetical is the pre-bump parent because the version bump was still uncommitted when it built |
 | macOS icon centred | OBSERVED | margins L49 R49 T49 B49 read from shipped icns bytes; generator refuses asymmetry |
-| Get Info shows canonical copyright | OBSERVED | `plutil -extract NSHumanReadableCopyright` on the built app |
+| Get Info shows canonical copyright | OBSERVED | `plutil -extract NSHumanReadableCopyright` on the built app; re-run on the 2.2.0 smoke image, 2026-09-05: `Copyright © 2026 Andrew David Nimmo` |
 | One file dialog at a time; stale scans discarded | TESTED | claim-guard + scan-epoch tests; 3 mutations caught. Dialog modality itself is platform behaviour: PENDING-USER below |
 | Dialog cards never outgrow the window | TESTED | layout-bounds fx test at 420×320; mutation caught. The earlier version of this test measured the drop-shadow and was discarded |
 | Single-line dialog titles cannot clip ink | TESTED for shape, **PENDING-USER for the pixels** | titles are Text nodes, which do not clip by construction; the two prior padding fixes were falsified on a Retina display, so this one is not "done" until seen there |
@@ -41,6 +41,14 @@ the rest accordingly.
 | Eight visible languages complete; two hidden ones partial-by-design | TESTED | parity/plural/placeholder suites; egg-bundle contract test |
 
 | Signing scaffolding inert and wired | OBSERVED + TESTED | unsigned `bb package` unchanged with the scaffolding in place; entitlements, script wiring and workflow steps pinned by test, two mutations caught. The *sufficiency* of the entitlements for notarisation is DERIVED until the first signed build — the JNA `disable-library-validation` need is the expected round-trip, stated in SIGNING.md |
+| Raw default-locale text operations cannot enter `src/` or `dev/` (R85) | TESTED | `bb locale-lint` in CI and pinned by the suite — zero hits *and* ≥20 files scanned, because a lint over nothing reports clean; six mutations caught, including the lint quietly scanning nothing and losing a pattern |
+| A Turkish machine keeps Italian: `--locale IT` and `--theme LIGHT` parse | TESTED | regressions force tr_TR around the call; mutations restoring the raw folds caught. Before the gate, both were live defects nothing exercised |
+| The whole suite passes under tr_TR | OBSERVED | `bb test-tr` green locally and on the Linux CI leg on every run since the gate merged |
+| The jackson-databind pin is load-bearing at 2.22.2 | TESTED | pin removed → `bb audit` refused the tree (all seven CVEs, exit 255); restored, bumped, scanned clean over 69 dependencies. Newest stable reitit (0.10.1) still resolves 2.21.1 |
+| The audit runs on the self-hosted runner and never for a fork PR | OBSERVED | push and scheduled runs green on the runner (first cron firing 2026-09-05); `audit.yml` has no `pull_request` trigger; fork-PR approval set to all outside collaborators |
+| JavaFX 26.0.2 renders every screen as 25.0.4 did | OBSERVED | 18 of 20 `bb shots` byte-identical across the bump; the done screen differs by ~1% sub-pixel rasterisation, deterministic (26-vs-26 control render 0.00%); suites green on all three CI platforms |
+| No button is narrower than its label needs | TESTED | layout invariant over five screens at the window's own size, in a shown window; mutation caught — after the test's first version was itself caught passing with the fix removed, and hardened with a deliberately deep fixture path |
+| Every registered mutation caught | OBSERVED | full `bb mutate` sweep on the release-2.2.0 tree, 2026-09-05: 58 of 59 caught, the 59th reported STALE — its anchor was the very fold the locale gate migrated, which is the stale check working — re-anchored and caught individually the same day |
 
 ## Release v2.0.0 — run 31091724587, commit `082779a`
 
@@ -87,6 +95,11 @@ report, and was cured by removing the shared state read it depended on.
    (up-to-date path). Still open: the startup checkbox sticking across a
    restart, `--no-update-check` removing the section, and the bottom
    spacing of the About card after the tightness fix.
+7. The 2.2.0 smoke dmg (`dist/CSV Cleaver-2.2.0.dmg`, built 2026-09-05)
+   installs and runs on a real Mac — the first artefact on the JavaFX 26
+   toolkit. Worth a look while there: the file card's Change… button reads
+   in full on the done screen (the fix this release carries), and numbers
+   still follow the window's language, not the machine's.
 
 ## Falsification record
 

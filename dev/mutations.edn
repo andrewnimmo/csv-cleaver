@@ -41,7 +41,10 @@
 
  {:label     "parse-size stops understanding this language's own units"
   :file      "src/csv_cleaver/format.clj"
-  :find      "  (-> (i18n/tr ctx size-key \"\") str/trim str/upper-case not-empty))"
+  ;; Re-anchored 2026-09-05: the locale gate moved this fold to text/upper
+  ;; and the first full sweep reported the old anchor STALE — which is the
+  ;; stale check doing its job.
+  :find      "  (-> (i18n/tr ctx size-key \"\") str/trim text/upper not-empty))"
   :replace   "  nil)"
   :namespace "csv-cleaver.state-test"}
 
