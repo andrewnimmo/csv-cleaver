@@ -32,7 +32,7 @@ jobs:
           java-version: '25'
 
       - name: Set up Clojure
-        uses: DeLaGuardo/setup-clojure@13.6.1
+        uses: DeLaGuardo/setup-clojure@13.7.0
         with:
           cli: latest
           bb: latest
@@ -93,7 +93,7 @@ jobs:
           java-version: '25'
 
       - name: Set up Clojure
-        uses: DeLaGuardo/setup-clojure@13.6.1
+        uses: DeLaGuardo/setup-clojure@13.7.0
         with:
           cli: latest
 
@@ -130,7 +130,7 @@ jobs:
           java-version: '25'
 
       - name: Set up Clojure
-        uses: DeLaGuardo/setup-clojure@13.6.1
+        uses: DeLaGuardo/setup-clojure@13.7.0
         with:
           cli: latest
 
